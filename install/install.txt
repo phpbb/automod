@@ -1,0 +1,65 @@
+################################################################ 
+##
+##	Package Manager
+##
+##	Quick pacman install for the current olympus available.
+##	Copy all included files and make the below edits,
+##	along with preforming the included SQl (in the form of a DB Dump at this time)
+##
+################################################################ 
+# 
+#-----[ OPEN ]------------------------------------------
+# 
+language/en/acp/common.php
+
+# 
+#-----[ FIND ]------------------------------------------
+#
+// Common
+$lang = array_merge($lang, array(
+
+# 
+#-----[ AFTER, ADD ]------------------------------------
+#
+
+	//
+	// Package Manager
+	//
+	'ACP_CAT_PACMAN'			=> 'Package Manager',
+	'ACP_PACMAN'				=> 'Package Manager',
+	'ACP_PACMAN_PACKAGES'		=> 'Packages',
+	'ACP_PACMAN_GENERAL'		=> 'General',
+	'ACP_PACMAN_MANAGE'			=> 'Manage',
+	'ACP_PACMAN_BROWSE'			=> 'Browse',
+	'ACP_PACMAN_UPLOAD'			=> 'Upload',
+	//
+	// Package Manager End
+	//
+	
+# 
+#-----[ OPEN ]------------------------------------------
+# 
+language/en/acp/permissions_phpbb.php
+
+# 
+#-----[ FIND ]------------------------------------------
+#
+// Admin Permissions
+$lang = array_merge($lang, array(
+
+# 
+#-----[ AFTER, ADD ]------------------------------------
+#
+
+	//
+	// Package Manager
+	//
+	'acl_a_pacman'		=> array('lang' => 'Can use the package manager', 'cat' => 'misc'),
+	//
+	// Package Manager End
+	//
+	
+# 
+#-----[ SAVE/CLOSE ALL FILES ]--------------------------------- 
+# 
+# EoM 	
