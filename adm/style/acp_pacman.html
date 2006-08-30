@@ -1,0 +1,270 @@
+<!-- INCLUDE overall_header.html -->
+
+<a name="maincontent"></a>
+
+<!-- IF S_INTRO -->
+	
+	<h1>{L_ACP_PACMAN}</h1>
+
+	{L_PACMAN_EXPLAIN}
+
+<!-- ENDIF -->
+
+<!-- IF S_MANAGE -->
+	
+	<h1>{L_ACP_PACMAN_MANAGE}</h1>
+	
+	<p>{L_MANAGE_EXPLAIN}</p>
+	
+
+	<table cellspacing="1">
+	<thead>
+	<tr>
+		<th>{L_NAME}</th>
+		<th>{L_DESC}</th>
+		<th>{L_AUTHOR}</th>
+		<th>{L_ACTION}</th>
+	</tr>
+	</thead>
+	<tbody>
+	<!-- BEGIN packages -->
+		<!-- IF packages.S_ROW_COUNT is even --><tr class="row1"><!-- ELSE --><tr class="row2"><!-- ENDIF -->
+			<td style="width: 15%; vertical-align: middle;"><b>{packages.PACKAGE_NAME}</b></td>
+			<td style="width: 35%; vertical-align: middle;">{packages.PACKAGE_DESC}</td>
+			<td style="width: 20%; text-align: center; vertical-align: middle;"><a href="mailto:{packages.PACKAGE_AUTHOR_EMAIL}">{packages.PACKAGE_AUTHOR_NAME}</a> <!-- IF packages.PACKAGE_AUTHOR_URL -->(<a href="{packages.PACKAGE_AUTHOR_URL}">{packages.PACKAGE_AUTHOR_URL}</a>)<!-- ENDIF --></td>
+			<td style="width: 10%; white-space: nowrap; text-align: center; vertical-align: middle;">
+				<a href="{packages.U_INFO}">{ICON_INFO}</a>
+				<a href="{packages.U_REMOVE}">{ICON_DELETE}</a>
+			</td>
+		</tr>
+	<!-- END packages -->
+	</tbody>
+	</table>
+
+<!-- ENDIF -->
+
+<!-- IF S_BROWSE -->
+	
+	<h1>{L_ACP_PACMAN_BROWSE}</h1>
+
+	<p>{L_BROWSE_EXPLAIN}</p>
+
+	<p><strong>{L_FROM_LOCAL}</strong></p>
+
+	<table cellspacing="1">
+		<col class="row1" /><col class="row1" /><col class="row2" /><col class="row2" />
+	<thead>
+	<tr>
+		<th>{L_NAME}</th>
+		<th>{L_DESC}</th>
+		<th>{L_AUTHOR}</th>
+		<th>{L_ACTION}</th>
+	</tr>
+	</thead>
+	<tbody>
+	<!-- BEGIN local -->
+		<!-- IF local.S_ROW_COUNT is even --><tr class="row1"><!-- ELSE --><tr class="row2"><!-- ENDIF -->
+			<td style="width: 15%; vertical-align: middle;"><b>{local.PACKAGE_NAME}</b></td>
+			<td style="width: 35%; vertical-align: middle;">{local.PACKAGE_DESC}</td>
+			<td style="width: 20%; text-align: center; vertical-align: middle;"><!-- IF local.PACKAGE_AUTHOR_EMAIL --><a href="mailto:{local.PACKAGE_AUTHOR_EMAIL}"><!-- ENDIF -->{local.PACKAGE_AUTHOR_NAME}<!-- IF local.PACKAGE_AUTHOR_EMAIL --></a><!-- ENDIF --><!-- IF local.PACKAGE_AUTHOR_URL --><br/>(<a href="{local.PACKAGE_AUTHOR_URL}">{local.PACKAGE_AUTHOR_URL}</a>)<!-- ENDIF --></td>
+			<td style="width: 10%; white-space: nowrap; text-align: center; vertical-align: middle;">
+				<a href="{local.U_INSTALL}">{ICON_INSTALL}</a> 
+				<a href="{local.U_INFO}">{ICON_INFO}</a> 
+				<a href="{local.U_DELETE}">{ICON_DELETE}</a>
+			</td>
+		</tr>
+	<!-- END local -->
+	<!-- IF not .local -->
+		<tr>
+			<td class="row1" colspan="4" style="text-align: center;">{L_NO_LOCAL}</td>
+		</tr>
+	<!-- ENDIF -->
+	</tbody>
+	</table>
+	
+	<br/>
+	
+	<p><strong>{L_FROM_PHPBB}</strong></p>
+
+	<table cellspacing="1">
+	<thead>
+	<tr>
+		<th colspan="2">{L_CAT}</th>
+		<th colspan="2">{L_CAT}</th>
+	</tr>
+	</thead>
+	<tbody>
+		<tr class="row1">
+			<td colspan="4" style="text-align: center;">Feed Unavailable</td>
+		</td>
+	<!-- BEGIN phpbb_cats -->
+		<!-- IF phpbb_cats.S_ROW_COUNT is even -->
+			<tr class="row1">
+				<td style="width: 5%;">{ICON_FOLDER}</td>
+				<td style="width: 45%;"><a href="{phpbb_cats.CAT_URL}">{phpbb_cats.CAT_NAME}</a></td>
+		<!-- ELSE -->
+				<td style="width: 5%;">{ICON_FOLDER}</td>
+				<td style="width: 45%;"><a href="{phpbb_cats.CAT_URL}">{phpbb_cats.CAT_NAME}</a></td>
+			</tr>
+		<!-- ENDIF -->
+		<!-- IF phpbb_cats.S_DUMMY -->
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+			</tr>
+		<!-- ENDIF -->
+	<!-- END phpbb_cats -->
+	</tbody>
+	</table>
+<!-- ENDIF -->
+
+<!-- IF S_PREPARE_INSTALL -->
+
+	<h1>{L_PREPARE_INSTALL}</h1>
+	
+	<p>{L_PREPARE_INSTALL_EXPLAIN}</p>
+
+	<fieldset>
+		<legend>{L_AUTHOR_NOTES}</legend>
+		<!-- IF AUTHOR_NOTES --><p>{AUTHOR_NOTES}</p><!-- ELSE --><p>{L_NO_AUTHOR_NOTES}</p><!-- ENDIF -->
+	</fieldset>
+	
+	<fieldset>
+		<legend>{L_NEW_FILES}</legend>
+		<!-- IF .new_files -->
+			<table cellspacing="1">
+			<thead>
+			<tr>
+				<th>{L_SOURCE}</th>
+				<th>{L_TARGET}</th>
+			</tr>
+			</thead>
+			<tbody>
+				<!-- BEGIN new_files -->
+					<!-- IF new_files.S_ROW_COUNT is even --><tr class="row1"><!-- ELSE --><tr class="row2"><!-- ENDIF -->
+						<td>{new_files.SOURCE}</td>
+						<td>{new_files.TARGET}</td>
+					<tr>
+				<!-- END new_files -->
+			</tbody>
+			</table>
+		<!-- ELSE -->
+			<p>{L_NO_NEW_FILES}</p>
+		<!-- ENDIF -->
+	</fieldset>
+
+	<fieldset>
+		<legend>{L_SQL_STATEMENTS}</legend>
+		<!-- IF SQL_STATEMENTS --><p>{SQL_STATEMENTS}</p><!-- ELSE --><p>{L_NO_SQL_STATEMENTS}</p><!-- ENDIF -->
+	</fieldset>
+	
+	<fieldset>
+		<legend>{L_MODIFICTIONS}</legend>
+		<!-- IF .edit_files -->
+			<!-- BEGIN edit_files -->
+				<fieldset>
+					<legend>{edit_files.FILENAME}</legend>
+					<!-- BEGIN finds -->
+						<fieldset>
+							<legend>{L_FIND}</legend>
+							<pre>{edit_files.finds.FIND_STRING}</pre>
+							<!-- BEGIN actions -->
+								<fieldset>
+									<legend>{edit_files.finds.actions.NAME}</legend>
+									<pre>{edit_files.finds.actions.COMMAND}</pre>
+								</fieldset>
+							<!-- END actions -->
+						</fieldset>
+					<!-- END finds -->
+				</fieldset>
+			<!-- END edit_files -->
+		<!-- ELSE -->
+			<p>{L_NO_MODIFICATIONS}</p>
+		<!-- ENDIF -->
+	</fieldset>
+	
+	<form id="install" method="post" action="{U_INSTALL}">
+	<fieldset class="quick" style="float: left;">
+		<input type="hidden" name="package_path" value="{PACKAGE_PATH}" />
+		<input class="button2" name="submit" type="submit" value="{L_INSTALL}" />
+	</fieldset>
+	</form>
+
+<!-- ENDIF -->
+
+<!-- IF S_RESULTS -->
+
+	<h1>{L_RESULTS}</h1>
+	
+	<p>{L_RESULTS_EXPLAIN}</p>
+
+	<fieldset>
+		<legend>{L_NEW_FILES}</legend>
+		<p>temp</p>
+	</fieldset>
+
+	<fieldset>
+		<legend>{L_SQL_STATEMENTS}</legend>
+		<p>temp</p>
+	</fieldset>
+	
+	<fieldset>
+		<legend>{L_MODIFICTIONS}</legend>
+		<p>temp</p>
+	</fieldset>
+	
+	<form id="install" method="post" action="{U_INSTALL}">
+	<fieldset class="quick" style="float: left;">
+		<input class="button2" name="submit" type="submit" value="{L_FINISH}" />
+	</fieldset>
+	</form>
+
+<!-- ENDIF -->
+
+<!-- IF S_INFO -->
+
+	<h1>{L_INFORMATION}</h1>
+	
+	<p>{L_INFORMATION_EXPLAIN}</p>
+	
+	<fieldset>
+		<legend>{L_}</legend>
+
+	</fieldset>
+	
+	<form id="back" method="post" action="{U_BACK}">
+	<fieldset class="quick" style="float: left;">
+		<input class="button2" name="submit" type="submit" value="{L_BACK}" />
+	</fieldset>
+	</form>
+
+<!-- ENDIF -->
+
+<!-- IF S_UPLOAD-->
+	
+	<h1>{L_ACP_PACMAN_UPLOAD}</h1>
+
+	<p>{L_UPLOAD_EXPLAIN}</p>
+	
+	<form id="upload" enctype="multipart/form-data" method="post" action="{U_ACTION}">
+	
+	<fieldset>
+		<legend>{L_ACP_PACMAN_UPLOAD}</legend>
+	<dl>
+		<dt><label for="url">{L_FROM_URL}:</label></dt>
+		<dd><input class="medium" type="text" id="url" name="package_url" /></dd>
+	</dl>
+	<dl>
+		<dt><label for="file">{L_FROM_LOCAL}:</label></dt>
+		<dd><input class="medium" type="file" name="package_file" /></dd>
+	</dl>
+	</fieldset>
+	
+	<fieldset class="quick" style="float: left;">
+		<input class="button2" name="submit" type="submit" value="{L_ACP_PACMAN_UPLOAD}" />
+	</fieldset>
+	
+	</form>
+
+<!-- ENDIF -->
+
+<!-- INCLUDE overall_footer.html -->
