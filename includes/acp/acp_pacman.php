@@ -208,8 +208,8 @@ class acp_pacman
 		foreach($packages as $row)
 		{
 			$template->assign_block_vars('local', array(
-				'PACKAGE_NAME'			=> $row['name'],
-				'PACKAGE_DESC'			=> $row['desc'],
+				'PACKAGE_NAME'			=> htmlspecialchars($row['name']),
+				'PACKAGE_DESC'			=> htmlspecialchars($row['desc']),
 				'PACKAGE_VERSION'		=> $row['version'],
 				'PACKAGE_PATH'			=> $row['path'],
 				'PACKAGE_AUTHOR_NAME'	=> $row['author_name'],
@@ -233,7 +233,8 @@ class acp_pacman
 		global $template;
 
 		$template->assign_vars(array(
-			'S_INFO'	=> true)
+			'S_INFO'	=> true,
+			'U_BACK'	=> $this->u_action)
 		);
 
 		if (is_string($package_id))
@@ -242,7 +243,32 @@ class acp_pacman
 		}
 		else
 		{
-		
+			global $db;
+
+			$package_id = intval($package_id);
+
+			$sql = 'SELECT *
+				FROM ' . PACKAGE_TABLE . "
+					WHERE package_id = $package_id";
+			$result = $db->sql_query($sql);
+			if ($row = $db->sql_fetchrow($result))
+			{
+				$template->assign_vars(array(
+					'PACKAGE_ID'			=> $row['package_id'],
+					'PACKAGE_NAME'			=> $row['package_name'],
+					'PACKAGE_DESC'			=> $row['package_desc'],
+					'PACKAGE_VERSION'		=> $row['package_version'],
+					'PACKAGE_PATH'			=> $row['package_path'],
+					'PACKAGE_AUTHOR_NAME'	=> $row['package_author_name'],
+					'PACKAGE_AUTHOR_EMAIL'	=> $row['package_author_email'],
+					'PACKAGE_AUTHOR_URL'	=> $row['package_author_url'])
+				);
+			}
+			else
+			{
+				// ERROR, MISSING PACKAGE ID
+			}
+			$db->sql_freeresult($result);
 		}
 
 		return;
@@ -425,8 +451,18 @@ class acp_pacman
 			}
 		}
 
+		// Last orders!
+		$sql = 'SELECT MAX(package_order) as last_order
+			FROM ' . PACKAGE_TABLE;
+		$result = $db->sql_query($sql);
+		if ($row = $db->sql_fetchrow($result))
+		{
+			$order = $row['last_order'] + 1;
+		}
+
 		// insert database data
 		$sql = 'INSERT INTO ' . PACKAGE_TABLE . ' ' . $db->sql_build_array('INSERT', array(
+			'package_order'			=> (int) $order,
 			'package_name'			=> (string) $details['name'],
 			'package_desc'			=> (string) $details['desc'],
 			'package_version'		=> (string) $details['version'],
@@ -504,6 +540,7 @@ class acp_pacman
 
 		// do stuff
 
+		// use package_order to backtrack edits etc...?
 		
 		// Remove DB entry
 		$sql = 'DELETE FROM ' . PACKAGE_TABLE . "

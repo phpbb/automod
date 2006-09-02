@@ -227,8 +227,39 @@
 	<p>{L_INFORMATION_EXPLAIN}</p>
 	
 	<fieldset>
-		<legend>{L_}</legend>
-
+		<legend>{L_OVERVIEW}</legend>
+		<dl>
+			<dt><label>{L_PACKAGE_NAME}:</label></dt>
+			<dd><strong>{PACKAGE_NAME}</strong></dd>
+		</dl>
+		<dl>
+			<dt><label>{L_PACKAGE_DESC}:</label></dt>
+			<dd><strong>{PACKAGE_DESC}</strong></dd>
+		</dl>
+		<dl>
+			<dt><label>{L_PACKAGE_VERSION}:</label></dt>
+			<dd><strong>{PACKAGE_VERSION}</strong></dd>
+		</dl>
+		<dl>
+			<dt><label>{L_PACKAGE_PATH}:</label></dt>
+			<dd><strong>{PACKAGE_PATH}</strong></dd>
+		</dl>
+	</fieldset>
+	
+	<fieldset>
+		<legend>{L_AUTHOR}</legend>
+		<dl>
+			<dt><label>{L_AUTHOR_NAME}:</label></dt>
+			<dd><strong>{PACKAGE_AUTHOR_NAME}</strong></dd>
+		</dl>
+		<dl>
+			<dt><label>{L_AUTHOR_EMAIL}:</label></dt>
+			<dd><a href="mailto:{PACKAGE_AUTHOR_EMAIL}">{PACKAGE_AUTHOR_EMAIL}</a></dd>
+		</dl>
+		<dl>
+			<dt><label>{L_AUTHOR_URL}:</label></dt>
+			<dd><strong>{PACKAGE_AUTHOR_URL}</strong></dd>
+		</dl>
 	</fieldset>
 	
 	<form id="back" method="post" action="{U_BACK}">
