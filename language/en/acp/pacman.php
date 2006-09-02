@@ -48,13 +48,24 @@ $lang = array_merge($lang, array(
 		<p>For further information on Packages and the Package Manager please visit the <a href="http://www.phpbb.com/">phpBB website</a>.</p>
 	',
 	
-	'MANAGE_EXPLAIN'	=> 'Here you can manage any packages that are currently installed on your phpBB board.',
-	'BROWSE_EXPLAIN'	=> 'This page allows you to view any packages, both on your server and on the phpBB server, available for installation.',
-	'UPLOAD_EXPLAIN'	=> 'This page allows you to upload your own package to your phpBB for local installation.',
+	'MANAGE_EXPLAIN'		=> 'Here you can manage any packages that are currently installed on your phpBB board.',
+	'BROWSE_EXPLAIN'		=> 'This page allows you to view any packages, both on your server and on the phpBB server, available for installation.',
+	'UPLOAD_EXPLAIN'		=> 'This page allows you to upload your own package to your phpBB for local installation.',
+	'INFORMATION_EXPLAIN'	=> 'This page shows all the available information about the selected package.',
 
 	'NAME'	=> 'Name',
 	'DESC'	=> 'Description',
 	'CAT'	=> 'Category',
+
+	'PACKAGE_NAME'		=> 'Package Name',
+	'PACKAGE_DESC'		=> 'Package Description',
+	'PACKAGE_CAT'		=> 'Package Category',
+	'PACKAGE_VERSION'	=> 'Package Version',
+	'PACKAGE_PATH'		=> 'Package Path',
+
+	'AUTHOR_NAME'		=> 'Author Name',
+	'AUTHOR_EMAIL'		=> 'Author Email',
+	'AUTHOR_URL'		=> 'Author Website',
 
 	'AUTHOR_NOTES'		=> 'Author Notes',
 	'NO_AUTHOR_NOTES'	=> 'No Author Notes.',
@@ -67,14 +78,15 @@ $lang = array_merge($lang, array(
 	'FIND'				=> 'FIND',
 	'FINISH'			=> 'Finish',
 
-	'INSTALL'	=> 'Install',
-	'FROM_URL'	=> 'From URL',
+	'INSTALL'		=> 'Install',
+	'FROM_URL'		=> 'From URL',
 	'FROM_LOCAL'	=> 'From Local',
 	'FROM_PHPBB'	=> 'From phpBB.com',
 	'SOURCE'		=> 'Source',
 	'TARGET'		=> 'Target',
-	'NO_LOCAL'	=> 'No Packages Available Locally.',
-
+	'NO_LOCAL'		=> 'No Packages Available Locally.',
+	'OVERVIEW'		=> 'Overview',
+	
 	'PACKAGE_UPLOADED'	=> 'Package Uploaded Successfully.',
 	'PACKAGE_DELETED'	=> 'Package Deleted Successfully.',
 	'PACKAGE_REMOVED'	=> 'Package Removed Successfully.',
