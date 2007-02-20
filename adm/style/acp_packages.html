@@ -1,0 +1,629 @@
+<!-- INCLUDE overall_header.html -->
+
+<a name="maincontent"></a>
+
+<!-- IF S_FRONTEND -->
+	
+	<h1>{L_ACP_PACKAGES}</h1>
+
+	{L_PACKAGES_EXPLAIN}
+
+	<table cellspacing="1">
+		<col class="row1" /><col class="row2" />
+	<thead>
+	<tr>
+		<th>{L_NAME}</th>
+		<th>{L_ACTIONS}</th>
+	</tr>
+	</thead>
+	<tbody>
+	<tr>
+		<td class="row3" colspan="3"><b>{L_INSTALLED_PACKAGES}</b></td>
+	</tr>
+	<!-- IF not .installed -->
+		<tr>
+			<td class="row1" colspan="2" style="text-align: center;">{L_NO_INSTALLED_PACKAGES}</td>
+		</tr>
+	<!-- ENDIF -->
+	<!-- BEGIN installed -->
+	<tr>
+		<td><strong>{installed.NAME}</strong></a></td>
+		<td style="text-align: center;">
+			<a href="{installed.U_INFORMATION}">{ICON_INFORMATION}</a>
+			<a href="{installed.U_UNINSTALL}">{ICON_DELETE}</a>
+		</td>
+	</tr>
+	<!-- END installed -->
+	<tr>
+		<td class="row3" colspan="3"><b>{L_UNINSTALLED_PACKAGES}</b></td>
+	</tr>
+	<!-- IF not .uninstalled -->
+	<tr>
+		<td class="row1" colspan="2" style="text-align: center;">{L_NO_UNINSTALLED_PACKAGES}</td>
+	</tr>
+	<!-- ENDIF -->
+	<!-- BEGIN uninstalled -->
+	<tr>
+		<td><strong>{uninstalled.NAME}</strong></a></td>
+		<td style="text-align: center;">
+			<a href="{uninstalled.U_INFORMATION}">{ICON_INFORMATION}</a>
+			<a href="{uninstalled.U_INSTALL}">{ICON_INSTALL}</a>
+		</td>
+	</tr>
+	<!-- END uninstalled -->
+	</tbody>
+	</table>
+	
+<!-- ELSEIF S_INFORMATION -->
+
+	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
+
+	<h1>{L_PACKAGE_INFORMATION}</h1>
+
+	<p>{L_PACKAGE_INFORMATION_EXPLAIN}</p>
+
+	<fieldset>
+		<legend>{L_PACKAGE_INFORMATION}</legend>
+		<dl>
+			<dt><label for="name">{L_NAME}:</label></dt>
+			<dd><b id="name">{NAME}</b></dd>
+		</dl>
+		<dl>
+			<dt><label for="version">{L_VERSION}:</label></dt>
+			<dd><p id="version">{VERSION}</p></dd>
+		</dl>
+		<dl>
+			<dt><label for="path">{L_PATH}:</label></dt>
+			<dd><p id="path">{PATH}</p></dd>
+		</dl>
+		<!-- IF S_INSTALL_TIME -->
+		<dl>
+			<dt><label for="install_time">{L_INSTALL_TIME}:</label></dt>
+			<dd><p id="install_time">{INSTALL_TIME}</p></dd>
+		</dl>
+		<!-- ENDIF -->
+		<dl>
+			<dt><label for="description">{L_DESCRIPTION}:</label></dt>
+			<dd><p id="description">{DESCRIPTION}</p></dd>
+		</dl>
+	</fieldset>
+
+	<!-- IF S_AUTHOR_NOTES -->
+	<fieldset>
+		<legend>{L_AUTHOR_NOTES}</legend>
+		{AUTHOR_NOTES}
+	</fieldset>
+	<!-- ENDIF -->
+	
+	<fieldset>
+		<legend>{L_AUTHOR_INFORMATION}</legend>
+		<dl>
+			<dt><label for="author_name">{L_AUTHOR_NAME}:</label></dt>
+			<dd><b id="author_name">{AUTHOR_NAME}</b></dd>
+		</dl>
+		<dl>
+			<dt><label for="author_email">{L_AUTHOR_EMAIL}:</label></dt>
+			<dd><b id="author_email"><a href="mailto:{AUTHOR_EMAIL}">{AUTHOR_EMAIL}</a></b></dd>
+		</dl>
+		<dl>
+			<dt><label for="author_url">{L_AUTHOR_URL}:</label></dt>
+			<dd><b id="author_url">{AUTHOR_URL}</b></dd>
+		</dl>
+	</fieldset>
+	
+	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
+
+<!-- ELSEIF S_PRE_INSTALL -->
+
+	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
+
+	<h1>{L_PRE_INSTALL}</h1>
+	
+	<p>{L_PRE_INSTALL_EXPLAIN}</p>
+	
+	<!-- IF S_AUTHOR_NOTES -->
+	<fieldset>
+		<legend>{L_AUTHOR_NOTES}</legend>
+		{AUTHOR_NOTES}
+	</fieldset>
+	<!-- ENDIF -->
+
+	<form id="acp_packages" method="post" action="{U_INSTALL}">
+	<fieldset class="submit-buttons">
+		<legend>{L_INSTALL}</legend>
+		<input type="hidden" name="package_path" value="{PACKAGE_PATH}" />
+		<input class="button1" type="submit" name="install" value="{L_INSTALL}" />
+	</fieldset>
+	</form>
+
+
+	<!-- IF S_NEW_FILES -->
+	<fieldset>
+		<legend>{L_NEW_FILES}</legend>
+
+		<table cellspacing="1">
+			<col class="row1" width="50%" /><col class="row2" />
+		<thead>
+		<tr>
+			<th>{L_SOURCE}</th>
+			<th>{L_TARGET}</th>
+		</tr>
+		</thead>
+		<tbody>
+			<!-- BEGIN new_files -->
+				<tr>
+					<td><strong>{new_files.SOURCE}</strong><!-- IF new_files.S_MISSING_FILE -->&nbsp;&nbsp;&nbsp;<strong><font color="red">({L_FILE_MISSING})</font></strong>&nbsp;<!-- ENDIF --></td>
+					<td>{new_files.TARGET}</td>
+				<tr>
+			<!-- END new_files -->
+		</tbody>
+		</table>
+	</fieldset>
+	<!-- ENDIF -->
+	
+	<!-- IF S_SQL -->
+	<fieldset>
+		<legend>{L_SQL_QUERIES}</legend>
+		<!-- BEGIN sql_queries -->
+			<fieldset>
+				<strong>{sql_queries.QUERY}</strong>
+			</fieldset>
+		<!-- END sql_queries -->
+	</fieldset>
+	<!-- ENDIF -->
+
+	<!-- IF S_EDITS -->
+	<fieldset>
+		<legend>{L_FILE_EDITS}</legend>
+		<!-- BEGIN edit_files -->
+			<fieldset>
+				<legend>{edit_files.FILENAME}</legend>
+				<!-- IF edit_files.S_MISSING_FILE -->
+				<strong><font color="red">{L_FILE_MISSING}</font></strong>
+				<!-- ENDIF -->
+				<!-- BEGIN finds -->
+					<fieldset>
+						<legend>{L_FIND}</legend>
+						<pre>{edit_files.finds.FIND_STRING}</pre>
+						<!-- IF edit_files.finds.S_MISSING_FIND -->
+						<strong><font color="red">{L_FIND_MISSING}</font></strong>
+						<!-- ENDIF -->
+						<!-- BEGIN actions -->
+							<fieldset>
+								<legend>{edit_files.finds.actions.NAME}</legend>
+								<pre>{edit_files.finds.actions.COMMAND}</pre>
+							</fieldset>
+						<!-- END actions -->
+					</fieldset>
+				<!-- END finds -->
+			</fieldset>
+		<!-- END edit_files -->
+	</fieldset>
+	<!-- ENDIF -->
+
+	<form id="acp_packages" method="post" action="{U_INSTALL}">
+	<fieldset class="submit-buttons">
+		<legend>{L_INSTALL}</legend>
+		<input type="hidden" name="package_path" value="{PACKAGE_PATH}" />
+		<input class="button1" type="submit" name="install" value="{L_INSTALL}" />
+	</fieldset>
+	</form>
+	
+	<br/>
+	
+	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
+
+<!-- ELSEIF S_INSTALL -->
+	
+	<h1>{L_INSTALLED}</h1>
+	
+	<p>{L_INSTALLED_EXPLAIN}</p>
+	
+	<form id="acp_packages" method="post" action="{U_RETURN}">
+	<fieldset class="submit-buttons">
+		<legend>{L_RETURN_PACKAGES}</legend>
+		<input class="button1" type="submit" name="return" value="{L_RETURN_PACKAGES}" />
+	</fieldset>
+	</form>
+
+	<!-- IF S_NEW_FILES -->
+	<fieldset>
+		<legend>{L_NEW_FILES}</legend>
+
+		<table cellspacing="1">
+			<col class="row1" /><col class="row1" /><col class="row2" />
+		<thead>
+		<tr>
+			<th>{L_SOURCE}</th>
+			<th>{L_TARGET}</th>
+			<th>{L_STATUS}</th>
+		</tr>
+		</thead>
+		<tbody>
+			<!-- BEGIN new_files -->
+				<tr>
+					<td><strong>{new_files.SOURCE}</strong></td>
+					<td>{new_files.TARGET}</td>
+					<td><!-- IF new_files.S_SUCCESS --><font color="green">{L_SUCCESS}</font><!-- ELSE --><font color="red">{L_ERROR}</font><!-- ENDIF --></td>
+				<tr>
+			<!-- END new_files -->
+		</tbody>
+		</table>
+	</fieldset>
+	<!-- ENDIF -->
+
+	<!-- IF S_SQL -->
+	<fieldset>
+		<legend>{L_SQL_QUERIES}</legend>
+		<!-- BEGIN sql_queries -->
+			<fieldset>
+				<strong><!-- IF sql_queries.S_SUCCESS --><font color="green">{L_SUCCESS}:</font><!-- ELSE --><font color="red">{L_ERROR}:</font><!-- ENDIF -->&nbsp;{sql_queries.QUERY}</strong>
+			</fieldset>
+		<!-- END sql_queries -->
+	</fieldset>
+	<!-- ENDIF -->
+
+	<!-- IF S_EDITS -->
+	<fieldset>
+		<legend>{L_FILE_EDITS}</legend>
+		<!-- BEGIN edit_files -->
+			<fieldset>
+				<legend>{edit_files.FILENAME}</legend>
+				<!-- IF edit_files.S_MISSING_FILE -->
+				<strong><font color="red">{L_FILE_MISSING}</font></strong>
+				<!-- ENDIF -->
+				<!-- BEGIN finds -->
+					<fieldset>
+						<legend>{L_FIND}</legend>
+						<pre>{edit_files.finds.FIND_STRING}</pre>
+						<!-- BEGIN actions -->
+							<fieldset>
+								<legend>{edit_files.finds.actions.NAME}</legend>
+								<pre>{edit_files.finds.actions.COMMAND}</pre>
+							</fieldset>
+							<!-- IF edit_files.finds.actions.S_SUCCESS --><font color="green">{L_SUCCESS}</font><!-- ELSE --><font color="red">{L_ERROR}</font><!-- ENDIF -->
+						<!-- END actions -->
+					</fieldset>
+				<!-- END finds -->
+			</fieldset>
+		<!-- END edit_files -->
+	</fieldset>
+	<!-- ENDIF -->
+
+	<form id="acp_packages" method="post" action="{U_RETURN}">
+	<fieldset class="submit-buttons">
+		<legend>{L_RETURN_PACKAGES}</legend>
+		<input class="button1" type="submit" name="return" value="{L_RETURN_PACKAGES}" />
+	</fieldset>
+	</form>
+
+<!-- ELSEIF S_PRE_UNINSTALL -->
+
+	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
+
+	<h1>{L_PRE_UNINSTALL}</h1>
+	
+	<p>{L_PRE_UNINSTALL_EXPLAIN}</p>
+	
+	<!-- IF S_AUTHOR_NOTES -->
+	<fieldset>
+		<legend>{L_AUTHOR_NOTES}</legend>
+		{AUTHOR_NOTES}
+	</fieldset>
+	<!-- ENDIF -->
+
+	<form id="acp_packages" method="post" action="{U_UNINSTALL}">
+	<fieldset class="submit-buttons">
+		<legend>{L_UNINSTALL}</legend>
+		<input type="hidden" name="package_id" value="{PACKAGE_ID}" />
+		<input class="button1" type="submit" name="uninstall" value="{L_UNINSTALL}" />
+	</fieldset>
+	</form>
+
+	<!-- IF S_REMOVING_FILES -->
+	<fieldset>
+		<legend>{L_REMOVING_FILES}</legend>
+
+		<table cellspacing="1">
+			<col class="row1" width="50%" /><col class="row2" />
+		<thead>
+		<tr>
+			<th>{L_SOURCE}</th>
+		</tr>
+		</thead>
+		<tbody>
+			<!-- BEGIN removing_files -->
+				<tr>
+					<td><strong>{removing_files.FILENAME}</strong><!-- IF removing_files.S_MISSING_FILE -->&nbsp;&nbsp;&nbsp;<strong><font color="red">({L_FILE_MISSING})</font></strong>&nbsp;<!-- ENDIF --></td>
+				<tr>
+			<!-- END removing_files -->
+		</tbody>
+		</table>
+	</fieldset>
+	<!-- ENDIF -->
+	
+	<!-- IF S_SQL -->
+	<fieldset>
+		<legend>{L_SQL_QUERIES}</legend>
+		
+		<table cellspacing="1">
+			<col class="row1" width="50%" /><col class="row2" />
+		<thead>
+		<tr>
+			<th>{L_ORIGINAL}</th>
+			<th>{L_REVERSE}</th>
+		</tr>
+		</thead>
+		<tbody>
+			<!-- BEGIN sql_queries -->
+				<tr>
+					<td><strong>{sql_queries.ORIGINAL_QUERY}</strong></td>
+					<td><strong><!-- IF sql_queries.S_UNKNOWN_REVERSE -->&nbsp;&nbsp;&nbsp;<strong><font color="red">{L_UNKNOWN_QUERY_REVERSE}!</font></strong>&nbsp;<!-- ELSE -->{sql_queries.REVERSE_QUERY}<!-- ENDIF --></strong></td>
+				<tr>
+			<!-- END sql_queries -->
+		</tbody>
+		</table>
+	</fieldset>
+	<!-- ENDIF -->
+
+	<!-- IF S_EDITS -->
+	<fieldset>
+		<legend>{L_FILE_EDITS}</legend>
+		<!-- BEGIN edit_files -->
+			<fieldset>
+				<legend>{edit_files.FILENAME}</legend>
+				<!-- IF edit_files.S_MISSING_FILE -->
+				<strong><font color="red">{L_FILE_MISSING}</font></strong>
+				<!-- ENDIF -->
+				<!-- BEGIN finds -->
+					<fieldset>
+						<legend>{L_FIND}</legend>
+						<pre>{edit_files.finds.FIND_STRING}</pre>
+						<!-- IF edit_files.finds.S_MISSING_FIND -->
+						<strong><font color="red">{L_FIND_MISSING}</font></strong>
+						<!-- ENDIF -->
+						<!-- BEGIN actions -->
+							<fieldset>
+								<legend>{edit_files.finds.actions.NAME}</legend>
+								<pre>{edit_files.finds.actions.COMMAND}</pre>
+							</fieldset>
+						<!-- END actions -->
+					</fieldset>
+				<!-- END finds -->
+			</fieldset>
+		<!-- END edit_files -->
+	</fieldset>
+	<!-- ENDIF -->
+
+	<form id="acp_packages" method="post" action="{U_UNINSTALL}">
+	<fieldset class="submit-buttons">
+		<legend>{L_UNINSTALL}</legend>
+		<input type="hidden" name="package_id" value="{PACKAGE_ID}" />
+		<input class="button1" type="submit" name="uninstall" value="{L_UNINSTALL}" />
+	</fieldset>
+	</form>
+	
+	<br/>
+	
+	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
+
+<!-- ELSEIF S_UNINSTALL -->
+	
+	<h1>{L_UNINSTALLED}</h1>
+	
+	<p>{L_UNINSTALLED_EXPLAIN}</p>
+	
+	<form id="acp_packages" method="post" action="{U_RETURN}">
+	<fieldset class="submit-buttons">
+		<legend>{L_RETURN_PACKAGES}</legend>
+		<input class="button1" type="submit" name="return" value="{L_RETURN_PACKAGES}" />
+	</fieldset>
+	<fieldset class="submit-buttons">
+		<legend>{L_RETURN_RESTORE_POINT}</legend>
+		<input type="hidden" name="package_id" value="{PACKAGE_ID}" />
+		<input class="button1" type="submit" name="restore_point" value="{L_RETURN_RESTORE_POINT}" />
+	</fieldset>
+	</form>
+	
+<!-- ENDIF -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- IF S_PREPARE_INSTALL -->
+
+	<h1>{L_PREPARE_INSTALL}</h1>
+	
+	<p>{L_PREPARE_INSTALL_EXPLAIN}</p>
+
+	<fieldset>
+		<legend>{L_AUTHOR_NOTES}</legend>
+		<!-- IF AUTHOR_NOTES --><p>{AUTHOR_NOTES}</p><!-- ELSE --><p>{L_NO_AUTHOR_NOTES}</p><!-- ENDIF -->
+	</fieldset>
+	
+	<fieldset>
+		<legend>{L_NEW_FILES}</legend>
+		<!-- IF .new_files -->
+			<table cellspacing="1">
+			<thead>
+			<tr>
+				<th>{L_SOURCE}</th>
+				<th>{L_TARGET}</th>
+			</tr>
+			</thead>
+			<tbody>
+				<!-- BEGIN new_files -->
+					<!-- IF new_files.S_ROW_COUNT is even --><tr class="row1"><!-- ELSE --><tr class="row2"><!-- ENDIF -->
+						<td>{new_files.SOURCE}</td>
+						<td>{new_files.TARGET}</td>
+					<tr>
+				<!-- END new_files -->
+			</tbody>
+			</table>
+		<!-- ELSE -->
+			<p>{L_NO_NEW_FILES}</p>
+		<!-- ENDIF -->
+	</fieldset>
+
+	<fieldset>
+		<legend>{L_SQL_STATEMENTS}</legend>
+		<!-- IF SQL_STATEMENTS --><p>{SQL_STATEMENTS}</p><!-- ELSE --><p>{L_NO_SQL_STATEMENTS}</p><!-- ENDIF -->
+	</fieldset>
+	
+	<fieldset>
+		<legend>{L_MODIFICTIONS}</legend>
+		<!-- IF .edit_files -->
+			<!-- BEGIN edit_files -->
+				<fieldset>
+					<legend>{edit_files.FILENAME}</legend>
+					<!-- BEGIN finds -->
+						<fieldset>
+							<legend>{L_FIND}</legend>
+							<pre>{edit_files.finds.FIND_STRING}</pre>
+							<!-- BEGIN actions -->
+								<fieldset>
+									<legend>{edit_files.finds.actions.NAME}</legend>
+									<pre>{edit_files.finds.actions.COMMAND}</pre>
+								</fieldset>
+							<!-- END actions -->
+						</fieldset>
+					<!-- END finds -->
+				</fieldset>
+			<!-- END edit_files -->
+		<!-- ELSE -->
+			<p>{L_NO_MODIFICATIONS}</p>
+		<!-- ENDIF -->
+	</fieldset>
+	
+	<form id="install" method="post" action="{U_INSTALL}">
+	<fieldset class="quick" style="float: left;">
+		<input type="hidden" name="package_path" value="{PACKAGE_PATH}" />
+		<input class="button2" name="submit" type="submit" value="{L_INSTALL}" />
+	</fieldset>
+	</form>
+
+<!-- ENDIF -->
+
+<!-- IF S_RESULTS -->
+
+	<h1>{L_RESULTS}</h1>
+	
+	<p>{L_RESULTS_EXPLAIN}</p>
+
+	<fieldset>
+		<legend>{L_NEW_FILES}</legend>
+		<p>temp</p>
+	</fieldset>
+
+	<fieldset>
+		<legend>{L_SQL_STATEMENTS}</legend>
+		<p>temp</p>
+	</fieldset>
+	
+	<fieldset>
+		<legend>{L_MODIFICTIONS}</legend>
+		<p>temp</p>
+	</fieldset>
+	
+	<form id="install" method="post" action="{U_INSTALL}">
+	<fieldset class="quick" style="float: left;">
+		<input class="button2" name="submit" type="submit" value="{L_FINISH}" />
+	</fieldset>
+	</form>
+
+<!-- ENDIF -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- INCLUDE overall_footer.html -->
