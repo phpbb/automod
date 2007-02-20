@@ -9,25 +9,25 @@
 */
 
 // Constant Defines for actions
-define('AFTER',		1);
-define('BEFORE',	2);
+//define('AFTER',		1);
+//define('BEFORE',	2);
 
 /**
 * Base IO class
 * @package pacman
+* @todo: implement an error handler
 */
 class io
 {
-	var $root, $store;
+	var $root;
 	var $data = array();
 
 	/**
 	* Set Root
 	*/
-	function io($root, $store)
+	function io($root)
 	{
 		$this->root = $root;
-		$this->store = $store;
 	}
 
 	/**
@@ -69,21 +69,19 @@ class io
 		$sub_dirs = explode('/', $filename);
 		array_pop($sub_dirs);
 		$sub_dirs = implode('/', $sub_dirs);
-		
-		$filename = "{$this->store}/{$filename}";
 
-		if(!is_dir("{$this->store}/{$sub_dirs}/"))
+		if(!is_dir("{$this->root}{$sub_dirs}/"))
 		{
-			mkdir("{$this->store}/{$sub_dirs}", 0644); // what perms we want here?
+			mkdir("{$this->root}{$sub_dirs}", 0644); // what perms we want here?
 		}
 
 		if (function_exists('file_put_contents'))
 		{
-			file_put_contents($filename, trim($content));
+			file_put_contents("{$this->root}{$filename}", trim($content));
 		}
 		else
 		{
-			if ($fp = @fopen($filename, 'wb'))
+			if ($fp = @fopen("{$this->root}{$filename}", 'wb'))
 			{
 				@flock($fp, LOCK_EX);
 				@fwrite ($fp, trim($content));
@@ -91,7 +89,7 @@ class io
 				@fclose($fp);
 
 				@umask(0);
-				@chmod($filename, 0644);
+				@chmod("{$this->root}{$filename}", 0644);
 			}
 		}
 	}
@@ -101,7 +99,7 @@ class io
 	* Alternative, if first arg is a file, copies file to target sub dir of store
 	* Any files named in $exceptions are excluded
 	*/
-	function copy_content($src, $to, $exceptions = '')
+	function copy_content($src, $to, $exceptions = array())
 	{
 		if(@is_dir("{$this->root}{$src}"))
 		{
@@ -128,7 +126,7 @@ class io
 			$this->write_content($to, $new_content);
 		}
 
-		return;
+		return true; // need to put false erroring in write_content etc....
 	}
 
 	/**
@@ -150,6 +148,7 @@ class io
 class editor extends io
 {
 	var $unprocessed, $processed;
+	var $previous_edits;
 
 	/**
 	* Make all line endings the same
@@ -165,16 +164,12 @@ class editor extends io
 	*/
 	function check_find($filename, $find)
 	{
-		if (strstr($this->unprocessed[$filename], trim($find)) === false)
+		if (strpos($this->unprocessed[$filename], trim($find)) === false)
 		{
-			// Passed?
-			if (strstr($this->processed[$filename], trim($find)))
-			{
-				die('Only find string available has been passed: <br/><pre>' . htmlspecialchars($find) . '</pre>');
-			}
-
 			// Error out
-			die('Cannot locate find string: <br/><pre>' . htmlspecialchars($find) . '</pre>');
+			//echo('<br/>Cannot locate find string: <br/><pre>' . htmlspecialchars($find) . '</pre><br/>');
+			// and return false
+			return false;
 		}
 		return true;
 	}
@@ -188,27 +183,129 @@ class editor extends io
 		$this->processed[$filename] = '';
 	}
 
+//	/**
+//	* Wraps the string in the appriopriate commenting out
+//	*/
+//	function add_wrap($string, $file_ext, $id)
+//	{
+//		global $phpEx;
+//		
+//		$command_id = mt_rand();
+//	
+//		switch($file_ext)
+//		{
+//			case $phpEx;
+//			case 'js':
+//			case 'css':
+//				$string = str_replace('*/', '*\/', $string);
+//				$string = "/*{{$id}:{$command_id}\n{$string}\n{$id}:{$command_id}}*/";
+//			break;
+//
+//			case 'html':
+//			case 'htm':
+//				$string = str_replace('-->', '--/>', $string);
+//				$string = "<!--{{$id}:{$command_id}\n{$string}\n{$id}:{$command_id}}-->";
+//			break;
+//			
+//			case 'cfg':
+//				$string = "{{$id}:{$command_id}\n{$string}\n{$id}:{$command_id}}";
+//				$lines = explode("\n", $string);
+//				$string = "#\n" . implode("\n#", $lines);
+//			break;
+//		}
+//		
+//		return $string;
+//	}
+
+	/**
+	* Wraps the string in the appropriate anchor
+	* Could be a little better me thinks, than just having a stab, due to the file extension
+	*/
+	function add_anchor($string, $file_ext, $id)
+	{
+		global $phpEx;
+		
+		$command_id = mt_rand();
+	
+		switch($file_ext)
+		{
+			case $phpEx;
+			case 'js':
+				$string = "//>{$id}:{$command_id}\n{$string}\n//<{$id}:{$command_id}";
+			break;
+			
+			case 'html':
+			case 'htm':
+				$string = "<!-->{$id}:{$command_id}-->\n{$string}\n<!--<{$id}:{$command_id}-->";
+			break;
+			
+			case 'css':
+				$string = "/*>{$id}:{$command_id}*/\n{$string}\n/*<{$id}:{$command_id}*/";
+			break;
+			
+			case 'cfg':
+				$string = "#>{$id}:{$command_id}\n{$string}\n#<{$id}:{$command_id}";
+			break;
+		}
+		
+		return $string;
+	}
+	
+	/**
+	* Cut and store all previous package edits in file, unless preformed by a package with an ID in the exceptions array
+	*/
+	function fold_edits($filename, $exceptions)
+	{
+		if(empty($exceptions))
+		{
+		
+		}
+		
+		return;
+	}
+
+	/**
+	* Inserted stored previous package edits back into file
+	*/
+	function unfold_edits($filename, $exceptions)
+	{
+		if(empty($exceptions))
+		{
+		
+		}
+		
+		return;
+	}
+
 	/**
 	* Add a string to the file, BEFORE/AFTER the given find string
 	* @todo: inline
 	*/
 	function add_string($filename, $find, $add, $pos)
 	{
-		$find = $this->normalize($find);
-		$this->check_find($filename, $find);
-
-		list($passed_data, $unpassed_data) = explode($find, $this->unprocessed[$filename]);
-		$this->processed[$filename] .= $passed_data;
-		$this->unprocessed[$filename] = $unpassed_data;
-
-		if ($pos == AFTER)
+		$find = trim($this->normalize($find));
+		if(!$this->check_find($filename, $find))
 		{
-			$this->unprocessed[$filename] = $find . "\n" . $add . $this->unprocessed[$filename];
+			return false;
 		}
-		elseif($pos == BEFORE)
+
+		$data = explode($find, ' ' . $this->unprocessed[$filename] . ' ');
+
+		$this->processed[$filename] .= $data[0];
+
+		array_shift($data);
+		$this->unprocessed[$filename] = implode($find, $data);
+		
+		if ($pos == 'AFTER')
 		{
-			$this->unprocessed[$filename] = $add . "\n" . $find . $this->unprocessed[$filename];
+			$this->unprocessed[$filename] = trim($find) . "\n" . trim($add) . "\n" . trim($this->unprocessed[$filename]);
 		}
+		elseif($pos == 'BEFORE')
+		{
+			$this->unprocessed[$filename] = trim($add) . "\n" . trim($find) . trim($this->unprocessed[$filename]);
+		}
+		
+		return true;
 	}
 
 	/**
@@ -217,7 +314,7 @@ class editor extends io
 	*/
 	function inc_string($filename, $find, $operation)
 	{
-		$find = $this->normalize($find);
+		$find = trim($this->normalize($find));
 		$operation = trim($operation);
 
 		if (strstr($operation, ' '))
@@ -272,6 +369,8 @@ class editor extends io
 
 		// insert back in
 		$this->unprocessed[$filename] = preg_replace($find, $replace, $this->unprocessed[$filename]);
+	
+		return true;
 	}
 
 	/**
@@ -279,17 +378,32 @@ class editor extends io
 	*/
 	function replace_string($filename, $find, $replace)
 	{
-		$find = $this->normalize($find);
-		$this->check_find($filename, $find);
+		$find = trim($this->normalize($find));
+		
+		if(!$this->check_find($filename, $find))
+		{
+			return false;
+		}
+
 		$this->unprocessed[$filename] = str_replace($find, $replace, $this->unprocessed[$filename]);
+	
+		return true;
 	}
 
 	/**
 	* Write & close file
 	*/
-	function close_file($filename)
+	function close_file($filename, $new_filename = '')
 	{
-		$this->write_content($filename, $this->processed[$filename] . $this->unprocessed[$filename]);
+		if(!empty($new_filename))
+		{
+			$this->write_content($new_filename, $this->processed[$filename] . $this->unprocessed[$filename]);
+		}
+		else
+		{
+			$this->write_content($filename, $this->processed[$filename] . $this->unprocessed[$filename]);
+		}
+
 		$this->clear_content($filename);
 		unset($this->processed[$filename]);
 		unset($this->unprocessed[$filename]);

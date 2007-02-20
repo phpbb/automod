@@ -40,19 +40,9 @@ class parser
 		$this->parser->set_file($file);
 	}
 	
-	function get_details()
+	function get_information()
 	{
-		return $this->parser->get_details();
-	}
-
-	function get_history()
-	{
-		return $this->parser->get_history();
-	}
-
-	function get_notes()
-	{
-		return $this->parser->get_notes();
+		return $this->parser->get_information();
 	}
 
 	function get_actions()
@@ -91,19 +81,20 @@ class parser_text
 	/**
 	* Return array of the basic MOD details
 	*/
-	function get_details()
+	function get_information()
 	{
-		$details = array(
-			'path' => $this->file
+		$information = array(
+			'PATH' => $this->file
 		);
 
+		// Get general info
 		$matches = array(
-			'name'			=> "/mod title:(.*?)\n/i",
-			'desc'			=> "/mod description:(.*?)\n/i", // more than one line descriptions?
-			'version'		=> "/mod version:(.*?)\n/i",
-			'author_name'	=> "/mod author:(.*?)</i",
-			'author_email'	=> "/mod author:[^<]+<(.*?)>/i",
-			'author_url'	=> "/mod author:[^<]+<[^>]+>[ ]+\([^)]+\)(.*?)\n/i",
+			'NAME'			=> "/mod title:(.*?)\n/i",
+			'DESCRIPTION'	=> "/mod description:(.*?)\n/i", // more than one line descriptions?
+			'VERSION'		=> "/mod version:(.*?)\n/i",
+			'AUTHOR_NAME'	=> "/mod author:(.*?)</i",
+			'AUTHOR_EMAIL'	=> "/mod author:[^<]+<(.*?)>/i",
+			'AUTHOR_URL'	=> "/mod author:[^<]+<[^>]+>[ ]+\([^)]+\)(.*?)\n/i",
 		);
 
 		foreach ($matches as $name => $expression)
@@ -115,17 +106,10 @@ class parser_text
 				return false;
 			}
 
-			$details[$name] = trim($m[1]);
+			$information[$name] = htmlspecialchars(trim($m[1]));
 		}
 		
-		return $details;
-	}
-
-	/**
-	* Return the Author Notes as a string
-	*/
-	function get_notes()
-	{
+		// Get author notes
 		$lines = preg_split('/author notes:/i', $this->data);
 		$lines = preg_split("/\n###/",  $lines[1]);
 		$lines = explode("\n", $lines[0]);
@@ -136,16 +120,13 @@ class parser_text
 			$notes .= trim(str_replace('##', '', $line)) . "\n";
 		}
 		$notes .= '</pre>';
-
-		return $notes;
-	}
-
-	/**
-	* Would only really be used when getting more info
-	*/
-	function get_history()
-	{
-	
+		
+		$information['AUTHOR_NOTES'] = $notes;
+		
+		// Get dependenices 
+		$information['DEPENDENCIES'] = array();
+		
+		return $information;
 	}
 
 	/**
@@ -153,22 +134,39 @@ class parser_text
 	*/
 	function get_actions()
 	{
+		global $table_prefix;
+	
 		$actions = array();
 
 		// Get Copy commands
-		$copys = '';
+		$new_files = '';
 
 		preg_match_all("/#[ \t]*\n#[ -]+\[ copy \][- ]+\n#[ \t]*\n([^#]+)/i", $this->data, $m);
 		for ($i = 0; $i < count($m[0]); $i++)
 		{
-			$copys .= $m[1][$i];
+			$new_files .= $m[1][$i];
 		}
 
-		preg_match_all("/copy (.*?) to (.*?)\n/i", $this->data, $m);
+		preg_match_all("/copy (.*?) to (.*?)\n/i", $new_files, $m);
 		for ($i = 0; $i < count($m[0]); $i++)
 		{
 			$from = str_replace('\\', '/', trim($m[1][$i]));
-			$actions['copy'][$from] = str_replace('\\', '/', trim($m[2][$i]));
+			$actions['NEW_FILES'][$from] = str_replace('\\', '/', trim($m[2][$i]));
+		}
+
+		// Get SQL queries
+		$sql = '';
+
+		preg_match_all("/#[ \t]*\n#[ -]+\[ sql \][- ]+\n#[ \t]*\n([^#]+)/i", $this->data, $m);
+		for ($i = 0; $i < count($m[0]); $i++)
+		{
+			$sql .= $m[1][$i];
+		}
+		
+		preg_match_all("/(.*?);/i", $sql, $m);
+		for ($i = 0; $i < count($m[0]); $i++)
+		{
+			$actions['SQL'][] = trim(str_replace('phpbb_', $table_prefix, $m[1][$i]));
 		}
 
 		// Cover all find actions
@@ -188,19 +186,17 @@ class parser_text
 				$find_contents = trim($find_contents) . "\n";
 
 				list($find_string) = explode("\n#", $find_contents);
-				$actions['edit'][$filename][$find_string] = array();
+				$actions['EDITS'][$filename][$find_string] = array();
 				$find_contents = preg_replace("/\n#[^\-\n]*/i", "\n", $find_contents);
 
 				preg_match_all("/\n[- \t]+\[(.*?)\][- \t]+/i", $find_contents, $m);
 				$commands = preg_split("/\n[- \t]+\[(.*?)\][- \t]+/i", $find_contents);
 				for ($i = 0; $i < count($m[1]); $i++)
 				{
-					$actions['edit'][$filename][$find_string] += array(trim($m[1][$i]) => trim($commands[($i+1)]));
+					$actions['EDITS'][$filename][$find_string] += array(trim($m[1][$i]) => trim($commands[($i+1)]));
 				}
 			}
 		}
-
-		$actions['sql'] = '';
 
 		return $actions;
 	}

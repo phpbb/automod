@@ -2,11 +2,33 @@
 ##
 ##	Package Manager
 ##
-##	Quick pacman install for the current olympus available.
 ##	Copy all included files and make the below edits,
-##	along with preforming the included SQl (in the form of a DB Dump at this time)
+##	along with preforming the included SQl (in the form of a DB Dump at this time, gonna have to work at the modules table SQL a bit probably)
 ##
 ################################################################ 
+
+# 
+#-----[ OPEN ]------------------------------------------
+# 
+adm/index.php
+
+# 
+#-----[ FIND ]------------------------------------------
+#
+		'ICON_SYNC_DISABLED'		=> '<img src="' . $phpbb_admin_path . 'images/icon_sync_disabled.gif" alt="' . $user->lang['RESYNC'] . '" title="' . $user->lang['RESYNC'] . '" />',
+
+# 
+#-----[ AFTER, ADD ]------------------------------------------
+#
+		// 
+		// >> Package Manager
+		//
+		'ICON_INSTALL'				=> '<img src="' . $phpbb_admin_path . 'images/icon_install.gif" alt="' . $user->lang['INSTALL'] . '" title="' . $user->lang['INSTALL'] . '" />',
+		'ICON_INFORMATION'			=> '<img src="' . $phpbb_admin_path . 'images/icon_information.gif" alt="' . $user->lang['INFORMATION'] . '" title="' . $user->lang['INFORMATION'] . '" />',
+		//
+		// << Package Manager
+		//
+
 # 
 #-----[ OPEN ]------------------------------------------
 # 
@@ -23,17 +45,31 @@ $lang = array_merge($lang, array(
 #
 
 	//
-	// Package Manager
+	// >> Package Manager
 	//
-	'ACP_CAT_PACMAN'			=> 'Package Manager',
-	'ACP_PACMAN'				=> 'Package Manager',
-	'ACP_PACMAN_PACKAGES'		=> 'Packages',
-	'ACP_PACMAN_GENERAL'		=> 'General',
-	'ACP_PACMAN_MANAGE'			=> 'Manage',
-	'ACP_PACMAN_BROWSE'			=> 'Browse',
-	'ACP_PACMAN_UPLOAD'			=> 'Upload',
+	'ACP_CAT_PACKAGES'			=> 'Packages',
+	'ACP_PACKAGES'				=> 'Packages',
+	'ACP_PACKAGE_MANAGEMENT'	=> 'Package Management',
 	//
-	// Package Manager End
+	// << Package Manager End
+	//
+
+# 
+#-----[ FIND ]------------------------------------------
+#
+// Log Entries
+$lang = array_merge($lang, array(
+
+# 
+#-----[ AFTER, ADD ]------------------------------------
+#
+	//
+	// >> Package Manager
+	//
+	'LOG_PACKAGE_ADD'		=> '<strong>Added new package</strong><br />» %s',
+	'LOG_PACKAGE_REMOVE'	=> '<strong>Removed package</strong><br />» %s',
+	//
+	// << Package Manager
 	//
 	
 # 
@@ -50,13 +86,12 @@ $lang = array_merge($lang, array(
 # 
 #-----[ AFTER, ADD ]------------------------------------
 #
-
 	//
-	// Package Manager
+	// >> Package Manager
 	//
-	'acl_a_pacman'		=> array('lang' => 'Can use the package manager', 'cat' => 'misc'),
+	'acl_a_packages'		=> array('lang' => 'Can manage packages', 'cat' => 'misc'),
 	//
-	// Package Manager End
+	// << Package Manager End
 	//
 	
 # 
