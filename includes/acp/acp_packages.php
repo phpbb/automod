@@ -267,7 +267,7 @@ class acp_packages
 					'DEPENDENCIES'	=> unserialize($row['package_dependencies']),
 					'NAME'			=> htmlspecialchars($row['package_name']),
 					'DESCRIPTION'	=> htmlspecialchars($row['package_description']),
-					'VERSION'		=> $row['package_version'],
+					'PVERSION'		=> $row['package_version'], // "VERSION" conflicts... silly
 					'PATH'			=> $row['package_path'],
 					'AUTHOR_NOTES'	=> $row['package_author_notes'],
 					'AUTHOR_NAME'	=> $row['package_author_name'],
