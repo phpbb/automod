@@ -1,7 +1,7 @@
 <?php
 /** 
 *
-* @package pacman
+* @package mods_manager
 * @version $Id$
 * @copyright (c) 2005 phpBB Group
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License 
@@ -14,7 +14,7 @@
 
 /**
 * Base IO class
-* @package pacman
+* @package mods_manager
 * @todo: implement an error handler
 */
 class io
@@ -72,7 +72,7 @@ class io
 
 		if(!is_dir("{$this->root}{$sub_dirs}/"))
 		{
-			mkdir("{$this->root}{$sub_dirs}", 0644); // what perms we want here?
+			$this->create_dir("{$sub_dirs}/", 0644); // what perms we want here? also set recurrsively, last arg (work in php < 5?)?
 		}
 
 		if (function_exists('file_put_contents'))
@@ -114,7 +114,7 @@ class io
 					}
 					else
 					{
-						$new_content = $this->get_content("{$src}{$file}");
+						$new_content = $this->get_content("./{$src}{$file}");
 						$this->write_content("{$to}{$file}", $new_content);
 					}
 				}
@@ -136,13 +136,80 @@ class io
 	{
 		unset($this->data[$filename]);
 	}
+	
+	/**
+	* Creates a folder (recurrsive, if root folders not there)
+	*/
+	function create_dir($dir, $perms = 0644)
+	{
+		$dir = preg_replace('/(\/){2,}|(\\\){1,}/', '/', $dir); //only forward-slash
+		
+		$dirs = array();
+		$dirs = explode("/", $dir);
+		$path = $this->root;
+		
+		foreach($dirs as $subdir)
+		{
+			$path .= "{$subdir}/";
+			if(!is_dir($path))
+			{
+				mkdir($path, $perms);
+			}
+		}
+	}
+	
+	/**
+	* Remove content (files or folders)
+	*/
+	function remove($target)
+	{
+		if(strstr($target, $this->root) === false)
+		{
+			$target = "{$this->root}{$target}";
+		}
+
+		if (!is_dir($target))
+		{
+			unlink($target);
+			return;
+		}
+		
+		$dir = $target;
+		$dir = preg_replace('/(\/){2,}|(\\\){1,}/', '/', $dir); //only forward-slash (php.net)
+
+		if (!(substr($dir, -1) == '/'))
+		{
+			$dir .= '/';
+		}
+
+		$handle = opendir($dir);
+		while (false !== ($file = readdir($handle)))
+		{
+			if ($file != '.' && $file != '..')
+			{
+				$path = "{$dir}{$file}";
+
+				if (is_dir("{$path}/"))
+				{
+					$this->remove($path);
+				}
+				else
+				{
+					unlink($path);
+				}
+			}
+		}
+		closedir($handle);
+
+		rmdir($dir);    //Remove dir
+	}
 }
 
 /**
 * Editor Class, extends IO
 * Runs through file sequential, ie new finds must come after previous finds
 * SQL and file copying not handled
-* @package pacman
+* @package mods_manager
 * @todo: implement some string checkin, way too much can go wild here
 */
 class editor extends io
@@ -283,7 +350,7 @@ class editor extends io
 	*/
 	function add_string($filename, $find, $add, $pos)
 	{
-		$find = trim($this->normalize($find));
+		$find = $this->normalize($find);
 		if(!$this->check_find($filename, $find))
 		{
 			return false;
@@ -291,18 +358,18 @@ class editor extends io
 
 		$data = explode($find, ' ' . $this->unprocessed[$filename] . ' ');
 
-		$this->processed[$filename] .= $data[0];
+		$this->processed[$filename] .= substr($data[0], 1);
 
 		array_shift($data);
-		$this->unprocessed[$filename] = implode($find, $data);
-		
+		$this->unprocessed[$filename] = substr(implode($find, $data), 0, -1);
+
 		if ($pos == 'AFTER')
 		{
-			$this->unprocessed[$filename] = trim($find) . "\n" . trim($add) . "\n" . trim($this->unprocessed[$filename]);
+			$this->unprocessed[$filename] = $find . "\n" . $add . "\n" . $this->unprocessed[$filename];
 		}
 		elseif($pos == 'BEFORE')
 		{
-			$this->unprocessed[$filename] = trim($add) . "\n" . trim($find) . trim($this->unprocessed[$filename]);
+			$this->unprocessed[$filename] = $add . "\n" . $find . $this->unprocessed[$filename];
 		}
 		
 		return true;
