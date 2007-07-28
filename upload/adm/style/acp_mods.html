@@ -4,87 +4,84 @@
 
 <!-- IF S_FRONTEND -->
 	
-	<h1>{L_ACP_PACKAGES}</h1>
+	<h1>{L_ACP_MODS}</h1>
 
-	{L_PACKAGES_EXPLAIN}
+	{L_MODS_EXPLAIN}
 
 	<table cellspacing="1">
-		<col class="row1" /><col class="row2" />
+		<col class="row1" /><col class="row2" /><col class="row2" />
 	<thead>
 	<tr>
 		<th>{L_NAME}</th>
+		<th>{L_OPTIONS}</th>
 		<th>{L_ACTIONS}</th>
 	</tr>
 	</thead>
 	<tbody>
 	<tr>
-		<td class="row3" colspan="3"><b>{L_INSTALLED_PACKAGES}</b></td>
+		<td class="row3" colspan="3"><b>{L_INSTALLED_MODS}</b></td>
 	</tr>
 	<!-- IF not .installed -->
 		<tr>
-			<td class="row1" colspan="2" style="text-align: center;">{L_NO_INSTALLED_PACKAGES}</td>
+			<td class="row1" colspan="3" style="text-align: center;">{L_NO_INSTALLED_MODS}</td>
 		</tr>
 	<!-- ENDIF -->
 	<!-- BEGIN installed -->
 	<tr>
-		<td><strong>{installed.NAME}</strong></a></td>
-		<td style="text-align: center;">
-			<a href="{installed.U_INFORMATION}">{ICON_INFORMATION}</a>
-			<a href="{installed.U_UNINSTALL}">{ICON_DELETE}</a>
-		</td>
+		<td><strong>{installed.MOD_NAME}</strong></a></td>
+		<td style="text-align: center;"><a href="{installed.U_DETAILS}">{L_DETAILS}</a></td>
+		<td style="text-align: center;"><a href="{installed.U_UNINSTALL}">{L_UNINSTALL}</a></td>
 	</tr>
 	<!-- END installed -->
 	<tr>
-		<td class="row3" colspan="3"><b>{L_UNINSTALLED_PACKAGES}</b></td>
+		<td class="row3" colspan="3"><b>{L_UNINSTALLED_MODS}</b></td>
 	</tr>
 	<!-- IF not .uninstalled -->
 	<tr>
-		<td class="row1" colspan="2" style="text-align: center;">{L_NO_UNINSTALLED_PACKAGES}</td>
+		<td class="row1" colspan="3" style="text-align: center;">{L_NO_UNINSTALLED_MODS}</td>
 	</tr>
 	<!-- ENDIF -->
 	<!-- BEGIN uninstalled -->
 	<tr>
-		<td><strong>{uninstalled.NAME}</strong></a></td>
-		<td style="text-align: center;">
-			<a href="{uninstalled.U_INFORMATION}">{ICON_INFORMATION}</a>
-			<a href="{uninstalled.U_INSTALL}">{ICON_INSTALL}</a>
-		</td>
+		<td><strong>{uninstalled.MOD_NAME}</strong></a></td>
+		<td style="text-align: center;"><a href="{uninstalled.U_DETAILS}">{L_DETAILS}</a></td>
+		<td style="text-align: center;"><a href="{uninstalled.U_INSTALL}">{L_INSTALL}</a></td>
 	</tr>
 	<!-- END uninstalled -->
 	</tbody>
 	</table>
 	
-<!-- ELSEIF S_INFORMATION -->
+<!-- ELSEIF S_DETAILS -->
 
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
 
-	<h1>{L_PACKAGE_INFORMATION}</h1>
+	<h1>{L_MOD_DETAILS}</h1>
 
-	<p>{L_PACKAGE_INFORMATION_EXPLAIN}</p>
+	<p>{L_MOD_DETAILS_EXPLAIN}</p>
 
 	<fieldset>
-		<legend>{L_PACKAGE_INFORMATION}</legend>
+		<legend>{L_MOD_DETAILS}</legend>
 		<dl>
 			<dt><label for="name">{L_NAME}:</label></dt>
-			<dd><b id="name">{NAME}</b></dd>
+			<dd><b id="name">{MOD_NAME}</b></dd>
 		</dl>
 		<dl>
 			<dt><label for="version">{L_VERSION}:</label></dt>
-			<dd><p id="version">{PVERSION}</p></dd>
+			<dd><p id="version">{MOD_VERSION}</p></dd>
 		</dl>
 		<dl>
 			<dt><label for="path">{L_PATH}:</label></dt>
-			<dd><p id="path">{PATH}</p></dd>
+			<dd><p id="path">{MOD_PATH}</p></dd>
 		</dl>
 		<!-- IF S_INSTALL_TIME -->
 		<dl>
 			<dt><label for="install_time">{L_INSTALL_TIME}:</label></dt>
-			<dd><p id="install_time">{INSTALL_TIME}</p></dd>
+			<dd><p id="install_time">{MOD_INSTALL_TIME}</p></dd>
 		</dl>
 		<!-- ENDIF -->
 		<dl>
 			<dt><label for="description">{L_DESCRIPTION}:</label></dt>
-			<dd><p id="description">{DESCRIPTION}</p></dd>
+			<dd><p id="description">{MOD_DESCRIPTION}</p></dd>
 		</dl>
 	</fieldset>
 
@@ -128,10 +125,10 @@
 	</fieldset>
 	<!-- ENDIF -->
 
-	<form id="acp_packages" method="post" action="{U_INSTALL}">
+	<form id="acp_mods" method="post" action="{U_INSTALL}">
 	<fieldset class="submit-buttons">
 		<legend>{L_INSTALL}</legend>
-		<input type="hidden" name="package_path" value="{PACKAGE_PATH}" />
+		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
 		<input class="button1" type="submit" name="install" value="{L_INSTALL}" />
 	</fieldset>
 	</form>
@@ -201,10 +198,10 @@
 	</fieldset>
 	<!-- ENDIF -->
 
-	<form id="acp_packages" method="post" action="{U_INSTALL}">
+	<form id="acp_mods" method="post" action="{U_INSTALL}">
 	<fieldset class="submit-buttons">
 		<legend>{L_INSTALL}</legend>
-		<input type="hidden" name="package_path" value="{PACKAGE_PATH}" />
+		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
 		<input class="button1" type="submit" name="install" value="{L_INSTALL}" />
 	</fieldset>
 	</form>
@@ -219,10 +216,10 @@
 	
 	<p>{L_INSTALLED_EXPLAIN}</p>
 	
-	<form id="acp_packages" method="post" action="{U_RETURN}">
+	<form id="acp_mods" method="post" action="{U_RETURN}">
 	<fieldset class="submit-buttons">
-		<legend>{L_RETURN_PACKAGES}</legend>
-		<input class="button1" type="submit" name="return" value="{L_RETURN_PACKAGES}" />
+		<legend>{L_RETURN_MODS}</legend>
+		<input class="button1" type="submit" name="return" value="{L_RETURN_MODS}" />
 	</fieldset>
 	</form>
 
@@ -290,10 +287,10 @@
 	</fieldset>
 	<!-- ENDIF -->
 
-	<form id="acp_packages" method="post" action="{U_RETURN}">
+	<form id="acp_mods" method="post" action="{U_RETURN}">
 	<fieldset class="submit-buttons">
-		<legend>{L_RETURN_PACKAGES}</legend>
-		<input class="button1" type="submit" name="return" value="{L_RETURN_PACKAGES}" />
+		<legend>{L_RETURN_MODS}</legend>
+		<input class="button1" type="submit" name="return" value="{L_RETURN_MODS}" />
 	</fieldset>
 	</form>
 
@@ -312,10 +309,10 @@
 	</fieldset>
 	<!-- ENDIF -->
 
-	<form id="acp_packages" method="post" action="{U_UNINSTALL}">
+	<form id="acp_mods" method="post" action="{U_UNINSTALL}">
 	<fieldset class="submit-buttons">
 		<legend>{L_UNINSTALL}</legend>
-		<input type="hidden" name="package_id" value="{PACKAGE_ID}" />
+		<input type="hidden" name="mod_id" value="{MOD_ID}" />
 		<input class="button1" type="submit" name="uninstall" value="{L_UNINSTALL}" />
 	</fieldset>
 	</form>
@@ -395,10 +392,10 @@
 	</fieldset>
 	<!-- ENDIF -->
 
-	<form id="acp_packages" method="post" action="{U_UNINSTALL}">
+	<form id="acp_mods" method="post" action="{U_UNINSTALL}">
 	<fieldset class="submit-buttons">
 		<legend>{L_UNINSTALL}</legend>
-		<input type="hidden" name="package_id" value="{PACKAGE_ID}" />
+		<input type="hidden" name="mod_id" value="{MOD_ID}" />
 		<input class="button1" type="submit" name="uninstall" value="{L_UNINSTALL}" />
 	</fieldset>
 	</form>
@@ -413,57 +410,14 @@
 	
 	<p>{L_UNINSTALLED_EXPLAIN}</p>
 	
-	<form id="acp_packages" method="post" action="{U_RETURN}">
+	<form id="acp_mods" method="post" action="{U_RETURN}">
 	<fieldset class="submit-buttons">
-		<legend>{L_RETURN_PACKAGES}</legend>
-		<input class="button1" type="submit" name="return" value="{L_RETURN_PACKAGES}" />
-	</fieldset>
-	<fieldset class="submit-buttons">
-		<legend>{L_RETURN_RESTORE_POINT}</legend>
-		<input type="hidden" name="package_id" value="{PACKAGE_ID}" />
-		<input class="button1" type="submit" name="restore_point" value="{L_RETURN_RESTORE_POINT}" />
+		<legend>{L_RETURN_MODS}</legend>
+		<input class="button1" type="submit" name="return" value="{L_RETURN_MODS}" />
 	</fieldset>
 	</form>
 	
 <!-- ENDIF -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 <!-- IF S_PREPARE_INSTALL -->
@@ -533,7 +487,7 @@
 	
 	<form id="install" method="post" action="{U_INSTALL}">
 	<fieldset class="quick" style="float: left;">
-		<input type="hidden" name="package_path" value="{PACKAGE_PATH}" />
+		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
 		<input class="button2" name="submit" type="submit" value="{L_INSTALL}" />
 	</fieldset>
 	</form>
@@ -568,62 +522,6 @@
 	</form>
 
 <!-- ENDIF -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 <!-- INCLUDE overall_footer.html -->

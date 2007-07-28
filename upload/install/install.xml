@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-stylesheet type="text/xsl" href="modx.prosilver.en.xsl"?>
+<mod xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.phpbb.com/mods/xml/modx-1.0.xsd">
+	<header>
+		<license>http://opensource.org/licenses/gpl-license.php GNU General Public License v2</license>
+		<title lang="en">MOD Manager Installation</title>
+		<author-group>
+			<author>
+				<realname>phpBB</realname>
+				<email>modmanager@phpbb.com</email>
+				<username>phpBB</username>
+				<homepage>http://www.phpbb.com</homepage>
+			</author>
+		</author-group>
+		<mod-version>
+			<major>0</major>
+			<minor>2</minor>
+			<revision>0</revision>
+			<release></release>
+		</mod-version>
+	</header>
+	<action-group>
+		<sql>
+CREATE TABLE `phpbb_mods` (
+  `mod_id` int(8) NOT NULL auto_increment,
+  `mod_active` tinyint(1) NOT NULL default '1',
+  `mod_time` int(11) default NULL,
+  `mod_dependencies` varchar(255) NOT NULL,
+  `mod_name` varchar(255) NOT NULL default '',
+  `mod_description` text NOT NULL,
+  `mod_version` varchar(100) NOT NULL default '',
+  `mod_path` varchar(255) NOT NULL default '',
+  `mod_author_notes` text NOT NULL,
+  `mod_author_name` varchar(255) NOT NULL default '',
+  `mod_author_email` varchar(255) NOT NULL default '',
+  `mod_author_url` varchar(255) NOT NULL default '',
+  `mod_actions` text NOT NULL,
+  PRIMARY KEY  (`mod_id`)
+) CHARACTER SET `utf8` COLLATE `utf8_bin`;
+		</sql>
+		<open src="includes/constants.php">
+			<edit>
+				<find>// Additional tables</find>
+				<action type="after-add"><![CDATA[
+define('MODS_TABLE',			$table_prefix . 'mods');
+				]]></action>
+			</edit>
+		</open>
+		<open src="language/en/acp/common.php">
+			<edit>
+				<find><![CDATA[
+// Common
+$lang = array_merge($lang, array(
+				]]></find>
+				<action type="after-add"><![CDATA[
+	//
+	// >> MOD Manager
+	//
+	'ACP_CAT_MODS'			=> 'MODs',
+	'ACP_MODS'			=> 'MODs',
+	'ACP_MOD_MANAGEMENT'	=> 'MOD Management',
+	//
+	// << MOD Manager End
+	//
+				]]>
+				</action>
+				<find><![CDATA[
+// Log Entries
+$lang = array_merge($lang, array(
+				]]></find>
+				<action type="after-add"><![CDATA[
+	//
+	// >> MOD Manager
+	//
+	'LOG_MOD_ADD'		=> '<strong>Added new MOD</strong><br />&raquo; %s',
+	'LOG_MOD_REMOVE'	=> '<strong>Removed MOD</strong><br />&raquo; %s',
+	//
+	// << MOD Manager
+	//
+				]]></action>
+			</edit>
+		</open>
+	</action-group>
+</mod>
