@@ -112,7 +112,7 @@ class parser_xml
 			'AUTHOR_NAME'	=> htmlspecialchars(trim($author_info['USERNAME'][0]['data'])),
 			'AUTHOR_EMAIL'	=> (isset($author_info['EMAIL'][0]['data'])) ? (htmlspecialchars(trim($author_info['EMAIL'][0]['data']))) : '',
 			'AUTHOR_URL'	=> (isset($author_info['HOMEPAGE'][0]['data'])) ? (htmlspecialchars(trim($author_info['HOMEPAGE'][0]['data']))) : '',
-			'AUTHOR_NOTES'	=> '<pre>' . htmlspecialchars(trim($header['AUTHOR-NOTES'][0]['data'])) . '</pre>'
+			'AUTHOR_NOTES'	=> str_replace("\n", '<br />', htmlspecialchars(trim($header['AUTHOR-NOTES'][0]['data']))),
 		);
 
 		return $details;

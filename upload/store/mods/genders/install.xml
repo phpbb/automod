@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-stylesheet type="text/xsl" href="modx.prosilver.en.xsl"?>
+<!--For security purposes, please check: http://www.phpbb.com/mods/ for the latest version of this MOD. Although MODs are checked before being allowed in the MODs Database there is no guarantee that there are no security problems within the MOD. No support will be given for MODs not found within the MODs Database which can be found at http://www.phpbb.com/mods/-->
+<mod xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.phpbb.com/mods/xml/modx-1.0.xsd">
+	<header>
+		<license>http://opensource.org/licenses/gpl-license.php GNU General Public License v2</license>
+		<title lang="en-gb">Genders</title>
+		<description lang="en-gb"><![CDATA[This MOD will allow your members to specify their Gender. They can chose between "Male", "Female" and "None specified".]]></description>
+		<author-notes lang="en-gb"><![CDATA[This Modification is a phpBB3 version of my phpBB2 genders mod. It does not have the options that the phpBB2 version has, but you can still change the gender image to text in your template.
+
+Another change is that by default this MOD will use the "minigender" imageset that was already in niels' phpBB2 genders mod. However the other imagesets are still included, and can be found in the /contrib/ folder.
+
+Thanks to following people, who created alternative gender images:
+ - "mini" imageset by Vinci
+ - "minigender" imageset from neils gender mod
+ - "default_darkbg" imageset by DreAdeDcoRpSE
+ - "(fe)male-images" imageset by Wout -- w00t
+ - "Planetary" imageset by HCP
+ - "prosilver" imageset by D-Shadow
+
+If you don't know how to run the SQL, simply drop the contrib/db_update.php file into your /install/ folder (you have to create it) and call it in your browser. The script should do the rest for you. Make sure to delete it after that though.
+
+After installation, you will have to refresh your imagesets and templates in the admin control panel.]]></author-notes>
+		<author-group>
+			<author>
+				<realname>Igor Wiedler</realname>
+				<email>evil@phpbbmodders.net</email>
+				<username>eviL&lt;3</username>
+				<homepage>http://phpbbmodders.net</homepage>
+				<contributions />
+			</author>
+		</author-group>
+		<mod-version>
+			<major>0</major>
+			<minor>1</minor>
+			<revision>3</revision>
+		</mod-version>
+		<installation>
+			<level>easy</level>
+			<time>600</time>
+			<target-version>
+				<target-primary>3.0.RC3</target-primary>
+				<target-major allow="exact">3</target-major>
+				<target-minor allow="exact">0</target-minor>
+			</target-version>
+		</installation>
+		<history>
+			<entry>
+				<date>2007-04-28</date>
+				<rev-version>
+					<major>0</major>
+					<minor>1</minor>
+					<revision>0</revision>
+				</rev-version>
+				<changelog lang="en-gb">
+					<change>Initial release</change>
+				</changelog>
+			</entry>
+			<entry>
+				<date>2007-05-03</date>
+				<rev-version>
+					<major>0</major>
+					<minor>1</minor>
+					<revision>1</revision>
+				</rev-version>
+				<changelog lang="en-gb">
+					<change>Fixed some typos (prosilver -> subsilver2), thanks to geoffreak!</change>
+					<change>Fixed undefined index with guest posts (thanks geoffreak and A_Jelly_Doughnut)</change>
+					<change>Upgrade script from phpBB2 Genders</change>
+				</changelog>
+			</entry>
+			<entry>
+				<date>2007-05-21</date>
+				<rev-version>
+					<major>0</major>
+					<minor>1</minor>
+					<revision>2</revision>
+				</rev-version>
+				<changelog lang="en-gb">
+					<change>Fixed malformed xml in install files</change>
+					<change>Updated for RC1</change>
+					<change>New awesome prosilver gender imageset from D-Shadow, those images are so awesome!</change>
+				</changelog>
+			</entry>
+			<entry>
+				<date>2007-07-30</date>
+				<rev-version>
+					<major>0</major>
+					<minor>1</minor>
+					<revision>3</revision>
+				</rev-version>
+				<changelog lang="en-gb">
+					<change>phpBB 3.0.RC4</change>
+				</changelog>
+			</entry>
+		</history>
+	</header>
+	<action-group>
+		<copy>
+			<file from="root/styles/prosilver/imageset/icon_gender_x.gif" to="styles/prosilver/imageset/icon_gender_x.gif" />
+			<file from="root/styles/prosilver/imageset/icon_gender_m.gif" to="styles/prosilver/imageset/icon_gender_m.gif" />
+			<file from="root/styles/prosilver/imageset/icon_gender_f.gif" to="styles/prosilver/imageset/icon_gender_f.gif" />
+			<file from="root/styles/subsilver2/imageset/icon_gender_x.gif" to="styles/subsilver2/imageset/icon_gender_x.gif" />
+			<file from="root/styles/subsilver2/imageset/icon_gender_m.gif" to="styles/subsilver2/imageset/icon_gender_m.gif" />
+			<file from="root/styles/subsilver2/imageset/icon_gender_f.gif" to="styles/subsilver2/imageset/icon_gender_f.gif" />
+		</copy>
+		<sql><![CDATA[ALTER TABLE phpbb_users ADD user_gender TINYINT(1) UNSIGNED NOT NULL DEFAULT '0';]]></sql>
+		<open src="memberlist.php">
+			<edit>
+				<find><![CDATA[, u.user_allow_pm]]></find>
+				<inline-edit>
+					<inline-find><![CDATA[, u.user_allow_pm]]></inline-find>
+					<inline-action type="after-add"><![CDATA[, u.user_gender]]></inline-action>
+				</inline-edit>
+			</edit>
+			<edit>
+				<find><![CDATA[				'U_VIEW_PROFILE'	=> get_username_string('profile', $row['user_id'], $row['username'], $row['user_colour']),]]></find>
+				<action type="after-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+				'USER_GENDER'		=> get_user_gender($row['user_gender']),
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+			<edit>
+				<find><![CDATA[		'S_JABBER_ENABLED'	=> ($config['jab_enable']) ? true : false,]]></find>
+				<action type="after-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+		'USER_GENDER_IMG'	=> get_user_gender($data['user_gender']),
+		'USER_GENDER'		=> get_user_gender($data['user_gender'], true),
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+		</open>
+		<open src="viewtopic.php">
+			<edit>
+				<find><![CDATA[				'age'				=> '',]]></find>
+				<action type="after-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+				'gender_img'		=> '',
+				'gender'			=> '',
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+			<edit>
+				<find><![CDATA[				'age'			=> '',]]></find>
+				<action type="after-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+				'gender_img'	=> get_user_gender($row['user_gender']),
+				'gender'		=> get_user_gender($row['user_gender'], true),
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+			<edit>
+				<find><![CDATA[		'POSTER_AGE'		=> $user_cache[$poster_id]['age'],]]></find>
+				<action type="after-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+		'POSTER_GENDER_IMG'	=> $user_cache[$poster_id]['gender_img'],
+		'POSTER_GENDER'		=> $user_cache[$poster_id]['gender'],
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+		</open>
+		<open src="adm/style/acp_users_profile.html">
+			<edit>
+				<find><![CDATA[		<dd>{L_DAY}: <select id="birthday" name="bday_day">{S_BIRTHDAY_DAY_OPTIONS}</select> {L_MONTH}: <select name="bday_month">{S_BIRTHDAY_MONTH_OPTIONS}</select> {L_YEAR}: <select name="bday_year">{S_BIRTHDAY_YEAR_OPTIONS}</select></dd>
+	</dl>]]></find>
+				<action type="after-add"><![CDATA[	<dl>
+		<dt><label for="gender_x">{L_GENDER}:</label><br /><span>{L_GENDER_EXPLAIN}</span></dt>
+		<dd>
+			<input type="radio" name="gender" id="gender_m" value="{GENDER_M}"<!-- IF S_GENDER_M --> checked="checked"<!-- ENDIF --> /> {L_GENDER_M} 
+			<input type="radio" name="gender" id="gender_f" value="{GENDER_F}"<!-- IF S_GENDER_F --> checked="checked"<!-- ENDIF --> /> {L_GENDER_F} 
+			<input type="radio" name="gender" id="gender_x" value="{GENDER_X}"<!-- IF S_GENDER_X --> checked="checked"<!-- ENDIF --> /> {L_GENDER_X}
+		</dd>
+	</dl>]]></action>
+			</edit>
+		</open>
+		<open src="includes/constants.php">
+			<edit>
+				<find><![CDATA[?>]]></find>
+				<action type="before-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+define('GENDER_F', 2); // Ladies first ;)
+define('GENDER_X', 0);
+define('GENDER_M', 1);
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+		</open>
+		<open src="includes/functions_display.php">
+			<edit>
+				<find><![CDATA[?>]]></find>
+				<action type="before-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+/**
+ * Get user gender
+ *
+ * @author eviL3
+ * @param int $user_gender User's gender
+ * @param bool $use_text Returns text if true or image if false
+ * @return string Gender
+ */
+function get_user_gender($user_gender, $use_text = false)
+{
+	global $user, $config;
+	
+	switch ($user_gender)
+	{
+		case GENDER_M:
+			$gender = 'gender_m';
+		break;
+		
+		case GENDER_F:
+			$gender = 'gender_f';
+		break;
+		
+		default:
+			$gender = 'gender_x';
+	}
+	
+	if ($use_text)
+	{
+		$gender = $user->lang[strtoupper($gender)];
+	}
+	else
+	{
+		$gender = $user->img('icon_' . $gender, strtoupper($gender));
+	}
+	
+	return $gender;
+}
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+		</open>
+		<open src="includes/acp/acp_styles.php">
+			<edit>
+				<find><![CDATA[, 'icon_foe']]></find>
+				<inline-edit>
+					<inline-find><![CDATA[, 'icon_foe']]></inline-find>
+					<inline-action type="after-add"><![CDATA[, 'icon_gender_x', 'icon_gender_m', 'icon_gender_f']]></inline-action>
+				</inline-edit>
+			</edit>
+		</open>
+		<open src="includes/acp/acp_users.php">
+			<edit>
+				<find><![CDATA[					'bday_year'		=> 0,]]></find>
+				<action type="after-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+					'gender'		=> request_var('gender', $user_row['user_gender']),
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+			<edit>
+				<find><![CDATA[						'bday_year'		=> array('num', true, 1901, gmdate('Y', time())),]]></find>
+				<action type="after-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+						'gender'		=> array('num', true, 0, 2),
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+			<edit>
+				<find><![CDATA[							'user_birthday'	=> sprintf('%2d-%2d-%4d', $data['bday_day'], $data['bday_month'], $data['bday_year']),]]></find>
+				<action type="after-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+							'user_gender'	=> $data['gender'],
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+			<edit>
+				<find><![CDATA[					'S_BIRTHDAY_DAY_OPTIONS'	=> $s_birthday_day_options,]]></find>
+				<action type="before-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+					'GENDER_X'		=> GENDER_X,
+					'GENDER_M'		=> GENDER_M,
+					'GENDER_F'		=> GENDER_F,
+
+					'S_GENDER_X'	=> ($data['gender'] == GENDER_X) ? true : false,
+					'S_GENDER_M'	=> ($data['gender'] == GENDER_M) ? true : false,
+					'S_GENDER_F'	=> ($data['gender'] == GENDER_F) ? true : false,
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+		</open>
+		<open src="includes/ucp/ucp_profile.php">
+			<edit>
+				<find><![CDATA[					'interests'		=> utf8_normalize_nfc(request_var('interests', $user->data['user_interests'], true)),]]></find>
+				<action type="after-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+					'gender'		=> request_var('gender', $user->data['user_gender']),
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+			<edit>
+				<find><![CDATA[						'interests'		=> array('string', true, 2, 500),]]></find>
+				<action type="after-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+						'gender'		=> array('num', true, 0, 2),
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+			<edit>
+				<find><![CDATA[								'user_interests'=> $data['interests'],]]></find>
+				<action type="after-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+							'user_gender'	=> $data['gender'],
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+			<edit>
+				<find><![CDATA[					'INTERESTS'	=> $data['interests'],]]></find>
+				<action type="after-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+					'GENDER_X'		=> GENDER_X,
+					'GENDER_M'		=> GENDER_M,
+					'GENDER_F'		=> GENDER_F,
+
+					'S_GENDER_X'	=> ($data['gender'] == GENDER_X) ? true : false,
+					'S_GENDER_M'	=> ($data['gender'] == GENDER_M) ? true : false,
+					'S_GENDER_F'	=> ($data['gender'] == GENDER_F) ? true : false,
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+		</open>
+		<open src="language/en/common.php">
+			<edit>
+				<find><![CDATA[?>]]></find>
+				<action type="before-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+$lang = array_merge($lang, array(
+	'GENDER'			=> 'Gender',
+	'GENDER_EXPLAIN'	=> 'Please enter your gender here.',
+	'GENDER_X'			=> 'None specified',
+	'GENDER_M'			=> 'Male',
+	'GENDER_F'			=> 'Female',
+));
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+		</open>
+		<open src="language/en/acp/styles.php">
+			<edit>
+				<find><![CDATA[?>]]></find>
+				<action type="before-add"><![CDATA[//-- mod : Genders ------------------------------------------------------------
+//-- add
+$lang = array_merge($lang, array(
+	'IMG_ICON_GENDER_X'	=> 'Gender: None specified',
+	'IMG_ICON_GENDER_M'	=> 'Gender: Male',
+	'IMG_ICON_GENDER_F'	=> 'Gender: Female',
+));
+//-- fin mod : Genders --------------------------------------------------------]]></action>
+			</edit>
+		</open>
+		<open src="styles/prosilver/imageset/imageset.cfg">
+			<edit>
+				<find><![CDATA[img_icon_user_warn = icon_user_warn.gif*20*20]]></find>
+				<action type="after-add"><![CDATA[img_icon_gender_x = icon_gender_x.gif
+img_icon_gender_m = icon_gender_m.gif
+img_icon_gender_f = icon_gender_f.gif]]></action>
+			</edit>
+		</open>
+		<open src="styles/prosilver/template/memberlist_body.html">
+			<edit>
+				<find><![CDATA[{memberrow.USERNAME_FULL}]]></find>
+				<inline-edit>
+					<inline-find><![CDATA[{memberrow.USERNAME_FULL}]]></inline-find>
+					<inline-action type="after-add"><![CDATA[ {memberrow.USER_GENDER_IMG}]]></inline-action>
+				</inline-edit>
+			</edit>
+		</open>
+		<open src="styles/prosilver/template/memberlist_leaders.html">
+			<edit>
+				<find><![CDATA[{admin.USERNAME_FULL}]]></find>
+				<inline-edit>
+					<inline-find><![CDATA[{admin.USERNAME_FULL}]]></inline-find>
+					<inline-action type="after-add"><![CDATA[ {admin.USER_GENDER}]]></inline-action>
+				</inline-edit>
+			</edit>
+			<edit>
+				<find><![CDATA[{mod.USERNAME_FULL}]]></find>
+				<inline-edit>
+					<inline-find><![CDATA[{mod.USERNAME_FULL}]]></inline-find>
+					<inline-action type="after-add"><![CDATA[ {mod.USER_GENDER}]]></inline-action>
+				</inline-edit>
+			</edit>
+		</open>
+		<open src="styles/prosilver/template/memberlist_view.html">
+			<edit>
+				<find><![CDATA[		<!-- IF LOCATION --><dt>{L_LOCATION}:</dt> <dd>{LOCATION}</dd><!-- ENDIF -->]]></find>
+				<action type="before-add"><![CDATA[		<dt>{L_GENDER}:</dt> <dd>{USER_GENDER_IMG}</dd>]]></action>
+			</edit>
+		</open>
+		<open src="styles/prosilver/template/ucp_profile_profile_info.html">
+			<edit>
+				<find><![CDATA[			<label for="bday_year">{L_YEAR}: <select name="bday_year" id="bday_year" style="width: 60px;">{S_BIRTHDAY_YEAR_OPTIONS}</select></label>
+		</dd>
+	</dl>]]></find>
+				<action type="after-add"><![CDATA[	<dl>
+		<dt><label for="gender_x">{L_GENDER}:</label><br /><span>{L_GENDER_EXPLAIN}</span></dt>
+		<dd>
+			<label for="gender_m"><input type="radio" name="gender" id="gender_m" value="{GENDER_M}"<!-- IF S_GENDER_M --> checked="checked"<!-- ENDIF --> /> {L_GENDER_M}</label> 
+			<label for="gender_f"><input type="radio" name="gender" id="gender_f" value="{GENDER_F}"<!-- IF S_GENDER_F --> checked="checked"<!-- ENDIF --> /> {L_GENDER_F}</label> 
+			<label for="gender_x"><input type="radio" name="gender" id="gender_x" value="{GENDER_X}"<!-- IF S_GENDER_X --> checked="checked"<!-- ENDIF --> /> {L_GENDER_X}</label>
+		</dd>
+	</dl>]]></action>
+			</edit>
+		</open>
+		<open src="styles/prosilver/template/viewtopic_body.html">
+			<edit>
+				<find><![CDATA[		<!-- IF postrow.POSTER_FROM --><dd><strong>{L_LOCATION}:</strong> {postrow.POSTER_FROM}</dd><!-- ENDIF -->]]></find>
+				<action type="after-add"><![CDATA[		<dd><strong>{L_GENDER}:</strong> {postrow.POSTER_GENDER_IMG}</dd>]]></action>
+			</edit>
+		</open>
+		<open src="styles/subsilver2/imageset/imageset.cfg">
+			<edit>
+				<find><![CDATA[img_icon_topic_unapproved = icon_topic_unapproved.gif*18*19]]></find>
+				<action type="after-add"><![CDATA[img_icon_gender_x = icon_gender_x.gif
+img_icon_gender_m = icon_gender_m.gif
+img_icon_gender_f = icon_gender_f.gif]]></action>
+			</edit>
+		</open>
+		<open src="styles/subsilver2/template/memberlist_body.html">
+			<edit>
+				<find><![CDATA[{memberrow.USERNAME_FULL}]]></find>
+				<inline-edit>
+					<inline-find><![CDATA[{memberrow.USERNAME_FULL}]]></inline-find>
+					<inline-action type="after-add"><![CDATA[ {memberrow.USER_GENDER_IMG}]]></inline-action>
+				</inline-edit>
+			</edit>
+		</open>
+		<open src="styles/subsilver2/template/memberlist_leaders.html">
+			<edit>
+				<find><![CDATA[{admin.USERNAME_FULL}]]></find>
+				<inline-edit>
+					<inline-find><![CDATA[{admin.USERNAME_FULL}]]></inline-find>
+					<inline-action type="after-add"><![CDATA[ {admin.USER_GENDER}]]></inline-action>
+				</inline-edit>
+			</edit>
+			<edit>
+				<find><![CDATA[{mod.USERNAME_FULL}]]></find>
+				<inline-edit>
+					<inline-find><![CDATA[{mod.USERNAME_FULL}]]></inline-find>
+					<inline-action type="after-add"><![CDATA[ {mod.USER_GENDER}]]></inline-action>
+				</inline-edit>
+			</edit>
+		</open>
+		<open src="styles/subsilver2/template/memberlist_view.html">
+			<edit>
+				<find><![CDATA[				<td><!-- IF INTERESTS --><b class="genmed">{INTERESTS}</b><!-- ENDIF --></td>
+			</tr>]]></find>
+				<action type="after-add"><![CDATA[			<tr>
+				<td class="gen" align="{S_CONTENT_FLOW_END}" nowrap="nowrap">{L_GENDER}: </td>
+				<td><b class="genmed">{USER_GENDER_IMG}</b></td>
+			</tr>]]></action>
+			</edit>
+		</open>
+		<open src="styles/subsilver2/template/ucp_profile_profile_info.html">
+			<edit>
+				<find><![CDATA[	<td class="row2"><span class="genmed">{L_DAY}:</span> <select name="bday_day">{S_BIRTHDAY_DAY_OPTIONS}</select> <span class="genmed">{L_MONTH}:</span> <select name="bday_month">{S_BIRTHDAY_MONTH_OPTIONS}</select> <span class="genmed">{L_YEAR}:</span> <select name="bday_year">{S_BIRTHDAY_YEAR_OPTIONS}</select></td>
+</tr>]]></find>
+				<action type="after-add"><![CDATA[<tr> 
+	<td class="row1" width="35%"><b class="genmed"><label for="gender_x">{L_GENDER}:</label> </b><br /><span class="gensmall">{L_GENDER_EXPLAIN}</span></td>
+	<td class="row2">
+		<label for="gender_m"><input type="radio" name="gender" id="gender_m" value="{GENDER_M}"<!-- IF S_GENDER_M --> checked="checked"<!-- ENDIF --> /> {L_GENDER_M}</label> 
+		<label for="gender_f"><input type="radio" name="gender" id="gender_f" value="{GENDER_F}"<!-- IF S_GENDER_F --> checked="checked"<!-- ENDIF --> /> {L_GENDER_F}</label> 
+		<label for="gender_x"><input type="radio" name="gender" id="gender_x" value="{GENDER_X}"<!-- IF S_GENDER_X --> checked="checked"<!-- ENDIF --> /> {L_GENDER_X}</label>
+	</td>
+</tr>]]></action>
+			</edit>
+		</open>
+		<open src="styles/subsilver2/template/viewtopic_body.html">
+			<edit>
+				<find><![CDATA[					<!-- IF postrow.POSTER_FROM --><br /><b>{L_LOCATION}:</b> {postrow.POSTER_FROM}<!-- ENDIF -->]]></find>
+				<action type="after-add"><![CDATA[					<br /><b>{L_GENDER}:</b> {postrow.POSTER_GENDER_IMG}]]></action>
+			</edit>
+		</open>
+	</action-group>
+</mod>
