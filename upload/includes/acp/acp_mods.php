@@ -108,7 +108,7 @@ class acp_mods
 		global $phpbb_root_path, $db, $template;
 
 		// get available MOD paths
-		$uninstalled = $this->find_mods("{$phpbb_root_path}mods");
+		$uninstalled = $this->find_mods("{$phpbb_root_path}store/mods");
 
 		// get installed MOD paths
 		$installed_paths = array();
@@ -122,9 +122,9 @@ class acp_mods
 		$db->sql_freeresult($result);
 
 		// show only available MODs that paths aren't in the DB
-		foreach($uninstalled as $file)
+		foreach ($uninstalled as $file)
 		{
-			if(!in_array($file, $installed_paths))
+			if (!in_array($file, $installed_paths))
 			{
 				$details = $this->mod_details($file);
 
@@ -156,11 +156,11 @@ class acp_mods
 		$details = $this->mod_details($mod_ident);
 		$template->assign_vars($details);
 
-		if(!empty($details['AUTHOR_NOTES']))
+		if (!empty($details['AUTHOR_NOTES']))
 		{
 			$template->assign_var('S_AUTHOR_NOTES', true);
 		}
-		if(isset($details['MOD_INSTALL_TIME']) && !empty($details['MOD_INSTALL_TIME']))
+		if (isset($details['MOD_INSTALL_TIME']) && !empty($details['MOD_INSTALL_TIME']))
 		{
 			$template->assign_var('S_INSTALL_TIME', true);
 		}
@@ -175,7 +175,7 @@ class acp_mods
 	{
 		global $phpbb_root_path, $phpEx;
 
-		if(is_int($mod_ident))
+		if (is_int($mod_ident))
 		{
 			global $db;
 
@@ -233,7 +233,7 @@ class acp_mods
 	{
 		global $phpbb_root_path, $phpEx;
 
-		if(is_int($mod_ident))
+		if (is_int($mod_ident))
 		{
 			global $db;
 			
@@ -241,9 +241,17 @@ class acp_mods
 				FROM ' . MODS_TABLE . "
 					WHERE mod_id = $mod_ident";
 			$result = $db->sql_query($sql);
-			if ($row = $db->sql_fetchrow($result))
+			$row = $db->sql_fetchrow($result);
+			$db->sql_freeresult($result);
+			
+			if ($row)
 			{
 				return unserialize($row['mod_actions']);
+			}
+			else
+			{
+				// @TODO: lang
+				//trigger_error('NO SUCH MOD IN DB', E_USER_WARNING);
 			}
 		}
 		else
@@ -271,7 +279,7 @@ class acp_mods
 		global $phpbb_root_path, $phpEx, $template;
 
 		// mod_path empty?
-		if(empty($mod_path))
+		if (empty($mod_path))
 		{
 			// ERROR
 			return false;
@@ -299,7 +307,7 @@ class acp_mods
 		);
 		
 		// Show author notes
-		if(!empty($details['AUTHOR_NOTES']))
+		if (!empty($details['AUTHOR_NOTES']))
 		{
 			$template->assign_vars(array(
 				'S_AUTHOR_NOTES'	=> $details['AUTHOR_NOTES'],
@@ -315,9 +323,9 @@ class acp_mods
 				'S_NEW_FILES'		=> true)
 			);
 
-			foreach($actions['NEW_FILES'] as $source => $target)
+			foreach ($actions['NEW_FILES'] as $source => $target)
 			{
-				if((!file_exists("{$phpbb_root_path}{$mod_root}{$source}")) && (!strpos($source, '*.*')))
+				if ((!file_exists("{$phpbb_root_path}{$mod_root}{$source}")) && (!strpos($source, '*.*')))
 				{
 					$template->assign_block_vars('new_files', array(
 						'S_MISSING_FILE' => true,
@@ -342,8 +350,10 @@ class acp_mods
 			$template->assign_vars(array(
 				'S_SQL'		=> true)
 			);
+			
+			$this->parse_sql($actions['SQL']);
 
-			foreach($actions['SQL'] as $query)
+			foreach ($actions['SQL'] as $query)
 			{
 				$template->assign_block_vars('sql_queries', array(
 					'QUERY'		=> $query)
@@ -352,7 +362,7 @@ class acp_mods
 		}
 		
 		// Show edits
-		if(isset($actions['EDITS']) && !empty($actions['EDITS']))
+		if (isset($actions['EDITS']) && !empty($actions['EDITS']))
 		{
 			$template->assign_vars(array(
 				'S_EDITS'		=> true)
@@ -360,7 +370,7 @@ class acp_mods
 			
 			foreach ($actions['EDITS'] as $file => $finds)
 			{
-				if(!file_exists("{$phpbb_root_path}{$file}"))
+				if (!file_exists("{$phpbb_root_path}{$file}"))
 				{
 					$template->assign_block_vars('edit_files', array(
 						'S_MISSING_FILE' => true,
@@ -380,7 +390,7 @@ class acp_mods
 					
 					foreach ($finds as $find => $action)
 					{
-						if(!$editor->check_find($file, $find))
+						if (!$editor->check_find($file, $find))
 						{
 							$template->assign_block_vars('edit_files.finds', array(
 								'S_MISSING_FIND'	=> true,
@@ -394,7 +404,7 @@ class acp_mods
 								'FIND_STRING'	=> htmlspecialchars($find)
 							));
 							
-							foreach($action as $name => $command)
+							foreach ($action as $name => $command)
 							{
 								$template->assign_block_vars('edit_files.finds.actions', array(
 									'NAME'	=> $name, // LANG!
@@ -422,7 +432,7 @@ class acp_mods
 		global $phpbb_root_path, $phpEx, $db, $template;
 
 		// mod_path empty?
-		if(empty($mod_path))
+		if (empty($mod_path))
 		{
 			// ERROR
 			return false;
@@ -472,9 +482,9 @@ class acp_mods
 				'S_EDITS'		=> true)
 			);
 			
-			foreach($actions['EDITS'] as $filename => $finds)
+			foreach ($actions['EDITS'] as $filename => $finds)
 			{
-				if(!file_exists("{$phpbb_root_path}{$filename}"))
+				if (!file_exists("{$phpbb_root_path}{$filename}"))
 				{
 					$template->assign_block_vars('edit_files', array(
 						'S_MISSING_FILE' => true,
@@ -488,19 +498,19 @@ class acp_mods
 						'FILENAME'	=> $filename
 					));
 			
-					$file_ext = substr(strrchr(__FILE__, '.'), 1);
+					$file_ext = substr(strrchr($filename, '.'), 1);
 					
 					$editor->open_file($filename);
 
 					$editor->fold_edits($filename, $dependenices);
 					
-					foreach($finds as $string => $commands)
+					foreach ($finds as $string => $commands)
 					{
 						$template->assign_block_vars('edit_files.finds', array(
 							'FIND_STRING'	=> htmlspecialchars($string)
 						));
 
-						foreach($commands as $type => $contents)
+						foreach ($commands as $type => $contents)
 						{
 							$status = false;
 							$contents_orig = $contents;
@@ -557,9 +567,9 @@ class acp_mods
 				'S_NEW_FILES'		=> true)
 			);
 	
-			foreach($actions['NEW_FILES'] as $source => $target)
+			foreach ($actions['NEW_FILES'] as $source => $target)
 			{
-				if(!$editor->copy_content($mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target)))
+				if (!$editor->copy_content($mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target)))
 				{
 					$template->assign_block_vars('new_files', array(
 						'SOURCE'		=> $source,
@@ -584,13 +594,18 @@ class acp_mods
 			$template->assign_vars(array(
 				'S_SQL'		=> true)
 			);
+			
+			$this->parse_sql($actions['SQL']);
+			
+			$db->sql_return_on_error(true);
 		
-			foreach($actions['SQL'] as $query)
+			foreach ($actions['SQL'] as $query)
 			{
-				if(!$db->sql_query($query)) // more than this please
+				if (!$db->sql_query($query)) // more than this please
 				{
 					$template->assign_block_vars('sql_queries', array(
-						'QUERY'		=> $row['mod_id'],
+						//'QUERY'		=> $row['mod_id'],
+						'QUERY'		=> $query,
 					));
 				}
 				else
@@ -602,13 +617,15 @@ class acp_mods
 					));
 				}
 			}
+			
+			$db->sql_return_on_error(false);
 		}
 
 		// Move edited files back, and delete temp stoarge folder
 		$editor->copy_content($edited_root, '');
 		
 		// Add log
-		add_log('admin', 'LOG_MOD_ADD', $details['NAME']);
+		add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);
 		
 		// Finish, by sending template data
 		$template->assign_vars(array(
@@ -619,14 +636,14 @@ class acp_mods
 	}
 
 	/**
-	* Uninstall a mod
+	* Pre-Uninstall a mod
 	*/
 	function pre_uninstall($mod_id)
 	{
 		global $phpbb_root_path, $phpEx, $template;
 		
 		// mod_id blank?
-		if(!$mod_id)
+		if (!$mod_id)
 		{
 			// ERROR
 			return false;
@@ -649,7 +666,7 @@ class acp_mods
 
 		$dependenices = $details['MOD_DEPENDENCIES'];
 
-		if(!empty($details['AUTHOR_NOTES']))
+		if (!empty($details['AUTHOR_NOTES']))
 		{
 			$template->assign_vars(array(
 				'S_AUTHOR_NOTES' => true,
@@ -665,9 +682,9 @@ class acp_mods
 				'S_REMOVING_FILES'		=> true)
 			);
 
-			foreach($actions['NEW_FILES'] as $source => $target)
+			foreach ($actions['NEW_FILES'] as $source => $target)
 			{
-				if((!file_exists("{$phpbb_root_path}{$target}")) && (!strpos($source, '*.*')))
+				if ((!file_exists("{$phpbb_root_path}{$target}")) && (!strpos($source, '*.*')))
 				{
 					$template->assign_block_vars('removing_files', array(
 						'S_MISSING_FILE' => true,
@@ -690,12 +707,14 @@ class acp_mods
 			$template->assign_vars(array(
 				'S_SQL'		=> true)
 			);
+			
+			$this->parse_sql($actions['SQL']);
 
-			foreach($actions['SQL'] as $query)
+			foreach ($actions['SQL'] as $query)
 			{
 				$reverse_query = $this->reverse_query($query);
 				
-				if($reverse_query == $query)
+				if ($reverse_query === false)
 				{
 					$template->assign_block_vars('sql_queries', array(
 						'S_UNKNOWN_REVERSE' => true,
@@ -714,7 +733,7 @@ class acp_mods
 		}
 
 		// Show edits
-		if(isset($actions['EDITS']) && !empty($actions['EDITS']))
+		if (isset($actions['EDITS']) && !empty($actions['EDITS']))
 		{
 			$template->assign_vars(array(
 				'S_EDITS'		=> true)
@@ -724,7 +743,7 @@ class acp_mods
 
 			foreach ($actions['EDITS'] as $file => $finds)
 			{
-				if(!file_exists("{$phpbb_root_path}{$file}"))
+				if (!file_exists("{$phpbb_root_path}{$file}"))
 				{
 					$template->assign_block_vars('edit_files', array(
 						'S_MISSING_FILE' => true,
@@ -744,7 +763,7 @@ class acp_mods
 	
 					foreach ($finds as $find => $actions)
 					{
-						if(!$editor->check_find($file, $find))
+						if (!$editor->check_find($file, $find))
 						{
 							$template->assign_block_vars('edit_files.finds', array(
 								'S_MISSING_FIND'	=> true,
@@ -758,7 +777,7 @@ class acp_mods
 								'FIND_STRING'	=> htmlspecialchars($find)
 							));
 							
-							foreach($actions as $name => $command)
+							foreach ($actions as $name => $command)
 							{
 								$template->assign_block_vars('edit_files.finds.actions', array(
 									'NAME'		=> $name, // LANG!
@@ -784,30 +803,108 @@ class acp_mods
 		global $phpbb_root_path, $phpEx, $db, $template;
 
 		// mod_id blank?
-		if(!$mod_id)
+		if (!$mod_id)
 		{
 			// ERROR
 			return false;
 		}
 
 		$template->assign_vars(array(
-			'S_UNINSTALL'		=> true,
+			'S_UNINSTALL'	=> true,
 
-			'MOD_ID'	=> $mod_id,
+			'MOD_ID'		=> $mod_id,
 
-			'U_RETURN'			=> $this->u_action)
-		);
+			'U_RETURN'		=> $this->u_action,
+		));
 
 		$actions = $this->mod_actions($mod_id);
 		$details = $this->mod_details($mod_id);
+
+		if (!empty($details['AUTHOR_NOTES']))
+		{
+			$template->assign_vars(array(
+				'S_AUTHOR_NOTES' => true,
+				
+				'AUTHOR_NOTES' => $details['AUTHOR_NOTES'])
+			);
+		}
+
+		// Show new files
+		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']))
+		{
+			$template->assign_vars(array(
+				'S_REMOVING_FILES'		=> true)
+			);
+
+			foreach ($actions['NEW_FILES'] as $source => $target)
+			{
+				if (!file_exists("{$phpbb_root_path}{$target}") && !strpos($source, '*.*'))
+				{
+					$template->assign_block_vars('removing_files', array(
+						'S_MISSING_FILE' => true,
+
+						'FILENAME'		=> $target)
+					);
+				}
+				else
+				{
+					include($phpbb_root_path . 'includes/editor.' . $phpEx);
+					$editor = new editor();
+					$editor->remove("{$phpbb_root_path}{$target}");
+					
+					$template->assign_block_vars('removing_files', array(
+						'FILENAME'		=> $target)
+					);
+				}
+			}
+		}
+		
+		// reverse SQL
+		if (isset($actions['SQL']) && !empty($actions['SQL']))
+		{
+			$template->assign_vars(array(
+				'S_SQL'		=> true)
+			);
+			
+			$this->parse_sql($actions['SQL']);
+		
+			foreach ($actions['SQL'] as $query)
+			{
+				$reverse_query = $this->reverse_query($query);
+				
+				if ($reverse_query === false)
+				{
+					continue;
+				}
+				
+				$db->sql_return_on_error(true);
+				
+				if (!$db->sql_query($reverse_query)) // more than this please
+				{
+					$template->assign_block_vars('sql_queries', array(
+						'QUERY'		=> $reverse_query,
+					));
+				}
+				else
+				{
+					$template->assign_block_vars('sql_queries', array(
+						'S_SUCCESS'	=> true,
+
+						'QUERY'		=> $reverse_query,
+					));
+				}
+				
+				$db->sql_return_on_error(false);
+			}
+		}
 		
 		// Delete from DB
 		$sql = 'DELETE FROM ' . MODS_TABLE . '
-				WHERE mod_id = ' . $mod_id;
+			WHERE mod_id = ' . $mod_id;
 		$db->sql_query($sql);
-						
+		
 		// Add log
-		add_log('admin', 'LOG_MOD_REMOVE', $details['NAME']);
+		add_log('admin', 'LOG_MOD_REMOVE', $details['MOD_NAME']);
 	}
 
 	/**
@@ -842,9 +939,16 @@ class acp_mods
 	*/
 	function reverse_query($orig_query)
 	{
-		$reverse_query = $orig_query;
+		if (preg_match('#ALTER TABLE\s([a-z_]+)\sADD(COLUMN|)\s([a-z_]+)#i', $orig_query, $matches))
+		{
+			return "ALTER TABLE {$matches[1]} DROP COLUMN {$matches[3]};";
+		}
+		else if (preg_match('#CREATE TABLE\s([a-z_])#iU', $orig_query, $matches))
+		{
+			return "DROP TABLE {$matches[1]};";
+		}
 
-		return $reverse_query;
+		return false;
 	}
 	
 	/**
@@ -858,7 +962,7 @@ class acp_mods
 		{
 			foreach ($finds as $find => $actions)
 			{
-				foreach($actions as $name => $command)// LANG!
+				foreach ($actions as $name => $command)// LANG!
 				{
 					switch($name)
 					{
@@ -878,6 +982,40 @@ class acp_mods
 		}
 
 		return $reverse_edits;
+	}
+	
+	/**
+	 * Parse sql
+	 *
+	 * @param array $sql_query
+	 */
+	function parse_sql(&$sql_query)
+	{
+		global $dbms, $table_prefix;
+		
+		if (!function_exists('get_available_dbms'))
+		{
+			global $phpbb_root_path, $phpEx;
+			
+			include($phpbb_root_path . 'includes/functions_install.' . $phpEx);
+		}
+		
+		static $available_dbms; 
+		
+		if (!isset($available_dbms))
+		{
+			$available_dbms = get_available_dbms($dbms);
+		}
+		
+		$remove_remarks = $available_dbms[$dbms]['COMMENTS'];
+		$delimiter = $available_dbms[$dbms]['DELIM'];
+		
+		$sql_query = implode(' ', $sql_query);
+		$sql_query = preg_replace('#phpbb_#i', $table_prefix, $sql_query);
+		$remove_remarks($sql_query);
+		$sql_query = split_sql_file($sql_query, $delimiter);
+		
+		//return $sql_query;
 	}
 }
 

@@ -294,24 +294,24 @@ class editor extends io
 		
 		$command_id = mt_rand();
 	
-		switch($file_ext)
+		switch ($file_ext)
 		{
 			case $phpEx;
 			case 'js':
-				$string = "//>{$id}:{$command_id}\n{$string}\n//<{$id}:{$command_id}";
+				$string = "// {$id}:{$command_id}\n{$string}\n// {$id}:{$command_id}";
 			break;
 			
 			case 'html':
 			case 'htm':
-				$string = "<!-->{$id}:{$command_id}-->\n{$string}\n<!--<{$id}:{$command_id}-->";
+				$string = "<!-- {$id}:{$command_id} -->\n{$string}\n<!-- {$id}:{$command_id} -->";
 			break;
 			
 			case 'css':
-				$string = "/*>{$id}:{$command_id}*/\n{$string}\n/*<{$id}:{$command_id}*/";
+				$string = "/* {$id}:{$command_id} */\n{$string}\n/* {$id}:{$command_id} */";
 			break;
 			
 			case 'cfg':
-				$string = "#>{$id}:{$command_id}\n{$string}\n#<{$id}:{$command_id}";
+				$string = "# {$id}:{$command_id}\n{$string}\n# {$id}:{$command_id}";
 			break;
 		}
 		

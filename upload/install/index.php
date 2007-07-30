@@ -57,7 +57,7 @@ $template->set_filenames(array(
 
 $template->assign_vars(array(
 	'SITENAME'						=> $config['sitename'],
-	'PAGE_TITLE'					=> $user->lang['mod_MANAGER'],
+	'PAGE_TITLE'					=> $user->lang['MOD_MANAGER'],
 
 	'SID'				=> $SID,
 	'_SID'				=> $_SID,
@@ -235,7 +235,7 @@ elseif ($action = 'install')
 	
 	// Create mod folder
 	// TODO: .htaccess file needed?
-	$editor->create_dir('mods');
+	//$editor->create_dir('store/mods');
 
 	// Get some Module info
 	$sql = 'SELECT MAX(module_id) as "last_m_id", MAX(right_id) as "last_r_id"
