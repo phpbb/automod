@@ -98,7 +98,7 @@ if (empty($action))
 		
 		'S_ROLE_OPTIONS'	=> $s_role_options,
 		
-		'U_ACTION'			=> append_sid("{$phpbb_root_path}install/index.php?action=install"),
+		'U_ACTION'			=> append_sid("{$phpbb_root_path}install/install_mod.php?action=install"),
 	));
 }
 elseif ($action = 'install')
