@@ -46,39 +46,5 @@ define('MODS_TABLE',			$table_prefix . 'mods');
 				]]></action>
 			</edit>
 		</open>
-		<open src="language/en/acp/common.php">
-			<edit>
-				<find><![CDATA[
-// Common
-$lang = array_merge($lang, array(
-				]]></find>
-				<action type="after-add"><![CDATA[
-	//
-	// >> MOD Manager
-	//
-	'ACP_CAT_MODS'			=> 'MODs',
-	'ACP_MODS'			=> 'MODs',
-	'ACP_MOD_MANAGEMENT'	=> 'MOD Management',
-	//
-	// << MOD Manager End
-	//
-				]]>
-				</action>
-				<find><![CDATA[
-// Log Entries
-$lang = array_merge($lang, array(
-				]]></find>
-				<action type="after-add"><![CDATA[
-	//
-	// >> MOD Manager
-	//
-	'LOG_MOD_ADD'		=> '<strong>Added new MOD</strong><br />&raquo; %s',
-	'LOG_MOD_REMOVE'	=> '<strong>Removed MOD</strong><br />&raquo; %s',
-	//
-	// << MOD Manager
-	//
-				]]></action>
-			</edit>
-		</open>
 	</action-group>
 </mod>

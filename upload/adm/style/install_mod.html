@@ -1,0 +1,76 @@
+<!-- INCLUDE install_header.html -->
+
+<form id="install_mod" method="post" action="{U_ACTION}" onsubmit="submit.disabled = 'disabled';">
+
+<!-- IF TITLE --><h1>{TITLE}</h1><!-- ENDIF -->
+<!-- IF BODY --><p>{BODY}</p><!-- ENDIF -->
+
+<!-- IF S_ROLE -->
+<fieldset>
+	<legend>role</legend>
+	<dl>
+		<dt><label for="role_id">{L_ROLE}</label></dt>
+		<dd><select id="role_id" name="role_id">{S_ROLE_OPTIONS}</select></dd>
+	</dl>
+</fieldset>
+<!-- ENDIF -->
+
+<!-- IF S_INSTALL -->
+<div align="center">
+	<p>{L_INSTALLING}</p>
+</div>
+<br/>
+<!-- IF S_SQL -->
+<fieldset>
+	<legend>{L_SQL_QUERIES}</legend>
+	<!-- BEGIN sql_queries -->
+		<fieldset>
+			<strong><!-- IF sql_queries.S_SUCCESS --><font color="green">{L_SUCCESS}:</font><!-- ELSE --><font color="red">{L_ERROR}:</font><!-- ENDIF -->&nbsp;{sql_queries.QUERY}</strong>
+		</fieldset>
+	<!-- END sql_queries -->
+</fieldset>
+<!-- ENDIF -->
+
+<!-- IF S_EDITS -->
+<fieldset>
+	<legend>{L_FILE_EDITS}</legend>
+	<!-- BEGIN edit_files -->
+		<fieldset>
+			<legend>{edit_files.FILENAME}</legend>
+			<!-- IF edit_files.S_MISSING_FILE -->
+			<strong><font color="red">{L_FILE_MISSING}</font></strong>
+			<!-- ENDIF -->
+			<!-- BEGIN finds -->
+				<fieldset>
+					<legend>{L_FIND}</legend>
+					<pre>{edit_files.finds.FIND_STRING}</pre>
+					<!-- IF edit_files.finds.S_MISSING_FIND -->
+					<strong><font color="red">{L_FIND_MISSING}</font></strong>
+					<!-- ENDIF -->
+					<!-- BEGIN actions -->
+						<fieldset>
+							<legend>{edit_files.finds.actions.NAME}</legend>
+							<pre>{edit_files.finds.actions.COMMAND}</pre>
+						</fieldset>
+					<!-- END actions -->
+				</fieldset>
+			<!-- END finds -->
+		</fieldset>
+	<!-- END edit_files -->
+</fieldset>
+<!-- ENDIF -->
+<div align="center">
+	<p>{L_INSTALLATION_SUCCESSFUL}</p>
+	<p>&raquo; <a href="{U_INDEX}">{L_INDEX}</a></p>
+</div>
+<!-- ENDIF -->
+
+<!-- IF L_SUBMIT -->
+	<fieldset class="submit-buttons">
+		<legend>{L_SUBMIT}</legend>
+		{S_HIDDEN}
+		<!-- IF L_SUBMIT --><input class="button1" type="submit" id="submit" onclick="this.className = 'button1 disabled';" name="submit" value="{L_SUBMIT}" /><!-- ENDIF -->
+	</fieldset>
+<!-- ENDIF -->
+
+<!-- INCLUDE install_footer.html -->

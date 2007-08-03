@@ -31,10 +31,12 @@ if (empty($lang) || !is_array($lang))
 // Banning
 $lang = array_merge($lang, array(
 	'MOD_MANAGER'			=> 'MOD Manager',
-	'INSTALLATION'				=> 'MOD Manager Installation',
-	'INSTALLATION_EXPLAIN'		=> 'Welcome to the MOD Manager Installation. The installer will preform the following steps, and you will need the following information... bleh. Please select a role to apply MOD manager access to, then click install to proceed.',
-	'INSTALLING'				=> 'MOD Manager Installing...',
-	'INSTALLATION_SUCCESSFUL'	=> 'MOD Manager Installed successfully! Please remove this <b>install/</b> directory.',
+	
+	'CAT_INSTALL_MODMANAGER'			=> 'MOD Manager',
+	'MODMANAGER_INSTALLATION'			=> 'MOD Manager Installation',
+	'MODMANAGER_INSTALLATION_EXPLAIN'	=> 'Welcome to the MOD Manager Installation. The installer will preform the following steps, and you will need the following information... bleh. Please select a role to apply MOD manager access to, then click install to proceed.',
+	'INSTALLING'						=> 'MOD Manager Installing...',
+	'INSTALLATION_SUCCESSFUL'			=> 'MOD Manager Installed successfully! Please remove this <b>install/</b> directory.',
 	
 	'MODS_EXPLAIN'	=> '<p>Here you can manage the available MODs on your board. MODs allow you to customize your board by automatically installing modifications produced within the phpBB community. For further information on MODs and the MOD Manager please visit the <a href="http://www.phpbb.com/">phpBB website</a>.</p>',
 

@@ -8,6 +8,98 @@
 *
 */
 
+if (!defined('IN_INSTALL'))
+{
+	// Someone has tried to access the file direct. This is not a good idea, so exit
+	exit;
+}
+
+if (!empty($setmodules))
+{
+	global $language, $lang;
+	include($phpbb_root_path . 'language/' . $language . '/acp/mods.' . $phpEx);
+	
+	$module[] = array(
+		'module_type'		=> 'install',
+		'module_title'		=> 'INSTALL_MODMANAGER',
+		'module_filename'	=> substr(basename(__FILE__), 0, -strlen($phpEx)-1),
+		'module_order'		=> 30,
+		'module_subs'		=> '',
+		'module_stages'		=> array('INTRO', 'REQUIREMENTS', 'FILE_EDITS', 'CREATE_TABLE', 'FINAL'),
+		'module_reqs'		=> ''
+	);
+}
+
+/**
+* Installation
+* @package install
+*/
+class install_mod extends module
+{
+	function install_mod(&$p_master)
+	{
+		$this->p_master = &$p_master;
+	}
+
+	function main($mode, $sub)
+	{
+		global $lang, $template, $language, $phpbb_root_path, $phpEx, $db;
+		
+		//include($phpbb_root_path . 'language/' . $language . '/acp/mods.' . $phpEx);
+		include($phpbb_root_path . 'language/' . $language . '/acp/permissions.' . $phpEx);
+		
+		require($phpbb_root_path . 'config.' . $phpEx);
+		require($phpbb_root_path . 'includes/constants.' . $phpEx);
+		require($phpbb_root_path . 'includes/db/' . $dbms . '.' . $phpEx);
+		require($phpbb_root_path . 'includes/functions_convert.' . $phpEx);
+
+		$db = new $sql_db();
+		$db->sql_connect($dbhost, $dbuser, $dbpasswd, $dbname, $dbport, false, true);
+		unset($dbpasswd);
+
+		switch ($sub)
+		{
+			case 'intro':
+				$this->select_role($mode, $sub);
+			break;
+		}
+		
+		$this->tpl_name = 'install_mod';
+	}
+	
+	function select_role($mode, $sub)
+	{
+		global $lang, $template, $phpbb_root_path, $phpEx, $language, $db;
+		
+		$this->page_title = $lang['SUB_INTRO'];
+		
+		// Make Role select
+		$sql = 'SELECT role_id, role_name
+			FROM ' . ACL_ROLES_TABLE . "
+			WHERE role_type = 'a_'
+			ORDER BY role_order ASC";
+		$result = $db->sql_query($sql);
+	
+		$s_role_options = '';
+		while ($row = $db->sql_fetchrow($result))
+		{
+			$role_name = (!empty($lang[$row['role_name']])) ? $lang[$row['role_name']] : $row['role_name'];
+			$s_role_options .= '<option value="' . $row['role_id'] . '">' . $role_name . '</option>';
+		}
+		$db->sql_freeresult($result);
+	
+		$template->assign_vars(array(
+			'S_OVERVIEW'		=> true,
+			'TITLE'				=> $lang['MODMANAGER_INSTALLATION'],
+			'BODY'				=> $lang['MODMANAGER_INSTALLATION_EXPLAIN'],
+			'S_ROLE_OPTIONS'	=> $s_role_options,
+			'L_SUBMIT'			=> $lang['NEXT_STEP'],
+			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=requirements&amp;language=$language",
+		));
+	}
+}
+
+/*
 define('IN_PHPBB', 1);
 define('ADMIN_START', 1);
 define('NEED_SID', true);
@@ -76,30 +168,7 @@ $template->assign_vars(array(
 
 if (empty($action))
 {
-	// Make Role select
-	$sql = 'SELECT role_id, role_name
-		FROM ' . ACL_ROLES_TABLE . "
-		WHERE role_type = 'a_'
-		ORDER BY role_order ASC";
-	$result = $db->sql_query($sql);
-
-	$s_role_options = '';
-	while ($row = $db->sql_fetchrow($result))
-	{
-		$role_name = (!empty($user->lang[$row['role_name']])) ? $user->lang[$row['role_name']] : $row['role_name'];
-
-		$s_role_options .= '<option value="' . $row['role_id'] . '">' . $role_name . '</option>';
-
-	}
-	$db->sql_freeresult($result);
-
-	$template->assign_vars(array(
-		'S_OVERVIEW'		=> true,
-		
-		'S_ROLE_OPTIONS'	=> $s_role_options,
-		
-		'U_ACTION'			=> append_sid("{$phpbb_root_path}install/install_mod.php?action=install"),
-	));
+	
 }
 elseif ($action = 'install')
 {
@@ -328,6 +397,6 @@ elseif ($action = 'install')
 }
 
 
-$template->display('body');
+$template->display('body');*/
 
 ?>
