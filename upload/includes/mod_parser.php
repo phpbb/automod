@@ -89,17 +89,56 @@ class parser_xml
 	*/
 	function get_details()
 	{
+		if (empty($this->data))
+		{
+			$this->set_file($this->mod_file);
+		}
+
 		$header = $this->data[0]['children']['HEADER'][0]['children'];
 
 		// get version information
 		$version_info = $header['MOD-VERSION'][0]['children'];
-		$version = ( isset($version_info['MAJOR'][0]['data']) ) ? trim($version_info['MAJOR'][0]['data']) : 0;
-		$version .= '.' . (( isset($version_info['MINOR'][0]['data']) ) ? trim($version_info['MINOR'][0]['data']) : 0);
-		$version .= '.' . (( isset($version_info['REVISION'][0]['data']) ) ? trim($version_info['REVISION'][0]['data']) : 0);
+		$version = (isset($version_info['MAJOR'][0]['data'])) ? trim($version_info['MAJOR'][0]['data']) : 0;
+		$version .= '.' . ((isset($version_info['MINOR'][0]['data'])) ? trim($version_info['MINOR'][0]['data']) : 0);
+		$version .= '.' . ((isset($version_info['REVISION'][0]['data'])) ? trim($version_info['REVISION'][0]['data']) : 0);
 		$version .= (isset($version_info['RELEASE'][0]['data'])) ? $version_info['RELEASE'][0]['data'] : '';
 
-		// get author information. Just taking first here. Multiple will be implemented later
-		$author_info = $header['AUTHOR-GROUP'][0]['children']['AUTHOR'][0]['children'];
+		$author_info = $header['AUTHOR-GROUP'][0]['children']['AUTHOR'];
+
+		$author_details = array();
+		// this is purposely bugged...for the moment
+		for ($i = 0; $i < sizeof($author_info); $i++)
+		{
+			$author_details = array(
+				'AUTHOR_NAME'		=> trim($author_info[$i]['children']['USERNAME'][0]['data']),
+				'AUTHOR_EMAIL'		=> trim($author_info[$i]['children']['EMAIL'][0]['data']),
+				'AUTHOR_REALNAME'	=> trim($author_info[$i]['children']['REALNAME'][0]['data']),
+				'AUTHOR_WEBSITE'	=> trim($author_info[$i]['children']['HOMEPAGE'][0]['data']),
+			);
+		}
+
+		// history
+/*		$history_info = $header['HISTORY'][0]['children']['ENTRY'];
+		$mod_history = array();
+		for ($i = 0; $i < sizeof($history_info); $i++)
+		{
+			$changes	= array();
+			$entry		= $history[$i]['children'];
+			$changelog	= $entry['CHANGELOG'][0]['children']['CHANGE'];
+			$changelog_version	= $entry['REV-VERSION'][0]['children'];
+
+			for ($j = 0; $j < sizeof($changelog); $j++)
+			{
+				$changes[] = $changelog[$j]['data'];
+			}
+
+			$mod_history[] = array(
+				'DATE'		=> $entry['DATE'][0]['data'],
+				'VERSION'	=> intval($version['MAJOR'][0]['data']) . '.' . intval($version['MINOR'][0]['data']) . '.' . intval($version['REVISION'][0]['data']) . $version['RELEASE'][0]['data'],
+				'CHANGES'	=> $changes,
+			);
+		}
+*/
 
 		// try not to hardcode schema?
 		$details = array(
@@ -109,11 +148,17 @@ class parser_xml
 			'MOD_VERSION'		=> htmlspecialchars(trim($version)),
 			'MOD_DEPENDENCIES'	=> htmlspecialchars(trim($header['TITLE'][0]['data'])),
 			
-			'AUTHOR_NAME'	=> htmlspecialchars(trim($author_info['USERNAME'][0]['data'])),
-			'AUTHOR_EMAIL'	=> (isset($author_info['EMAIL'][0]['data'])) ? (htmlspecialchars(trim($author_info['EMAIL'][0]['data']))) : '',
+			// author still needs a touch of work
+/*			'AUTHOR_NAME'	=> trim($author_details['USERNAME'][0]['data']),
+			'AUTHOR_EMAIL'	=> (isset($author_['EMAIL'][0]['data'])) ? (htmlspecialchars(trim($author_info['EMAIL'][0]['data']))) : '',
 			'AUTHOR_URL'	=> (isset($author_info['HOMEPAGE'][0]['data'])) ? (htmlspecialchars(trim($author_info['HOMEPAGE'][0]['data']))) : '',
 			'AUTHOR_NOTES'	=> str_replace("\n", '<br />', htmlspecialchars(trim($header['AUTHOR-NOTES'][0]['data']))),
+*/
+			// add history...needs to be turned into a block var in the template
 		);
+
+		$details = array_merge($details, $author_details);
+		$details['history'] = $mod_history;
 
 		return $details;
 	}
@@ -130,18 +175,18 @@ class parser_xml
 		$xml_actions = $this->data[0]['children']['ACTION-GROUP'][0]['children'];
 
 		// sql
-		$sql_info = ( !empty($xml_actions['SQL']) ) ? $xml_actions['SQL'] : '';
-		for($i = 0, $total = sizeof($sql_info); $i < $total; $i++)
+		$sql_info = (!empty($xml_actions['SQL'])) ? $xml_actions['SQL'] : '';
+		for ($i = 0; $i < sizeof($sql_info); $i++)
 		{
-			$actions['SQL'][] = ( !empty($sql_info[$i]['data']) ) ? trim(str_replace('phpbb_', $table_prefix, $sql_info[$i]['data'])) : '';
+			$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim(str_replace('phpbb_', $table_prefix, $sql_info[$i]['data'])) : '';
 		}
 
 		// new files
-		$new_files_info = ( !empty($xml_actions['COPY']) ) ? $xml_actions['COPY'] : array();
-		for($i = 0, $total = sizeof($new_files_info); $i < $total; $i++)
+		$new_files_info = (!empty($xml_actions['COPY'])) ? $xml_actions['COPY'] : array();
+		for ($i = 0; $i < sizeof($new_files_info); $i++)
 		{
 			$new_files = $new_files_info[$i]['children']['FILE'];
-			for($j = 0, $file_total = sizeof($new_files); $j < $file_total; $j++)
+			for ($j = 0; $j < sizeof($new_files); $j++)
 			{
 				$from = str_replace('\\', '/', $new_files[$j]['attrs']['FROM']);
 				$to = str_replace('\\', '/', $new_files[$j]['attrs']['TO']);
@@ -151,19 +196,19 @@ class parser_xml
 
 
 		// open
-		$open_info = ( !empty($xml_actions['OPEN']) ) ? $xml_actions['OPEN'] : array();
-		for( $i = 0, $total = sizeof($open_info); $i < $total; $i++ )
+		$open_info = (!empty($xml_actions['OPEN'])) ? $xml_actions['OPEN'] : array();
+		for ($i = 0; $i < sizeof($open_info); $i++)
 		{
 			$current_file = str_replace('\\', '/', trim($open_info[$i]['attrs']['SRC']));
 			$actions['EDITS'][$current_file] = array();
 
-			$edit_info = ( !empty($open_info[$i]['children']['EDIT']) ) ? $open_info[$i]['children']['EDIT'] : array();
-			for($j = 0, $edit_total = sizeof($edit_info); $j < $edit_total; $j++)
+			$edit_info = (!empty($open_info[$i]['children']['EDIT'])) ? $open_info[$i]['children']['EDIT'] : array();
+			for ($j = 0; $j < sizeof($edit_info); $j++)
 			{
-				$action_info = ( !empty($edit_info[$j]['children']) ) ? $edit_info[$j]['children'] : array();
+				$action_info = (!empty($edit_info[$j]['children'])) ? $edit_info[$j]['children'] : array();
 	
 				// straight edit, no inline
-				if(isset($action_info['ACTION']))
+				if (isset($action_info['ACTION']))
 				{
 					$type = str_replace('-', ', ', $action_info['ACTION'][0]['attrs']['TYPE']);
 					$actions['EDITS'][$current_file][trim($action_info['FIND'][0]['data'])] = array($type => trim($action_info['ACTION'][0]['data']));
@@ -171,7 +216,23 @@ class parser_xml
 				// inline
 				else
 				{
-					// BLeh?
+					$inline_info = (!empty($action_info['INLINE-EDIT'])) ? $action_info['INLINE-EDIT'] : array();
+					for ($k = 0; $k < sizeof($inline_info); $k++)
+					{
+						$inline_actions = (!empty($inline_info[$k]['children'])) ? $inline_info[$k]['children'] : array();
+
+						$inline_find = $inline_actions['INLINE-FIND'][0]['data'];
+
+						$inline_actions = (!empty($inline_actions['INLINE-ACTION'])) ? $inline_actions['INLINE-ACTION'] : array();
+						for ($l = 0; $l < sizeof($inline_actions); $l++)
+						{
+							$type = str_replace(',', '-', str_replace(' ', '', $inline_actions[$l]['attrs']['TYPE']));
+
+							// trying to reduce the levels of arrays without impairing features
+							// need to keep the "full" edit intact.
+							$actions['EDITS'][$current_file][trim($action_info['FIND'][0]['data'])]['in-line-edit'][$inline_find]['in-line-' . $type][] = $inline_actions[$l]['data'];
+						}
+					}
 				}
 			}
 		}
@@ -202,7 +263,7 @@ class xml_array
 		$XML = str_replace('&gt;', '<![CDATA[&gt;]]>', $XML);
 
 		$this->XML = xml_parse($this->parser, $XML);
-		if(!$this->XML)
+		if (!$this->XML)
 		{
 			die(sprintf("XML error: %s at line %d", xml_error_string(xml_get_error_code($this->parser)), xml_get_current_line_number($this->parser)));
 		}
@@ -220,22 +281,22 @@ class xml_array
 
 	function tag_data($parser, $tag_data)
 	{
-		if($tag_data)
+		if ($tag_data)
 		{
-			if(isset($this->output[count($this->output)-1]['data']))
+			if (isset($this->output[sizeof($this->output) - 1]['data']))
 			{
-				$this->output[count($this->output)-1]['data'] .= $tag_data;
+				$this->output[sizeof($this->output) - 1]['data'] .= $tag_data;
 			}
 			else
 			{
-				$this->output[count($this->output)-1]['data'] = $tag_data;
+				$this->output[sizeof($this->output) - 1]['data'] = $tag_data;
 			}
 		}
 	}
 
 	function tag_closed($parser, $name)
 	{
-		$this->output[count($this->output)-2]['children'][$name][] = $this->output[count($this->output)-1];
+		$this->output[sizeof($this->output) - 2]['children'][$name][] = $this->output[sizeof($this->output) - 1];
 		array_pop($this->output);
 	}
 }
