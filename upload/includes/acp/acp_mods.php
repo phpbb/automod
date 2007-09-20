@@ -622,7 +622,7 @@ class acp_mods
 		// Move included files
 		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']))
 		{
-			$template->assign_vars('S_NEW_FILES', true);
+			$template->assign_var('S_NEW_FILES', true);
 	
 			foreach ($actions['NEW_FILES'] as $source => $target)
 			{
