@@ -173,6 +173,7 @@ class install_mod extends module
 		));
 		
 		// create the mods table
+		// @todo: Make non-MySQL friendy
 		$sql = 'CREATE TABLE `phpbb_mods` (
 		  `mod_id` int(8) NOT NULL auto_increment,
 		  `mod_active` tinyint(1) NOT NULL default \'1\',
@@ -249,7 +250,6 @@ class install_mod extends module
 	
 		// Insert the auth option
 		$auth_data = array(
-			'auth_option_id'	=> '',
 			'auth_option'		=> 'a_mods',
 			'is_global'			=> 1,
 			'is_local'			=> 0,
