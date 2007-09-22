@@ -109,7 +109,7 @@ class parser_xml
 		// this is purposely bugged...for the moment
 		for ($i = 0; $i < sizeof($author_info); $i++)
 		{
-			$author_details = array(
+			$author_details[] = array(
 				'AUTHOR_NAME'		=> trim($author_info[$i]['children']['USERNAME'][0]['data']),
 				'AUTHOR_EMAIL'		=> trim($author_info[$i]['children']['EMAIL'][0]['data']),
 				'AUTHOR_REALNAME'	=> trim($author_info[$i]['children']['REALNAME'][0]['data']),
@@ -118,27 +118,33 @@ class parser_xml
 		}
 
 		// history
-/*		$history_info = $header['HISTORY'][0]['children']['ENTRY'];
+		$history_info = $header['HISTORY'][0]['children']['ENTRY'];
+
 		$mod_history = array();
 		for ($i = 0; $i < sizeof($history_info); $i++)
 		{
 			$changes	= array();
-			$entry		= $history[$i]['children'];
+			$entry		= $history_info[$i]['children'];
 			$changelog	= $entry['CHANGELOG'][0]['children']['CHANGE'];
-			$changelog_version	= $entry['REV-VERSION'][0]['children'];
+			$changelog_version_ary	= $entry['REV-VERSION'][0]['children'];
 
 			for ($j = 0; $j < sizeof($changelog); $j++)
 			{
 				$changes[] = $changelog[$j]['data'];
 			}
 
+			$changelog_version = (isset($changelog_version_ary['MAJOR'][0]['data'])) ? trim($changelog_version_ary['MAJOR'][0]['data']) : 0;
+			$changelog_version .= '.' . ((isset($changelog_version_ary['MINOR'][0]['data'])) ? trim($changelog_version_ary['MINOR'][0]['data']) : 0);
+			$changelog_version .= '.' . ((isset($changelog_version_ary['REVISION'][0]['data'])) ? trim($changelog_version_ary['REVISION'][0]['data']) : 0);
+			$changelog_version .= (isset($changelog_version_ary['RELEASE'][0]['data'])) ? $changelog_version_ary['RELEASE'][0]['data'] : '';
+
 			$mod_history[] = array(
 				'DATE'		=> $entry['DATE'][0]['data'],
-				'VERSION'	=> intval($version['MAJOR'][0]['data']) . '.' . intval($version['MINOR'][0]['data']) . '.' . intval($version['REVISION'][0]['data']) . $version['RELEASE'][0]['data'],
+				'VERSION'	=> $changelog_version,
 				'CHANGES'	=> $changes,
 			);
 		}
-*/
+
 
 		// try not to hardcode schema?
 		$details = array(
@@ -147,18 +153,10 @@ class parser_xml
 			'MOD_DESCRIPTION'	=> htmlspecialchars(trim($header['DESCRIPTION'][0]['data'])),
 			'MOD_VERSION'		=> htmlspecialchars(trim($version)),
 			'MOD_DEPENDENCIES'	=> htmlspecialchars(trim($header['TITLE'][0]['data'])),
-			
-			// author still needs a touch of work
-/*			'AUTHOR_NAME'	=> trim($author_details['USERNAME'][0]['data']),
-			'AUTHOR_EMAIL'	=> (isset($author_['EMAIL'][0]['data'])) ? (htmlspecialchars(trim($author_info['EMAIL'][0]['data']))) : '',
-			'AUTHOR_URL'	=> (isset($author_info['HOMEPAGE'][0]['data'])) ? (htmlspecialchars(trim($author_info['HOMEPAGE'][0]['data']))) : '',
-			'AUTHOR_NOTES'	=> str_replace("\n", '<br />', htmlspecialchars(trim($header['AUTHOR-NOTES'][0]['data']))),
-*/
-			// add history...needs to be turned into a block var in the template
-		);
 
-		$details = array_merge($details, $author_details);
-		$details['history'] = $mod_history;
+			'AUTHOR_DETAILS'	=> $author_details,
+			'MOD_HISTORY'		=> $mod_history,
+		);
 
 		return $details;
 	}
