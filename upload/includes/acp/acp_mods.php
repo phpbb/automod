@@ -154,6 +154,33 @@ class acp_mods
 		));				
 
 		$details = $this->mod_details($mod_ident);
+
+		foreach ($details['AUTHOR_DETAILS'] as $author_details)
+		{
+			$template->assign_block_vars('author_list', $author_details);
+		}
+		unset($details['AUTHOR_DETAILS']);
+
+		if (!empty($details['MOD_HISTORY']))
+		{
+			foreach ($details['MOD_HISTORY'] as $mod_version)
+			{
+				$template->assign_block_vars('changelog', array(
+					'VERSION'	=> $mod_version['VERSION'],
+					'DATE'		=> $mod_version['DATE'],
+				));
+
+				foreach ($mod_version['CHANGES'] as $changes)
+				{
+					$template->assign_block_vars('changelog.changes', array(
+						'CHANGE'	=> $changes,
+					));
+				}
+			}
+		}
+
+		unset($details['MOD_HISTORY']);
+
 		$template->assign_vars($details);
 
 		if (!empty($details['AUTHOR_NOTES']))
@@ -317,7 +344,13 @@ class acp_mods
 				'AUTHOR_NOTES'		=> $details['AUTHOR_NOTES'],
 			));
 		}
-		
+
+		// Only display full actions if the user has requested them.
+		if (!defined('DEBUG'))
+		{
+			return;
+		}
+
 		// Show new files
 		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']))
 		{
@@ -383,7 +416,7 @@ class acp_mods
 					$editor->open_file($file);
 
 					$editor->fold_edits($file, $dependenices);
-//		print_r($finds);			
+			
 					foreach ($finds as $find => $action)
 					{
 						if (!$editor->check_find($file, $find))
@@ -448,7 +481,7 @@ class acp_mods
 
 					$editor->close_file($file);
 				}
-			} //exit;
+			}
 		}
 
 		return;
@@ -485,10 +518,10 @@ class acp_mods
 			'mod_author_url'	=> (string) $details['AUTHOR_URL'],
 			'mod_actions'		=> (string) serialize($actions),
 		));
-		//$db->sql_query($sql);
+		$db->sql_query($sql);
 		
 		// get mod id
-		//$mod_id = $db->sql_nextid();
+		$mod_id = $db->sql_nextid();
 		
 		include($phpbb_root_path . 'includes/editor.' . $phpEx);
 		$editor = new editor($phpbb_root_path);
@@ -622,7 +655,7 @@ class acp_mods
 		// Move included files
 		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']))
 		{
-			$template->assign_var('S_NEW_FILES', true);
+			$template->assign_vars('S_NEW_FILES', true);
 	
 			foreach ($actions['NEW_FILES'] as $source => $target)
 			{
