@@ -91,21 +91,50 @@
 		{AUTHOR_NOTES}
 	</fieldset>
 	<!-- ENDIF -->
+
+	<!-- IF .changelog -->
+	<fieldset>
+		<legend>{L_MOD_CHANGELOG}</legend>
+		<!-- BEGIN changelog -->
+		<dl>
+			<dt><label for="change_date">{L_CHANGE_DATE}</label></dt>
+			<dt><b id="change_date">{changelog.DATE}</b></dt>
+		</dl>
+		<dl>
+			<dt><label for="change_version">{L_CHANGE_VERSION}</label></dt>
+			<dt><b id="change_version">{changelog.VERSION}</b></dt>
+		</dl>
+		<dl>
+			<dt><label for="changes">{L_CHANGES}</label></dt>
+			<dt id="changes">
+				<ul>
+					<!-- BEGIN changes -->
+					<li>{changelog.changes.CHANGE}</li>
+					<!-- END changes -->
+				</ul>
+			</dt>
+		</dl>
+		<!-- END changelog -->
+	</fieldset>
+	<!-- ENDIF -->
 	
+
 	<fieldset>
 		<legend>{L_AUTHOR_INFORMATION}</legend>
+		<!-- BEGIN author_list -->
 		<dl>
 			<dt><label for="author_name">{L_AUTHOR_NAME}:</label></dt>
-			<dd><b id="author_name">{AUTHOR_NAME}</b></dd>
+			<dd><b id="author_name">{author_list.AUTHOR_NAME}</b></dd>
 		</dl>
 		<dl>
 			<dt><label for="author_email">{L_AUTHOR_EMAIL}:</label></dt>
-			<dd><b id="author_email"><a href="mailto:{AUTHOR_EMAIL}">{AUTHOR_EMAIL}</a></b></dd>
+			<dd><b id="author_email"><a href="mailto:{author_list.AUTHOR_EMAIL}">{author_list.AUTHOR_EMAIL}</a></b></dd>
 		</dl>
 		<dl>
 			<dt><label for="author_url">{L_AUTHOR_URL}:</label></dt>
-			<dd><b id="author_url">{AUTHOR_URL}</b></dd>
+			<dd><b id="author_url">{author_list.AUTHOR_WEBSITE}</b></dd>
 		</dl>
+		<!-- END author_list -->
 	</fieldset>
 	
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
