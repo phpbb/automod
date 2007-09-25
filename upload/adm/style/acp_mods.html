@@ -92,7 +92,7 @@
 	</fieldset>
 	<!-- ENDIF -->
 
-	<!-- IF .changelog -->
+	<!-- IF S_CHANGELOG -->
 	<fieldset>
 		<legend>{L_MOD_CHANGELOG}</legend>
 		<!-- BEGIN changelog -->
@@ -117,7 +117,6 @@
 		<!-- END changelog -->
 	</fieldset>
 	<!-- ENDIF -->
-	
 
 	<fieldset>
 		<legend>{L_AUTHOR_INFORMATION}</legend>
@@ -227,6 +226,7 @@
 	</fieldset>
 	<!-- ENDIF -->
 
+	<!-- IF S_NEW_FILES or S_EDITS or S_SQL -->
 	<form id="acp_mods" method="post" action="{U_INSTALL}">
 	<fieldset class="submit-buttons">
 		<legend>{L_INSTALL}</legend>
@@ -234,8 +234,9 @@
 		<input class="button1" type="submit" name="install" value="{L_INSTALL}" />
 	</fieldset>
 	</form>
+	<!-- ENDIF -->
 	
-	<br/>
+	<br />
 	
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
 
@@ -251,6 +252,15 @@
 		<input class="button1" type="submit" name="return" value="{L_RETURN_MODS}" />
 	</fieldset>
 	</form>
+
+	<!-- IF S_DIY -->
+	<fieldset>
+		<legend>{L_DIY_INSTRUCTIONS}</legend>
+		<!-- BEGIN diy_instructions -->
+		<div>{diy_instructions.DIY_INSTRUCTION}</div>
+		<!-- END diy_instructions -->
+	</fieldset>
+	<!-- ENDIF -->
 
 	<!-- IF S_NEW_FILES -->
 	<fieldset>

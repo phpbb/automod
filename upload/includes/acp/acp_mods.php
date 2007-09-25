@@ -163,6 +163,8 @@ class acp_mods
 
 		if (!empty($details['MOD_HISTORY']))
 		{
+			$template->assign_var('S_CHANGELOG', true);
+
 			foreach ($details['MOD_HISTORY'] as $mod_version)
 			{
 				$template->assign_block_vars('changelog', array(
@@ -346,7 +348,7 @@ class acp_mods
 		}
 
 		// Only display full actions if the user has requested them.
-		if (!defined('DEBUG'))
+		if (!defined('DEBUG') || isset($_GET['full_details']))
 		{
 			return;
 		}
@@ -518,7 +520,7 @@ class acp_mods
 			'mod_author_url'	=> (string) $details['AUTHOR_URL'],
 			'mod_actions'		=> (string) serialize($actions),
 		));
-		$db->sql_query($sql);
+		//$db->sql_query($sql);
 		
 		// get mod id
 		$mod_id = $db->sql_nextid();
@@ -543,7 +545,7 @@ class acp_mods
 		if (isset($actions['EDITS']) && !empty($actions['EDITS'])) // this is some beefy looping
 		{
 			$template->assign_var('S_EDITS', true);
-			
+				
 			foreach ($actions['EDITS'] as $filename => $finds)
 			{
 				if (!file_exists("$phpbb_root_path$filename"))
@@ -551,13 +553,13 @@ class acp_mods
 					$template->assign_block_vars('edit_files', array(
 						'S_MISSING_FILE' => true,
 						
-						'FILENAME'	=> $filename)
-					);
+						'FILENAME'	=> $filename,
+					));
 				}
 				else
 				{
 					$template->assign_block_vars('edit_files', array(
-						'FILENAME'	=> $filename
+						'FILENAME'	=> $filename,
 					));
 			
 					$file_ext = substr(strrchr($filename, '.'), 1);
@@ -565,11 +567,11 @@ class acp_mods
 					$editor->open_file($filename);
 
 					$editor->fold_edits($filename, $dependenices);
-					
+				
 					foreach ($finds as $string => $commands)
 					{
 						$template->assign_block_vars('edit_files.finds', array(
-							'FIND_STRING'	=> htmlspecialchars($string)
+							'FIND_STRING'	=> $string,
 						));
 
 						foreach ($commands as $type => $contents)
@@ -609,6 +611,7 @@ class acp_mods
 										foreach ($inline_edit as $inline_action => $inline_contents)
 										{
 											$inline_contents = $inline_contents[0];
+											$contents = $contents_orig = $inline_contents;
 											switch (strtoupper($inline_action))
 											{
 												case 'IN-LINE-BEFORE-ADD':
@@ -624,17 +627,18 @@ class acp_mods
 												break;
 
 												default:
+													die("Error, unrecognised command $type"); // ERROR!
 												break;
 											}
 										}
 									}
-
+								break;
 
 								default:
 									die("Error, unrecognised command $type"); // ERROR!
 								break;
 							}
-							
+
 							$template->assign_block_vars('edit_files.finds.actions', array(
 								'S_SUCCESS'	=> $status,
 
@@ -647,7 +651,6 @@ class acp_mods
 					$editor->unfold_edits($filename, $dependenices);
 
 					$editor->close_file($filename, "$edited_root$filename");
-				
 				}
 			}
 		}
@@ -655,7 +658,7 @@ class acp_mods
 		// Move included files
 		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']))
 		{
-			$template->assign_vars('S_NEW_FILES', true);
+			$template->assign_var('S_NEW_FILES', true);
 	
 			foreach ($actions['NEW_FILES'] as $source => $target)
 			{
@@ -707,6 +710,19 @@ class acp_mods
 			}
 			
 			$db->sql_return_on_error(false);
+		}
+
+		// Display Do-It-Yourself Actions...per the MODX spec, these should be displayed last
+		if (!empty($actions['DIY_INSTRUCTIONS']))
+		{
+			$template->assign_var('S_DIY', true);
+
+			foreach ($actions['DIY_INSTRUCTIONS'] as $instruction)
+			{
+				$template->assign_block_vars('diy_instructions', array(
+					'DIY_INSTRUCTION'	=> $instruction,
+				));
+			}
 		}
 
 		// Move edited files back, and delete temp stoarge folder
@@ -830,13 +846,13 @@ class acp_mods
 					$template->assign_block_vars('edit_files', array(
 						'S_MISSING_FILE' => true,
 						
-						'FILENAME'	=> $file
+						'FILENAME'	=> $file,
 					));
 				}
 				else
 				{
 					$template->assign_block_vars('edit_files', array(
-						'FILENAME'	=> $file
+						'FILENAME'	=> $file,
 					));
 				
 					$editor->open_file($file);
