@@ -76,6 +76,15 @@ class io
 			$this->create_dir("$sub_dirs/", 0644); // what perms we want here? also set recurrsively, last arg (work in php < 5?)?
 		}
 
+		if (!is_writable("$this->root$sub_dirs/"))
+		{
+			@chmod("$this->root$sub_dirs/", 0666);
+			if (!is_writable("$this->root$sub_dirs/"))
+			{
+				return false;
+			}
+		}
+
 		if (function_exists('file_put_contents'))
 		{
 			file_put_contents("$this->root$filename", trim($content));

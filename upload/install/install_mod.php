@@ -171,27 +171,58 @@ class install_mod extends module
 			'L_SUBMIT'			=> $lang['NEXT_STEP'],
 			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=final&amp;language=$language",
 		));
-		
-		// create the mods table
-		// @todo: Make non-MySQL friendy
-		$sql = 'CREATE TABLE `phpbb_mods` (
-		  `mod_id` int(8) NOT NULL auto_increment,
-		  `mod_active` tinyint(1) NOT NULL default \'1\',
-		  `mod_time` int(11) default NULL,
-		  `mod_dependencies` varchar(255) NOT NULL,
-		  `mod_name` varchar(255) NOT NULL default \'\',
-		  `mod_description` text NOT NULL,
-		  `mod_version` varchar(100) NOT NULL default \'\',
-		  `mod_path` varchar(255) NOT NULL default \'\',
-		  `mod_author_notes` text NOT NULL,
-		  `mod_author_name` varchar(255) NOT NULL default \'\',
-		  `mod_author_email` varchar(255) NOT NULL default \'\',
-		  `mod_author_url` varchar(255) NOT NULL default \'\',
-		  `mod_actions` text NOT NULL,
-		  PRIMARY KEY  (`mod_id`)
-		) CHARACTER SET `utf8` COLLATE `utf8_bin`;';
-		$db->sql_query($sql);
-		
+
+		$available_dbms = get_available_dbms();
+
+		include($phpbb_root_path . 'config.'.$phpEx);
+
+		$available_dbms = $available_dbms[$dbms];
+
+		// this is borrowed from the main phpBB installer, credit to the core phpBB Developers
+		// If mysql is chosen, we need to adjust the schema filename slightly to reflect the correct version. ;)
+		if ($install_dbms == 'mysqli')
+		{
+			$install_dbms = 'mysql';
+		}
+
+		if ($install_dbms == 'mysql')
+		{
+			if (version_compare($db->mysql_version, '4.1.3', '>='))
+			{
+				$db_schema = $install_dbms . '_41';
+			}
+			else
+			{
+				$db_schema = $install_dbms . '_40';
+			}
+		}
+
+		// Ok we have the db info go ahead and read in the relevant schema
+		// and work on building the table
+		$dbms_schema = 'schemas/pacman/' . $db_schema . '_schema.sql';
+
+		// How should we treat this schema?
+		$remove_remarks = $available_dbms['COMMENTS'];
+		$delimiter = $available_dbms['DELIM'];
+
+		$sql_query = @file_get_contents($dbms_schema);
+
+		$sql_query = preg_replace('#phpbb_#i', $table_prefix, $sql_query);
+
+		$remove_remarks($sql_query);
+
+		$sql_query = split_sql_file($sql_query, $delimiter);
+
+		foreach ($sql_query as $sql)
+		{
+			if (!$db->sql_query($sql))
+			{
+				$error = $db->sql_error();
+				$this->p_master->db_error($error['message'], $sql, __LINE__, __FILE__);
+			}
+		}
+		// end borrow from phpBB core
+
 		// Get some Module info
 		$sql = 'SELECT MAX(module_id) AS last_m_id, MAX(right_id) AS last_r_id
 			FROM ' . MODULES_TABLE;
@@ -267,10 +298,10 @@ class install_mod extends module
 			'auth_option_id'	=> $auth_option_id,
 			'auth_setting'		=> 1,
 		);
-		
+
 		$sql = 'INSERT INTO ' . ACL_ROLES_DATA_TABLE . ' ' . $db->sql_build_array('INSERT', $roles_data);
 		$db->sql_query($sql);
-		
+
 		// Reset cache so we can actaully see the lovely new tab in the ACP
 		$cache->purge();
 	}

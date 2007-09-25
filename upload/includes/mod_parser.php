@@ -235,6 +235,15 @@ class parser_xml
 			}
 		}
 
+
+		if (!empty($xml_actions['DIY-INSTRUCTIONS']))
+		{
+			foreach ($xml_actions['DIY-INSTRUCTIONS'] as $diy_instruction_set)
+			{
+				$actions['DIY_INSTRUCTIONS'][] = $diy_instruction_set['data'];
+			}
+		}
+
 		return $actions;
 		var_dump($actions);
 	}
