@@ -520,7 +520,7 @@ class acp_mods
 			'mod_author_url'	=> (string) $details['AUTHOR_URL'],
 			'mod_actions'		=> (string) serialize($actions),
 		));
-		//$db->sql_query($sql);
+		$db->sql_query($sql);
 		
 		// get mod id
 		$mod_id = $db->sql_nextid();
