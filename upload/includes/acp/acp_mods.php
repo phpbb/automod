@@ -268,7 +268,7 @@ class acp_mods
 		{
 			global $db;
 			
-			$sql = 'SELECT *
+			$sql = 'SELECT mod_actions
 				FROM ' . MODS_TABLE . "
 					WHERE mod_id = $mod_ident";
 			$result = $db->sql_query($sql);
@@ -401,7 +401,7 @@ class acp_mods
 			
 			foreach ($actions['EDITS'] as $file => $finds)
 			{
-				if (!file_exists("{$phpbb_root_path}{$file}"))
+				if (!file_exists("$phpbb_root_path$file"))
 				{
 					$template->assign_block_vars('edit_files', array(
 						'S_MISSING_FILE' => true,
@@ -761,7 +761,7 @@ class acp_mods
 			'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
 			'U_BACK'			=> $this->u_action,
 		));
-		
+
 		$actions = $this->mod_actions($mod_id);
 		$details = $this->mod_details($mod_id);
 
@@ -786,7 +786,7 @@ class acp_mods
 
 			foreach ($actions['NEW_FILES'] as $source => $target)
 			{
-				if ((!file_exists("$phpbb_root_path$target")) && !strpos($source, '*.*') !== false)
+				if ((!file_exists("$phpbb_root_path$target")) && strpos($source, '*.*') === false)
 				{
 					$template->assign_block_vars('removing_files', array(
 						'S_MISSING_FILE' => true,
@@ -846,6 +846,90 @@ class acp_mods
 					$template->assign_block_vars('edit_files', array(
 						'S_MISSING_FILE' => true,
 						
+						'FILENAME'	=> $file
+					));
+				}
+				else
+				{
+					$template->assign_block_vars('edit_files', array(
+						'FILENAME'	=> $file
+					));
+				
+					$editor->open_file($file);
+
+					$editor->fold_edits($file, $dependenices);
+			
+					foreach ($finds as $find => $action)
+					{
+						if (!$editor->check_find($file, $find))
+						{
+							$template->assign_block_vars('edit_files.finds', array(
+								'S_MISSING_FIND'	=> true,
+
+								'FIND_STRING'		=> htmlspecialchars($find)
+							));
+						}
+						else
+						{
+							$template->assign_block_vars('edit_files.finds', array(
+								'FIND_STRING'	=> htmlspecialchars($find)
+							));
+
+							// check if we have an inline find	
+							if (isset($action['in-line-find']))
+							{
+								foreach ($action['in-line-find'] as $inline_find => $inline_action_ary)
+								{
+									$template->assign_block_vars('edit_files.finds.actions', array(
+										'NAME'		=> 'In-Line Find', // LANG!
+										'COMMAND'	=> (is_array($inline_find)) ? htmlspecialchars(implode('<br />', $inline_find)) : htmlspecialchars($inline_find),
+									));
+
+									if (!$editor->check_find($file, $inline_find))
+									{
+										$template->assign_block_vars('edit_files.finds', array(
+											'S_MISSING_FIND'	=> true,
+
+											'FIND_STRING'		=> htmlspecialchars($inline_find)
+										));
+									}
+									else
+									{
+										foreach ($inline_action_ary as $inline_action => $inline_command)
+										{
+											$template->assign_block_vars('edit_files.finds.actions', array(
+												'NAME'		=> $inline_action, // LANG!
+												'COMMAND'	=> (is_array($inline_command)) ? htmlspecialchars(implode('<br />', $inline_command)) : htmlspecialchars($inline_command),
+											));
+										}
+									}
+								}
+							}
+							else
+							{
+							
+								foreach ($action as $name => $command)
+								{
+									$template->assign_block_vars('edit_files.finds.actions', array(
+										'NAME'		=> $name, // LANG!
+										'COMMAND'	=> (is_array($command)) ? htmlspecialchars(implode('<br />', $command)) : htmlspecialchars($command),
+									));
+								}
+							}
+						}
+					}
+					
+					$editor->unfold_edits($file, $dependenices);
+
+					$editor->close_file($file);
+				}
+
+
+			/*	if (!file_exists("$phpbb_root_path$file"))
+				{
+					$template->assign_block_vars('edit_files', array(
+						'S_MISSING_FILE' => true,
+						
 						'FILENAME'	=> $file,
 					));
 				}
@@ -866,7 +950,7 @@ class acp_mods
 							$template->assign_block_vars('edit_files.finds', array(
 								'S_MISSING_FIND'	=> true,
 
-								'FIND_STRING'	=> htmlspecialchars($find)
+								'FIND_STRING'	=> htmlspecialchars($find),
 							));
 						}
 						else
@@ -879,7 +963,8 @@ class acp_mods
 							{
 								$template->assign_block_vars('edit_files.finds.actions', array(
 									'NAME'		=> $name, // LANG!
-									'COMMAND'	=> htmlspecialchars($command),
+//									'COMMAND'	=> htmlspecialchars($command),
+
 								));
 							}
 						}
@@ -889,6 +974,7 @@ class acp_mods
 
 					$editor->close_file($file);
 				}
+*/
 			}
 		}
 	}
@@ -906,6 +992,9 @@ class acp_mods
 			// ERROR
 			return false;
 		}
+
+		include($phpbb_root_path . 'includes/editor.' . $phpEx);
+		$editor = new editor($phpbb_root_path);
 
 		$template->assign_vars(array(
 			'S_UNINSTALL'	=> true,
@@ -934,6 +1023,8 @@ class acp_mods
 
 			foreach ($actions['NEW_FILES'] as $source => $target)
 			{
+				// @todo: this will not delete files that were placed by an * command... 
+				// because the complete file list is not currently stored.  
 				if (!file_exists("$phpbb_root_path$target") && strpos($source, '*.*') !== false)
 				{
 					$template->assign_block_vars('removing_files', array(
@@ -944,8 +1035,6 @@ class acp_mods
 				}
 				else
 				{
-					include($phpbb_root_path . 'includes/editor.' . $phpEx);
-					$editor = new editor();
 					$editor->remove("$phpbb_root_path$target");
 					
 					$template->assign_block_vars('removing_files', array(
@@ -1039,7 +1128,7 @@ class acp_mods
 		{
 			return "ALTER TABLE {$matches[1]} DROP COLUMN {$matches[3]};";
 		}
-		else if (preg_match('#CREATE TABLE\s([a-z_])#iU', $orig_query, $matches))
+		else if (preg_match('#CREATE TABLE\s([a-z_])+#i', $orig_query, $matches))
 		{
 			return "DROP TABLE {$matches[1]};";
 		}
@@ -1061,17 +1150,50 @@ class acp_mods
 			{
 				foreach ($actions as $name => $command) // LANG!
 				{
-					switch ($name)
+					switch (strtoupper($name))
 					{
 						case 'AFTER, ADD':
 						case 'BEFORE, ADD':
 							$find = $command;
+							// replace with an empty string
 							$reverse_edits[$file][$find]['REPLACE WITH'] = '';
 						break;
 						
 						case 'REPLACE WITH':
-							$new_find = $command;
-							$reverse_edits[$file][$new_find]['REPLACE WITH'] = $find;
+							// replace $command (new code) with $find (original code)
+							$reverse_edits[$file][$command]['REPLACE WITH'] = $find;
+						break;
+
+						case 'IN-LINE-EDIT':
+							// build the reverse just like the normal action
+							foreach ($command as $inline_find => $inline_action_ary)
+							{
+								foreach ($inline_action_ary as $inline_action => $inline_command)
+								{
+									$inline_command = $inline_command[0];
+
+									switch (strtoupper($inline_action))
+									{
+										case 'IN-LINE-AFTER-ADD':
+										case 'IN-LINE-BEFORE-ADD':
+											// Replace with a blank string
+											$reverse_edits[$file][$find]['in-line-edit'][$inline_command] = '';
+										break;
+
+										case 'IN-LINE-REPLACE':
+											// replace with the inline find
+											$reverse_edits[$file][$find]['in-line-edit'][$inline_find][$inline_action] = $inline_command;
+										break;
+
+										default:
+											// For the moment, we do nothing.
+										break;
+									}
+								}
+							}
+						break;
+
+						default:
 						break;
 					}
 				}
