@@ -155,11 +155,14 @@ class acp_mods
 
 		$details = $this->mod_details($mod_ident);
 
-		foreach ($details['AUTHOR_DETAILS'] as $author_details)
+		if (!empty($details['AUTHOR_DETAILS']))
 		{
-			$template->assign_block_vars('author_list', $author_details);
+			foreach ($details['AUTHOR_DETAILS'] as $author_details)
+			{
+				$template->assign_block_vars('author_list', $author_details);
+			}
+			unset($details['AUTHOR_DETAILS']);
 		}
-		unset($details['AUTHOR_DETAILS']);
 
 		if (!empty($details['MOD_HISTORY']))
 		{
@@ -615,15 +618,15 @@ class acp_mods
 											switch (strtoupper($inline_action))
 											{
 												case 'IN-LINE-BEFORE-ADD':
-													$status = $editor->add_string($filename, $string, $inline_contents, 'BEFORE', true, $line['start'], $line['end']);
+													$status = $editor->add_string($filename, $inline_find, $inline_contents, 'BEFORE', true, $line['start'], $line['end']);
 												break;
 
 												case 'IN-LINE-AFTER-ADD':
-													$status = $editor->add_string($filename, $string, $inline_contents, 'AFTER', true, $line['start'], $line['end']);
+													$status = $editor->add_string($filename, $inline_find, $inline_contents, 'AFTER', true, $line['start'], $line['end']);
 												break;
 
 												case 'IN-LINE-REPLACE':
-													$status = $editor->replace_string($filename, $string, $contents, $line['start'], $line['end']);
+													$status = $editor->replace_string($filename, $inline_find, $contents, $line['start'], $line['end']);
 												break;
 
 												default:
@@ -1108,7 +1111,7 @@ class acp_mods
 				{
 					$mods = array_merge($mods, $this->find_mods("$dir/$file"));
 				}
-				elseif (stripos($file, 'install') !== false && stripos($file, 'xml') !== false) // Very simple, beef up
+				elseif (/*stripos($file, 'install') !== false &&*/ stripos($file, 'xml') !== false) // Very simple, beef up
 				{
 					$mods[] = "$dir/$file";
 				}
