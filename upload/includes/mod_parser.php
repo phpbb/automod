@@ -34,6 +34,7 @@ class parser
 		switch ($ext)
 		{
 			case 'xml':
+			default:
 				$this->parser = new parser_xml();
 			break;
 		}
@@ -96,12 +97,15 @@ class parser_xml
 
 		$header = $this->data[0]['children']['HEADER'][0]['children'];
 
-		// get version information
+		// get MOD version information
 		$version_info = $header['MOD-VERSION'][0]['children'];
 		$version = (isset($version_info['MAJOR'][0]['data'])) ? trim($version_info['MAJOR'][0]['data']) : 0;
 		$version .= '.' . ((isset($version_info['MINOR'][0]['data'])) ? trim($version_info['MINOR'][0]['data']) : 0);
 		$version .= '.' . ((isset($version_info['REVISION'][0]['data'])) ? trim($version_info['REVISION'][0]['data']) : 0);
 		$version .= (isset($version_info['RELEASE'][0]['data'])) ? $version_info['RELEASE'][0]['data'] : '';
+
+		// get phpBB version recommendation
+		$phpbb_version = $header['INSTALLATION'][0]['children']['TARGET-VERSION'][0]['children'];
 
 		$author_info = $header['AUTHOR-GROUP'][0]['children']['AUTHOR'];
 
@@ -156,6 +160,7 @@ class parser_xml
 
 			'AUTHOR_DETAILS'	=> $author_details,
 			'MOD_HISTORY'		=> $mod_history,
+			'PHPBB_VERSION'		=> $phpbb_version,
 		);
 
 		return $details;
@@ -201,6 +206,7 @@ class parser_xml
 			$actions['EDITS'][$current_file] = array();
 
 			$edit_info = (!empty($open_info[$i]['children']['EDIT'])) ? $open_info[$i]['children']['EDIT'] : array();
+			// find, after add, before add, replace with
 			for ($j = 0; $j < sizeof($edit_info); $j++)
 			{
 				$action_info = (!empty($edit_info[$j]['children'])) ? $edit_info[$j]['children'] : array();
@@ -208,7 +214,7 @@ class parser_xml
 				// straight edit, no inline
 				if (isset($action_info['ACTION']))
 				{
-					$type = str_replace('-', ', ', $action_info['ACTION'][0]['attrs']['TYPE']);
+					$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
 					$actions['EDITS'][$current_file][trim($action_info['FIND'][0]['data'])] = array($type => trim($action_info['ACTION'][0]['data']));
 				}
 				// inline
