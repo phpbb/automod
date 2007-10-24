@@ -22,6 +22,7 @@ class io
 {
 	var $root;
 	var $data = array();
+	var $transfer;
 
 	/**
 	* Set Root
@@ -29,6 +30,7 @@ class io
 	function io($root)
 	{
 		$this->root = $root;
+		$this->transfer = new transfer();
 	}
 
 	/**
@@ -73,7 +75,7 @@ class io
 
 		if (!is_dir("$this->root$sub_dirs/"))
 		{
-			$this->create_dir("$sub_dirs/", 0644); // what perms we want here? also set recurrsively, last arg (work in php < 5?)?
+			$this->create_dir("$sub_dirs/", 0666); // what perms we want here? also set recurrsively, last arg (work in php < 5?)?
 		}
 
 		if (!is_writable("$this->root$sub_dirs/"))
@@ -310,6 +312,7 @@ class editor extends io
 	/**
 	* Wraps the string in the appropriate anchor
 	* Could be a little better me thinks, than just having a stab, due to the file extension
+	* bug: this breaks while in an SQL query
 	*/
 	function add_anchor($string, $file_ext, $id)
 	{
@@ -380,7 +383,7 @@ class editor extends io
 	function add_string($filename, $find, $add, $pos, $inline = false, $start_offset = 0, $end_offset = 0)
 	{
 		$find = $this->normalize($find);
-		if (!$this->check_find($filename, $find))
+		if (!$this->check_find($filename, $find, $inline))
 		{
 			return false;
 		}

@@ -25,6 +25,8 @@ class acp_mods
 		$this->tpl_name = 'acp_mods';
 		$this->page_title = 'ACP_CAT_MODS';
 
+		include($phpbb_root_path . "includes/functions_transfer.$phpEx");
+
 		// get any url vars
 		$action = request_var('action', '');
 		$mod_id = request_var('mod_id', 0);
@@ -67,7 +69,7 @@ class acp_mods
 						$this->list_uninstalled();
 					break;
 				}
-				
+
 				return;
 
 			break;
@@ -121,7 +123,8 @@ class acp_mods
 		}
 		$db->sql_freeresult($result);
 
-		$available_mods = array_diff($available_mods, $installed_paths);
+		// we don't care about any xml files not in the main directory
+		$available_mods = array_diff($available_mods['main'], $installed_paths);
 		unset($installed_paths);
 
 		// show only available MODs that paths aren't in the DB
@@ -137,7 +140,7 @@ class acp_mods
 				'U_DETAILS'	=> $this->u_action . '&amp;action=details&amp;mod_path=' . $details['MOD_PATH'],
 			));
 		}
-		
+
 		return;
 	}
 
@@ -310,7 +313,7 @@ class acp_mods
 	*/
 	function pre_install($mod_path)
 	{
-		global $phpbb_root_path, $phpEx, $template;
+		global $phpbb_root_path, $phpEx, $template, $db;
 
 		// mod_path empty?
 		if (empty($mod_path))
@@ -321,10 +324,13 @@ class acp_mods
 		
 		$actions = $this->mod_actions($mod_path);
 		$details = $this->mod_details($mod_path);
-		
+
+		// check for "child" MODX files and attempt to decide which ones we need
+		$actions = $this->find_children($mod_path, $actions, 'pre_install');
+
 		include($phpbb_root_path . 'includes/editor.' . $phpEx);
 		$editor = new editor($phpbb_root_path);
-		
+
 		$mod_root = explode('/', str_replace($phpbb_root_path, '', $mod_path));
 		array_pop($mod_root);
 		$mod_root = implode('/', $mod_root) . '/';
@@ -339,7 +345,7 @@ class acp_mods
 			'U_INSTALL'		=> $this->u_action . '&amp;action=install&amp;mod_path=' . $mod_path,
 			'U_BACK'		=> $this->u_action,
 		));
-		
+
 		// Show author notes
 		if (!empty($details['AUTHOR_NOTES']))
 		{
@@ -351,7 +357,7 @@ class acp_mods
 		}
 
 		// Only display full actions if the user has requested them.
-		if (!defined('DEBUG') || isset($_GET['full_details']))
+		if (!defined('DEBUG') || !isset($_GET['full_details']))
 		{
 			return;
 		}
@@ -470,7 +476,6 @@ class acp_mods
 							}
 							else
 							{
-							
 								foreach ($action as $name => $command)
 								{
 									$template->assign_block_vars('edit_files.finds.actions', array(
@@ -507,6 +512,9 @@ class acp_mods
 		}
 
 		$actions = $this->mod_actions($mod_path);
+		// check for "child" MODX files and attempt to decide which ones we need
+		$actions = $this->find_children($mod_path, $actions, 'install');
+
 		$details = $this->mod_details($mod_path);
 
 		// Insert database data
@@ -522,9 +530,12 @@ class acp_mods
 			'mod_author_email'	=> (string) $details['AUTHOR_EMAIL'],
 			'mod_author_url'	=> (string) $details['AUTHOR_URL'],
 			'mod_actions'		=> (string) serialize($actions),
+			// TODO: Utilize these columns
+			'mod_languages'		=> '',
+			'mod_styles'		=> '',
 		));
 		$db->sql_query($sql);
-		
+
 		// get mod id
 		$mod_id = $db->sql_nextid();
 		
@@ -532,7 +543,7 @@ class acp_mods
 		$editor = new editor($phpbb_root_path);
 
 		// get mod install root && make temporary edited folder root
-		// todo...don't explode and explode this quite so much
+		// @todo...don't explode and implode this quite so much
 		$mod_root = explode('/', str_replace($phpbb_root_path, '', $mod_path));
 		array_pop($mod_root);
 		$mod_root = implode('/', $mod_root) . '/';
@@ -548,7 +559,7 @@ class acp_mods
 		if (isset($actions['EDITS']) && !empty($actions['EDITS'])) // this is some beefy looping
 		{
 			$template->assign_var('S_EDITS', true);
-				
+	
 			foreach ($actions['EDITS'] as $filename => $finds)
 			{
 				if (!file_exists("$phpbb_root_path$filename"))
@@ -584,12 +595,12 @@ class acp_mods
 
 							switch (strtoupper($type)) // LANG!
 							{
-								case 'AFTER, ADD':
+								case 'AFTER ADD':
 									$contents = $editor->add_anchor($contents, $file_ext, $mod_phpbb_id);
 									$status = $editor->add_string($filename, $string, $contents, 'AFTER');
 								break;
 								
-								case 'BEFORE, ADD':
+								case 'BEFORE ADD':
 									$contents = $editor->add_anchor($contents, $file_ext, $mod_phpbb_id);
 									$status = $editor->add_string($filename, $string, $contents, 'BEFORE', false);
 								break;
@@ -789,7 +800,7 @@ class acp_mods
 
 			foreach ($actions['NEW_FILES'] as $source => $target)
 			{
-				if ((!file_exists("$phpbb_root_path$target")) && strpos($source, '*.*') === false)
+				if (!file_exists("$phpbb_root_path$target") && strpos($source, '*.*') === false)
 				{
 					$template->assign_block_vars('removing_files', array(
 						'S_MISSING_FILE' => true,
@@ -1094,26 +1105,35 @@ class acp_mods
 	}
 
 	/**
-	* Returns array of available mod install files in dir (Recurrsive)
-	* At the moment, simply returns files with "install" in the filename
+	* Returns array of available mod install files in dir (Recursive)
 	*/
 	function find_mods($dir)
 	{
-		$mods = array();
+		static $mods = array();
 
 		$dp = opendir($dir);
 		while (($file = readdir($dp)) !== false)
 		{
 			if ($file{0} != '.')
 			{
-				// recurse
-				if (is_dir("$dir/$file"))
+				// recurse - we don't want anything within the MODX "root" though
+				if (is_dir("$dir/$file") && $file != 'root/')
 				{
 					$mods = array_merge($mods, $this->find_mods("$dir/$file"));
 				}
-				elseif (/*stripos($file, 'install') !== false &&*/ stripos($file, 'xml') !== false) // Very simple, beef up
+				// this might be better as an str function, especially being in a loop
+				else if (preg_match('#xml$#i', $file))
 				{
-					$mods[] = "$dir/$file";
+					// if this is an "extra" MODX file, make a record of it as such
+					// we are assuming the MOD follows MODX packaging standards here
+					if (preg_match('#(contrib|templates|languages)#i', $dir, $match))
+					{
+						$mods[$match[1]][] = "$dir/$file";
+					}
+					else
+					{
+						$mods['main'][] = "$dir/$file";
+					}
 				}
 			}
 		}
@@ -1163,6 +1183,7 @@ class acp_mods
 						break;
 						
 						case 'REPLACE WITH':
+						case 'REPLACE, WITH':
 							// replace $command (new code) with $find (original code)
 							$reverse_edits[$file][$command]['REPLACE WITH'] = $find;
 						break;
@@ -1221,24 +1242,142 @@ class acp_mods
 			
 			include($phpbb_root_path . 'includes/functions_install.' . $phpEx);
 		}
-		
+
 		static $available_dbms; 
 		
 		if (!isset($available_dbms))
 		{
 			$available_dbms = get_available_dbms($dbms);
 		}
-		
+
 		$remove_remarks = $available_dbms[$dbms]['COMMENTS'];
 		$delimiter = $available_dbms[$dbms]['DELIM'];
-		
+
 		$sql_query = implode(' ', $sql_query);
 		$sql_query = preg_replace('#phpbb_#i', $table_prefix, $sql_query);
 		$remove_remarks($sql_query);
 		$sql_query = split_sql_file($sql_query, $delimiter);
-		
+
 		//return $sql_query;
 	}
+
+	function find_children($mod_path, $actions, $action)
+	{
+		global $db, $template, $parser;
+
+		$children = $this->find_mods(dirname($mod_path));
+
+		if (sizeof($children['contrib']))
+		{
+			// there are things like upgrades...we probably don't care. 
+			// this assumption may need to be revisited, therefore this comment
+		}
+
+		if (sizeof($children['languages']))
+		{
+			// additional languages are available...find out which ones we may want to apply
+			// we don't care about english because it is included in the main MODX file
+			$sql = 'SELECT lang_id, lang_iso FROM ' . LANG_TABLE . "
+				WHERE lang_iso <> 'en'";
+			$result = $db->sql_query($sql);
+
+			$installed_languages = array();
+			while ($row = $db->sql_fetchrow($result))
+			{
+				$installed_languages[$row['lang_id']] = $row['lang_iso'];
+			}
+
+			// We _must_ have language xml files that are named "nl.xml" or "en-US.xml" for this to work
+			// it appears that the MODX packaging standards call for this anyway
+			$available_languages = array_map('core_basename', $children['languages']);
+			$process_languages = array_intersect($available_languages, $installed_languages);
+
+			// $unknown_languages are installed on the board, but not provied for by the MOD
+			$unknown_languages = array_diff($installed_languages, $available_languages);
+
+			// these are langauges which are installed, but not provided for by the MOD
+			if (sizeof($unknown_languages) && $action == 'pre_install')
+			{
+				$template->assign_var('UNKNOWN_LANGUAGES', true);
+
+				// get full names from the DB
+				$sql = 'SELECT lang_english, lang_local FROM ' . LANG_TABLE . '
+					WHERE ' . $db->sql_in_set('lang_iso', $unknown_languages);
+				$result = $db->sql_query($sql);
+
+				// alert the user.
+				while ($row = $db->sql_fetchrow($result))
+				{
+					$template->assign_block_vars('unknown_lang', array(
+						'ENGLISH_NAME'	=> $row['lang_english'],
+						'LOCAL_NAME'	=> $row['lang_local'],
+					));
+				}
+			}
+
+			if (sizeof($process_languages) && (!defined('DEBUG') || !isset($_GET['full_details']) || $action == 'install'))
+			{
+				// add the actions to our $actions array...somehow
+				foreach ($process_languages as $key => $void)
+				{
+					$actions = array_merge_recursive($actions, $this->mod_actions($children['languages'][$key]));
+				}
+			}
+		}
+
+		if (sizeof($children['templates']))
+		{
+			// additional styles are available for this MOD
+
+			// NOTE: Need to somehow exclude prosilver
+			$sql = 'SELECT template_id, template_name FROM ' . STYLES_TEMPLATE_TABLE;
+			$result = $db->sql_query($sql);
+
+			$installed_templates = array();
+			while ($row = $db->sql_fetchrow($result))
+			{
+				$installed_templates[$row['template_id']] = $row['template_name']; 
+			}
+
+			// We _must_ have language xml files that are named like "subSilver2.xml" for this to work
+			$available_templates = array_map('core_basename', $children['templates']);
+			$process_templates = array_intersect($available_templates, $installed_templates);
+
+			// $unknown_templates are installed on the board, but not provied for by the MOD
+			$unknown_templates = array_diff($installed_templates, $available_templates);
+
+			if (sizeof($unknown_templates) && $action == 'pre_install')
+			{
+				// prompt the user
+				// consider Nuttzy-like behavior (attempt to apply another xml file to a template)
+				$template->assign_var('S_UNKNOWN_TEMPLATES', true);
+
+				foreach ($unknown_templates as $unknown_template)
+				{
+					$template->assign_block_vars('unknown_templates', array(
+						'TEMPLATE_NAME'		=> $unknown_template,
+					));
+				}
+			}
+
+			if (sizeof($process_templates) && (!defined('DEBUG') || !isset($_GET['full_details']) || $action == 'install'))
+			{
+				// add the template actions to our $actions array...
+				foreach ($process_templates as $key => $void)
+				{
+					$actions = array_merge_recursive($actions, $this->mod_actions($children['templates'][$key]));
+				}
+			}
+		}
+
+		return $actions;
+	}
+}
+
+function core_basename($path)
+{
+	$path = basename($path);
+	return substr($path, 0, strrpos($path, '.'));
 }
 
 ?>
