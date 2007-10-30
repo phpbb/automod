@@ -17,7 +17,9 @@ CREATE TABLE phpbb_mods (
 	mod_author_name varchar(255) NOT NULL DEFAULT '',
 	mod_author_email varchar(255) NOT NULL DEFAULT '',
 	mod_author_url varchar(255) NOT NULL DEFAULT '',
-	mod_actions mediumtext(16777215) NOT NULL DEFAULT ''
+	mod_actions mediumtext(16777215) NOT NULL DEFAULT '',
+	mod_languages varchar(255) NOT NULL DEFAULT '',
+	mod_templates varchar(255) NOT NULL DEFAULT ''
 );
 
 

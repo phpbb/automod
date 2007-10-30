@@ -15,17 +15,17 @@
 
 /*
 CREATE TABLESPACE "PHPBB"
-	LOGGING 
-	DATAFILE 'E:\ORACLE\ORADATA\LOCAL\PHPBB.ora' 
+	LOGGING
+	DATAFILE 'E:\ORACLE\ORADATA\LOCAL\PHPBB.ora'
 	SIZE 10M
 	AUTOEXTEND ON NEXT 10M
 	MAXSIZE 100M;
 
-CREATE USER "PHPBB" 
-	PROFILE "DEFAULT" 
-	IDENTIFIED BY "phpbb_password" 
-	DEFAULT TABLESPACE "PHPBB" 
-	QUOTA UNLIMITED ON "PHPBB" 
+CREATE USER "PHPBB"
+	PROFILE "DEFAULT"
+	IDENTIFIED BY "phpbb_password"
+	DEFAULT TABLESPACE "PHPBB"
+	QUOTA UNLIMITED ON "PHPBB"
 	ACCOUNT UNLOCK;
 
 GRANT ANALYZE ANY TO "PHPBB";
@@ -56,7 +56,9 @@ CREATE TABLE phpbb_mods (
 	mod_author_name varchar2(255) DEFAULT '' ,
 	mod_author_email varchar2(255) DEFAULT '' ,
 	mod_author_url varchar2(255) DEFAULT '' ,
-	mod_actions clob DEFAULT '' 
+	mod_actions clob DEFAULT '' ,
+	mod_languages varchar2(255) DEFAULT '' ,
+	mod_templates varchar2(255) DEFAULT '' 
 )
 /
 

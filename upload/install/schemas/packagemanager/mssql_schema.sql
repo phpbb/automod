@@ -22,7 +22,9 @@ CREATE TABLE [phpbb_mods] (
 	[mod_author_name] [varchar] (255) DEFAULT ('') NOT NULL ,
 	[mod_author_email] [varchar] (255) DEFAULT ('') NOT NULL ,
 	[mod_author_url] [varchar] (255) DEFAULT ('') NOT NULL ,
-	[mod_actions] [text] DEFAULT ('') NOT NULL 
+	[mod_actions] [text] DEFAULT ('') NOT NULL ,
+	[mod_languages] [varchar] (255) DEFAULT ('') NOT NULL ,
+	[mod_templates] [varchar] (255) DEFAULT ('') NOT NULL 
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 
