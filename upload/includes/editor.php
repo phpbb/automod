@@ -75,7 +75,7 @@ class io
 
 		if (!is_dir("$this->root$sub_dirs/"))
 		{
-			$this->create_dir("$sub_dirs/", 0666); // what perms we want here? also set recurrsively, last arg (work in php < 5?)?
+			$this->create_dir("$sub_dirs/", 0666);
 		}
 
 		if (!is_writable("$this->root$sub_dirs/"))
@@ -84,6 +84,15 @@ class io
 			if (!is_writable("$this->root$sub_dirs/"))
 			{
 				return false;
+			}
+		}
+
+		if (!is_writable("$this->root$filename"))
+		{
+			@chmod("$this->root$filename", 0666);
+			if (!is_writable("$this->root$filename"))
+			{
+//				return false;
 			}
 		}
 
@@ -96,7 +105,7 @@ class io
 			if ($fp = @fopen("$this->root$filename", 'wb'))
 			{
 				@flock($fp, LOCK_EX);
-				@fwrite ($fp, trim($content));
+				@fwrite($fp, trim($content));
 				@flock($fp, LOCK_UN);
 				@fclose($fp);
 
@@ -151,7 +160,7 @@ class io
 	{
 		unset($this->data[$filename]);
 	}
-	
+
 	/**
 	* Creates a folder (recursive, if root folder is not there)
 	*/
@@ -188,7 +197,7 @@ class io
 			@unlink($target);
 			return;
 		}
-		
+
 		$dir = $target;
 		$dir = preg_replace('#(/){2,}|(\\\)+#', '/', $dir); // only forward-slash (php.net)
 

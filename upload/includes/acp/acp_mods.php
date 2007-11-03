@@ -110,7 +110,12 @@ class acp_mods
 		global $phpbb_root_path, $db, $template;
 
 		// get available MOD paths
-		$available_mods = $this->find_mods("{$phpbb_root_path}store/mods");
+		$available_mods = $this->find_mods("{$phpbb_root_path}store/mods", 1);
+
+		if (!sizeof($available_mods['main']))
+		{
+			return;
+		}
 
 		// get installed MOD paths
 		$installed_paths = array();
@@ -130,7 +135,7 @@ class acp_mods
 		// show only available MODs that paths aren't in the DB
 		foreach ($available_mods as $file)
 		{
-			$details = $this->mod_details($file);
+			$details = $this->mod_details($file, false);
 
 			$template->assign_block_vars('uninstalled', array(
 				'MOD_NAME'	=> $details['MOD_NAME'],
@@ -156,7 +161,7 @@ class acp_mods
 			'U_BACK'	=> $this->u_action
 		));				
 
-		$details = $this->mod_details($mod_ident);
+		$details = $this->mod_details($mod_ident, true);
 
 		if (!empty($details['AUTHOR_DETAILS']))
 		{
@@ -206,7 +211,7 @@ class acp_mods
 	/**
 	* Returns array of mod information
 	*/
-	function mod_details($mod_ident)
+	function mod_details($mod_ident, $find_children = true)
 	{
 		global $phpbb_root_path, $phpEx;
 
@@ -236,6 +241,11 @@ class acp_mods
 					'AUTHOR_EMAIL'	=> $row['mod_author_email'],
 					'AUTHOR_URL'	=> $row['mod_author_url']
 				);
+
+				if ($find_children)
+				{
+					$this->find_children($row['mod_path'], false, 'details');
+				}
 			}
 			else
 			{
@@ -256,6 +266,11 @@ class acp_mods
 			$parser->set_file($mod_path);
 
 			$details = $parser->get_details();
+
+			if ($find_children)
+			{
+				$this->find_children($mod_path, false, 'details');
+			}
 
 			unset($parser);
 		}
@@ -323,7 +338,7 @@ class acp_mods
 		}
 		
 		$actions = $this->mod_actions($mod_path);
-		$details = $this->mod_details($mod_path);
+		$details = $this->mod_details($mod_path, false);
 
 		// check for "child" MODX files and attempt to decide which ones we need
 		$actions = $this->find_children($mod_path, $actions, 'pre_install');
@@ -515,7 +530,7 @@ class acp_mods
 		// check for "child" MODX files and attempt to decide which ones we need
 		$actions = $this->find_children($mod_path, $actions, 'install');
 
-		$details = $this->mod_details($mod_path);
+		$details = $this->mod_details($mod_path, false);
 
 		// Insert database data
 		$sql = 'INSERT INTO ' . MODS_TABLE . ' ' . $db->sql_build_array('INSERT', array(
@@ -555,7 +570,7 @@ class acp_mods
 		$dependenices = $details['MOD_DEPENDENCIES'];
 		$mod_phpbb_id = (!empty($details['PHPBB_ID'])) ? $details['PHPBB_ID'] : $mod_id;
 
-		// preform file edits
+		// perform file edits
 		if (isset($actions['EDITS']) && !empty($actions['EDITS'])) // this is some beefy looping
 		{
 			$template->assign_var('S_EDITS', true);
@@ -585,12 +600,13 @@ class acp_mods
 					foreach ($finds as $string => $commands)
 					{
 						$template->assign_block_vars('edit_files.finds', array(
-							'FIND_STRING'	=> $string,
+							'FIND_STRING'	=> htmlspecialchars($string),
 						));
 
 						foreach ($commands as $type => $contents)
 						{
 							$status = false;
+							$inline_template_ary = array();
 							$contents_orig = $contents;
 
 							switch (strtoupper($type)) // LANG!
@@ -637,13 +653,18 @@ class acp_mods
 												break;
 
 												case 'IN-LINE-REPLACE':
-													$status = $editor->replace_string($filename, $inline_find, $contents, $line['start'], $line['end']);
+													$status = $editor->replace_string($filename, $inline_find, $inline_contents, $line['start'], $line['end']);
 												break;
 
 												default:
 													die("Error, unrecognised command $type"); // ERROR!
 												break;
 											}
+
+											$inline_template_ary[] = array(
+												'NAME'		=> $inline_action, // LANG!
+												'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
+											);
 										}
 									}
 								break;
@@ -657,8 +678,18 @@ class acp_mods
 								'S_SUCCESS'	=> $status,
 
 								'NAME'		=> $type, // LANG!
-								'COMMAND'	=> htmlspecialchars($contents_orig),
+								'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
 							));
+
+							// since these vars must be assigned after the parent block or else things break
+							if (sizeof($inline_template_ary))
+							{
+								foreach ($inline_template_ary as $inline_template)
+								{
+									$template->assign_block_vars('edit_files.finds.actions.inline', $inline_template);
+								}
+								$inline_template_ary = array();
+							}
 						}
 					}
 
@@ -777,7 +808,7 @@ class acp_mods
 		));
 
 		$actions = $this->mod_actions($mod_id);
-		$details = $this->mod_details($mod_id);
+		$details = $this->mod_details($mod_id, false);
 
 		include($phpbb_root_path . 'includes/editor.' . $phpEx);
 		$editor = new editor($phpbb_root_path);
@@ -913,7 +944,7 @@ class acp_mods
 										{
 											$template->assign_block_vars('edit_files.finds.actions', array(
 												'NAME'		=> $inline_action, // LANG!
-												'COMMAND'	=> (is_array($inline_command)) ? htmlspecialchars(implode('<br />', $inline_command)) : htmlspecialchars($inline_command),
+												'COMMAND'	=> (is_array($inline_command)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_command),
 											));
 										}
 									}
@@ -921,12 +952,11 @@ class acp_mods
 							}
 							else
 							{
-							
 								foreach ($action as $name => $command)
 								{
 									$template->assign_block_vars('edit_files.finds.actions', array(
 										'NAME'		=> $name, // LANG!
-										'COMMAND'	=> (is_array($command)) ? htmlspecialchars(implode('<br />', $command)) : htmlspecialchars($command),
+										'COMMAND'	=> (is_array($command)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($command),
 									));
 								}
 							}
@@ -992,7 +1022,7 @@ class acp_mods
 			}
 		}
 	}
-		
+
 	/**
 	* Uninstall a mod
 	*/
@@ -1019,7 +1049,7 @@ class acp_mods
 		));
 
 		$actions = $this->mod_actions($mod_id);
-		$details = $this->mod_details($mod_id);
+		$details = $this->mod_details($mod_id, false);
 
 		if (!empty($details['AUTHOR_NOTES']))
 		{
@@ -1057,7 +1087,7 @@ class acp_mods
 				}
 			}
 		}
-		
+
 		// reverse SQL
 		if (isset($actions['SQL']) && !empty($actions['SQL']))
 		{
@@ -1106,20 +1136,30 @@ class acp_mods
 
 	/**
 	* Returns array of available mod install files in dir (Recursive)
+	* @param $dir string - 
+	* @param $recurse int - number of levels to recurse 
 	*/
-	function find_mods($dir)
+	function find_mods($dir, $recurse = false)
 	{
-		static $mods = array();
+		if ($recurse === false)
+		{
+			$mods = array();
+			$recurse = 0;
+		}
+		else
+		{
+			static $mods = array();
+		}
 
 		$dp = opendir($dir);
 		while (($file = readdir($dp)) !== false)
 		{
-			if ($file{0} != '.')
+			if ($file[0] != '.' && $file != 'CVS' && strpos("$dir/$file", '_edited') === false)
 			{
 				// recurse - we don't want anything within the MODX "root" though
-				if (is_dir("$dir/$file") && $file != 'root/')
+				if ($recurse && is_dir("$dir/$file") && strpos("$dir/$file", 'root') === false)
 				{
-					$mods = array_merge($mods, $this->find_mods("$dir/$file"));
+					$mods = array_merge($mods, $this->find_mods("$dir/$file", $recurse - 1));
 				}
 				// this might be better as an str function, especially being in a loop
 				else if (preg_match('#xml$#i', $file))
@@ -1137,6 +1177,7 @@ class acp_mods
 				}
 			}
 		}
+		closedir($dp);
 
 		return $mods;
 	}
@@ -1261,16 +1302,32 @@ class acp_mods
 		//return $sql_query;
 	}
 
+	/**
+	* Search on the file system for other .xml files that belong to this MOD
+	* This method currently takes three parameters.
+	* @param string $mod_path - path to the "main" MODX file, relative to phpBB Root
+	* @param array $actions - the current actions this MOD is using. 
+	*  -- Run through array_merge_recursive() to produce a final array after all calls to this method
+	*  @param string $action - 'pre_install' || 'install' || 'details'
+	*/
 	function find_children($mod_path, $actions, $action)
 	{
-		global $db, $template, $parser;
+		global $db, $template;
 
-		$children = $this->find_mods(dirname($mod_path));
+		$children = $this->find_mods(dirname($mod_path), 2);
 
-		if (sizeof($children['contrib']))
+		if (sizeof($children['contrib']) && $action == 'details')
 		{
-			// there are things like upgrades...we probably don't care. 
-			// this assumption may need to be revisited, therefore this comment
+			$template->assign_var('S_CONTRIB_AVAILABLE', true);
+
+			// there are things like upgrades...we don't care unless the MOD has previously been installed. 
+			foreach ($children['contrib'] as $xml_file)
+			{
+				$child_details = $this->mod_details($xml_file, false);
+				$child_details['U_INSTALL'] = $this->u_action . '&amp;action=install&amp;mod_path=' . $xml_file;
+
+				$template->assign_block_vars('contrib', $child_details);
+			}
 		}
 
 		if (sizeof($children['languages']))
@@ -1296,9 +1353,10 @@ class acp_mods
 			$unknown_languages = array_diff($installed_languages, $available_languages);
 
 			// these are langauges which are installed, but not provided for by the MOD
-			if (sizeof($unknown_languages) && $action == 'pre_install')
+			if (sizeof($unknown_languages) && ($action == 'pre_install' || $action == 'details'))
 			{
-				$template->assign_var('UNKNOWN_LANGUAGES', true);
+				// may wish to rename away from "unknown" for our details mode
+				$template->assign_var('S_UNKNOWN_LANGUAGES', true);
 
 				// get full names from the DB
 				$sql = 'SELECT lang_english, lang_local FROM ' . LANG_TABLE . '
@@ -1315,9 +1373,9 @@ class acp_mods
 				}
 			}
 
-			if (sizeof($process_languages) && (!defined('DEBUG') || !isset($_GET['full_details']) || $action == 'install'))
+			if (sizeof($process_languages) && (defined('DEBUG') || isset($_GET['full_details']) || $action == 'install'))
 			{
-				// add the actions to our $actions array...somehow
+				// add the actions to our $actions array...give praise to array_merge_recursive
 				foreach ($process_languages as $key => $void)
 				{
 					$actions = array_merge_recursive($actions, $this->mod_actions($children['languages'][$key]));
@@ -1329,7 +1387,6 @@ class acp_mods
 		{
 			// additional styles are available for this MOD
 
-			// NOTE: Need to somehow exclude prosilver
 			$sql = 'SELECT template_id, template_name FROM ' . STYLES_TEMPLATE_TABLE;
 			$result = $db->sql_query($sql);
 
@@ -1341,12 +1398,14 @@ class acp_mods
 
 			// We _must_ have language xml files that are named like "subSilver2.xml" for this to work
 			$available_templates = array_map('core_basename', $children['templates']);
+
+			// $process_templates are those that are installed on the board and provided for by the MOD
 			$process_templates = array_intersect($available_templates, $installed_templates);
 
 			// $unknown_templates are installed on the board, but not provied for by the MOD
-			$unknown_templates = array_diff($installed_templates, $available_templates);
+			$unknown_templates = array_diff($available_templates, $installed_templates);
 
-			if (sizeof($unknown_templates) && $action == 'pre_install')
+			if (sizeof($unknown_templates) && ($action == 'pre_install' || $action == 'details'))
 			{
 				// prompt the user
 				// consider Nuttzy-like behavior (attempt to apply another xml file to a template)
@@ -1360,7 +1419,7 @@ class acp_mods
 				}
 			}
 
-			if (sizeof($process_templates) && (!defined('DEBUG') || !isset($_GET['full_details']) || $action == 'install'))
+			if (sizeof($process_templates) && (defined('DEBUG') || isset($_GET['full_details']) || $action == 'install'))
 			{
 				// add the template actions to our $actions array...
 				foreach ($process_templates as $key => $void)
@@ -1374,6 +1433,11 @@ class acp_mods
 	}
 }
 
+/**
+* Helper function 
+* Runs basename() on $path, then trims the extension from it
+* @param string $path - path to be basenamed
+*/
 function core_basename($path)
 {
 	$path = basename($path);
