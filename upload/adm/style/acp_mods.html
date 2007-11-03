@@ -85,10 +85,52 @@
 		</dl>
 	</fieldset>
 
+	<fieldset>
+		<legend>{L_AUTHOR_INFORMATION}</legend>
+		<!-- BEGIN author_list -->
+		<dl>
+			<dt><label for="author_name">{L_AUTHOR_NAME}:</label></dt>
+			<dd><b id="author_name">{author_list.AUTHOR_NAME}</b></dd>
+		</dl>
+		<dl>
+			<dt><label for="author_email">{L_AUTHOR_EMAIL}:</label></dt>
+			<dd><b id="author_email"><a href="mailto:{author_list.AUTHOR_EMAIL}">{author_list.AUTHOR_EMAIL}</a></b></dd>
+		</dl>
+		<dl>
+			<dt><label for="author_url">{L_AUTHOR_URL}:</label></dt>
+			<dd><b id="author_url">{author_list.AUTHOR_WEBSITE}</b></dd>
+		</dl>
+		<!-- END author_list -->
+	</fieldset>
+
 	<!-- IF S_AUTHOR_NOTES -->
 	<fieldset>
 		<legend>{L_AUTHOR_NOTES}</legend>
 		{AUTHOR_NOTES}
+	</fieldset>
+	<!-- ENDIF -->
+
+	<!-- IF S_CONTRIB_AVAILABLE or S_UNKNOWN_LANGUAGES or S_UNKNOWN_TEMPLATES -->
+	<fieldset>
+		<legend>{L_ADDITIONAL_CHANGES}</legend>
+		<!-- BEGIN contrib -->
+		<dl>
+			<dt><label>{L_MOD_NAME}:</label></dt>
+			<dd><b>{contrib.MOD_NAME}</b> (<a href="{contrib.U_INSTALL}">{L_INSTALL_MOD}</a>)</dd>
+		</dl>
+		<!-- END contrib -->
+		<!-- BEGIN unknown_templates -->
+		<dl>
+			<dt><label>{L_STYLE_NAME}:</label></dt>
+			<dd><b>{unknown_templates.TEMPLATE_NAME}</b> (<a href="{contrib.U_INSTALL}">{L_INSTALL_MOD}</a>)</dd>
+		</dl>
+		<!-- END unknown_templates -->
+		<!-- BEGIN unknown_lang -->
+		<dl>
+			<dt><label>{L_LANGUAGE_NAME}:</label></dt>
+			<dd><b>{unknown_lang.LANGUAGE_NAME}</b> (<a href="{contrib.U_INSTALL}">{L_INSTALL_MOD}</a>)</dd>
+		</dl>
+		<!-- END unknown_lang -->
 	</fieldset>
 	<!-- ENDIF -->
 
@@ -117,24 +159,6 @@
 		<!-- END changelog -->
 	</fieldset>
 	<!-- ENDIF -->
-
-	<fieldset>
-		<legend>{L_AUTHOR_INFORMATION}</legend>
-		<!-- BEGIN author_list -->
-		<dl>
-			<dt><label for="author_name">{L_AUTHOR_NAME}:</label></dt>
-			<dd><b id="author_name">{author_list.AUTHOR_NAME}</b></dd>
-		</dl>
-		<dl>
-			<dt><label for="author_email">{L_AUTHOR_EMAIL}:</label></dt>
-			<dd><b id="author_email"><a href="mailto:{author_list.AUTHOR_EMAIL}">{author_list.AUTHOR_EMAIL}</a></b></dd>
-		</dl>
-		<dl>
-			<dt><label for="author_url">{L_AUTHOR_URL}:</label></dt>
-			<dd><b id="author_url">{author_list.AUTHOR_WEBSITE}</b></dd>
-		</dl>
-		<!-- END author_list -->
-	</fieldset>
 	
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
 
@@ -217,6 +241,12 @@
 							<fieldset>
 								<legend>{edit_files.finds.actions.NAME}</legend>
 								<pre>{edit_files.finds.actions.COMMAND}</pre>
+								<!-- BEGIN inline -->
+									<fieldset>
+										<legend>{edit_files.finds.actions.inline.NAME}</legend>
+										<pre>{edit_files.finds.actions.inline.COMMAND}</pre>
+									</fieldset>
+								<!-- END inline -->
 							</fieldset>
 						<!-- END actions -->
 					</fieldset>
@@ -316,6 +346,12 @@
 							<fieldset>
 								<legend>{edit_files.finds.actions.NAME}</legend>
 								<pre>{edit_files.finds.actions.COMMAND}</pre>
+								<!-- BEGIN inline -->
+									<fieldset>
+										<legend>{edit_files.finds.actions.inline.NAME}</legend>
+										<pre>{edit_files.finds.actions.inline.COMMAND}</pre>
+									</fieldset>
+								<!-- END inline -->
 							</fieldset>
 							<!-- IF edit_files.finds.actions.S_SUCCESS --><font color="green">{L_SUCCESS}</font><!-- ELSE --><font color="red">{L_ERROR}</font><!-- ENDIF -->
 						<!-- END actions -->
