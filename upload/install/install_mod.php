@@ -207,27 +207,10 @@ class install_mod extends module
 		$available_dbms = $available_dbms[$dbms];
 
 		// this is borrowed from the main phpBB installer, credit to the core phpBB Developers
-		// If mysql is chosen, we need to adjust the schema filename slightly to reflect the correct version. ;)
-		if ($install_dbms == 'mysqli')
-		{
-			$install_dbms = 'mysql';
-		}
-
-		if ($install_dbms == 'mysql')
-		{
-			if (version_compare($db->mysql_version, '4.1.3', '>='))
-			{
-				$db_schema = $install_dbms . '_41';
-			}
-			else
-			{
-				$db_schema = $install_dbms . '_40';
-			}
-		}
 
 		// Ok we have the db info go ahead and read in the relevant schema
 		// and work on building the table
-		$dbms_schema = 'schemas/pacman/' . $db_schema . '_schema.sql';
+		$dbms_schema = 'schemas/mods_manager/' .  $available_dbms['SCHEMA'] . '_schema.sql';
 
 		// How should we treat this schema?
 		$remove_remarks = $available_dbms['COMMENTS'];
