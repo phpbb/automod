@@ -17,7 +17,8 @@ CREATE TABLE phpbb_mods (
 	mod_author_url blob NOT NULL,
 	mod_actions mediumblob NOT NULL,
 	mod_languages blob NOT NULL,
-	mod_templates blob NOT NULL,
+	mod_styles blob NOT NULL,
+	mod_path blob NOT NULL,
 	PRIMARY KEY (mod_id)
 );
 

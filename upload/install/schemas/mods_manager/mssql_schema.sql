@@ -24,7 +24,8 @@ CREATE TABLE [phpbb_mods] (
 	[mod_author_url] [varchar] (100) DEFAULT ('') NOT NULL ,
 	[mod_actions] [text] DEFAULT ('') NOT NULL ,
 	[mod_languages] [varchar] (255) DEFAULT ('') NOT NULL ,
-	[mod_templates] [varchar] (255) DEFAULT ('') NOT NULL 
+	[mod_styles] [varchar] (255) DEFAULT ('') NOT NULL ,
+	[mod_path] [varchar] (255) DEFAULT ('') NOT NULL 
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 
