@@ -30,7 +30,7 @@ if (empty($lang) || !is_array($lang))
 
 
 $lang = array_merge($lang, array(
-	'ADDITIONAL_CHANGES'	=> 'Available Changes'
+	'ADDITIONAL_CHANGES'	=> 'Available Changes',
 	'AUTHOR_EMAIL'			=> 'Author Email',
 	'AUTHOR_INFORMATION'	=> 'Author Information',
 	'AUTHOR_NAME'			=> 'Author Name',

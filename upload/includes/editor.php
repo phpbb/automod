@@ -30,6 +30,13 @@ class io
 	function io($root)
 	{
 		$this->root = $root;
+
+		if (!class_exists('transfer'))
+		{
+			global $phpbb_root_path, $phpEx;
+			include("{$phpbb_root_path}includes/functions_transfer.$phpEx");
+		}
+
 		$this->transfer = new transfer();
 	}
 
@@ -274,7 +281,7 @@ class editor extends io
 
 		return true;
 	}
-	
+
 	/**
 	* Open a file with IO, for processing
 	*/
