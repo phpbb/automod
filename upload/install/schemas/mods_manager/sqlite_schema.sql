@@ -19,7 +19,8 @@ CREATE TABLE phpbb_mods (
 	mod_author_url text(65535) NOT NULL DEFAULT '',
 	mod_actions mediumtext(16777215) NOT NULL DEFAULT '',
 	mod_languages text(65535) NOT NULL DEFAULT '',
-	mod_templates text(65535) NOT NULL DEFAULT ''
+	mod_styles text(65535) NOT NULL DEFAULT '',
+	mod_path text(65535) NOT NULL DEFAULT ''
 );
 
 

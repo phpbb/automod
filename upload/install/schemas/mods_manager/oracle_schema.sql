@@ -58,7 +58,8 @@ CREATE TABLE phpbb_mods (
 	mod_author_url varchar2(300) DEFAULT '' ,
 	mod_actions clob DEFAULT '' ,
 	mod_languages varchar2(765) DEFAULT '' ,
-	mod_templates varchar2(765) DEFAULT '' ,
+	mod_styles varchar2(765) DEFAULT '' ,
+	mod_path varchar2(765) DEFAULT '' ,
 	CONSTRAINT pk_phpbb_mods PRIMARY KEY (mod_id)
 )
 /

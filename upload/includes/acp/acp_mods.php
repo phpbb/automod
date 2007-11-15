@@ -547,8 +547,8 @@ class acp_mods
 			'mod_author_email'	=> (string) $details['AUTHOR_EMAIL'],
 			'mod_author_url'	=> (string) $details['AUTHOR_URL'],
 			'mod_actions'		=> (string) serialize($actions),
-			'mod_languages'		=> implode(',', $elements['languages'],
-			'mod_styles'		=> implode(',', $elements['templates'],
+			'mod_languages'		=> (string) implode(',', $elements['languages']),
+			'mod_styles'		=> (string) implode(',', $elements['templates']),
 		));
 		$db->sql_query($sql);
 
@@ -1144,12 +1144,12 @@ class acp_mods
 	{
 		if ($recurse === false)
 		{
-			$mods = array();
+			$mods = array('main' => array(), 'contrib' => array(), 'templates' => array(), 'languages' => array());
 			$recurse = 0;
 		}
 		else
 		{
-			static $mods = array();
+			static $mods = array('main' => array(), 'contrib' => array(), 'templates' => array(), 'languages' => array());
 		}
 
 		$dp = opendir($dir);
