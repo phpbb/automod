@@ -5,26 +5,20 @@
 <!-- IF BODY --><p>{BODY}</p><!-- ENDIF -->
 
 <!-- IF S_REQUIREMENTS -->
-	<p>Requirements will be listed here with yes and no. Not checking for these at this point</p>
+	<p>Requirements will be listed here with yes and no. Not checking for these at this point.</p>
 <!-- ENDIF -->
 
 <!-- IF S_FILE_EDITS -->
-	<p>Only adding the constant for the table. Include here or within a different file so that we don't have to edit anything when installing?</p>
-	
-	<p><strong>FIND:</strong></p>
-	<pre>// Additional tables</pre>
-	
-	<p><strong>AFTER, ADD:</strong></p>
-	<pre>define('MODS_TABLE',			$table_prefix . 'mods');</pre>
+	<p>The installer is editing your files.  This message is probably temporary.</p>
 <!-- ENDIF -->
 
 <!-- IF S_CREATE_TABLES -->
-	<p>The SQL queries have been preformed. If you didn't get an error, then they were done successfully I hope.</p>
+	<p>The SQL queries have been performed. If you didn't get an error, then they were done successfully I hope.</p>
 <!-- ENDIF -->
 
 <!-- IF S_ADVANCE -->
 	<fieldset>
-		<legend>role</legend>
+		<legend>{L_ROLE}</legend>
 		<dl>
 			<dt><label for="role_id">{L_ROLE}</label></dt>
 			<dd><select id="role_id" name="role_id">{S_ROLE_OPTIONS}</select></dd>

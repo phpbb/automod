@@ -244,7 +244,8 @@ class acp_mods
 
 				if ($find_children)
 				{
-					$this->find_children($row['mod_path'], false, 'details');
+					$actions = false;
+					$this->find_children($row['mod_path'], $actions, 'details');
 				}
 			}
 			else
@@ -269,7 +270,8 @@ class acp_mods
 
 			if ($find_children)
 			{
-				$this->find_children($mod_path, false, 'details');
+				$actions = false;
+				$this->find_children($mod_path, $actions, 'details');
 			}
 
 			unset($parser);
@@ -341,7 +343,7 @@ class acp_mods
 		$details = $this->mod_details($mod_path, false);
 
 		// check for "child" MODX files and attempt to decide which ones we need
-		$actions = $this->find_children($mod_path, $actions, 'pre_install');
+		$elements = $this->find_children($mod_path, $actions, 'pre_install');
 
 		include($phpbb_root_path . 'includes/editor.' . $phpEx);
 		$editor = new editor($phpbb_root_path);
@@ -528,7 +530,7 @@ class acp_mods
 
 		$actions = $this->mod_actions($mod_path);
 		// check for "child" MODX files and attempt to decide which ones we need
-		$actions = $this->find_children($mod_path, $actions, 'install');
+		$elements = $this->find_children($mod_path, $actions, 'install');
 
 		$details = $this->mod_details($mod_path, false);
 
@@ -545,9 +547,8 @@ class acp_mods
 			'mod_author_email'	=> (string) $details['AUTHOR_EMAIL'],
 			'mod_author_url'	=> (string) $details['AUTHOR_URL'],
 			'mod_actions'		=> (string) serialize($actions),
-			// TODO: Utilize these columns
-			'mod_languages'		=> '',
-			'mod_styles'		=> '',
+			'mod_languages'		=> implode(',', $elements['languages'],
+			'mod_styles'		=> implode(',', $elements['templates'],
 		));
 		$db->sql_query($sql);
 
@@ -1267,7 +1268,7 @@ class acp_mods
 
 		return $reverse_edits;
 	}
-	
+
 	/**
 	 * Parse sql
 	 *
@@ -1306,14 +1307,15 @@ class acp_mods
 	* Search on the file system for other .xml files that belong to this MOD
 	* This method currently takes three parameters.
 	* @param string $mod_path - path to the "main" MODX file, relative to phpBB Root
-	* @param array $actions - the current actions this MOD is using. 
+	* @param array &$actions - the current actions this MOD is using. 
 	*  -- Run through array_merge_recursive() to produce a final array after all calls to this method
 	*  @param string $action - 'pre_install' || 'install' || 'details'
 	*/
-	function find_children($mod_path, $actions, $action)
+	function find_children($mod_path, &$actions, $action)
 	{
 		global $db, $template;
 
+		$elements = array();
 		$children = $this->find_mods(dirname($mod_path), 2);
 
 		if (sizeof($children['contrib']) && $action == 'details')
@@ -1347,7 +1349,7 @@ class acp_mods
 			// We _must_ have language xml files that are named "nl.xml" or "en-US.xml" for this to work
 			// it appears that the MODX packaging standards call for this anyway
 			$available_languages = array_map('core_basename', $children['languages']);
-			$process_languages = array_intersect($available_languages, $installed_languages);
+			$process_languages = $elements['templates'] = array_intersect($available_languages, $installed_languages);
 
 			// $unknown_languages are installed on the board, but not provied for by the MOD
 			$unknown_languages = array_diff($installed_languages, $available_languages);
@@ -1400,7 +1402,7 @@ class acp_mods
 			$available_templates = array_map('core_basename', $children['templates']);
 
 			// $process_templates are those that are installed on the board and provided for by the MOD
-			$process_templates = array_intersect($available_templates, $installed_templates);
+			$process_templates = $elements['languages'] = array_intersect($available_templates, $installed_templates);
 
 			// $unknown_templates are installed on the board, but not provied for by the MOD
 			$unknown_templates = array_diff($available_templates, $installed_templates);
@@ -1429,7 +1431,7 @@ class acp_mods
 			}
 		}
 
-		return $actions;
+		return $elements;
 	}
 }
 
