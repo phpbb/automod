@@ -102,7 +102,7 @@ class parser_xml
 		$version = (isset($version_info['MAJOR'][0]['data'])) ? trim($version_info['MAJOR'][0]['data']) : 0;
 		$version .= '.' . ((isset($version_info['MINOR'][0]['data'])) ? trim($version_info['MINOR'][0]['data']) : 0);
 		$version .= '.' . ((isset($version_info['REVISION'][0]['data'])) ? trim($version_info['REVISION'][0]['data']) : 0);
-		$version .= (isset($version_info['RELEASE'][0]['data'])) ? $version_info['RELEASE'][0]['data'] : '';
+		$version .= (isset($version_info['RELEASE'][0]['data'])) ? trim($version_info['RELEASE'][0]['data']) : '';
 
 		// get phpBB version recommendation
 		$phpbb_version = $header['INSTALLATION'][0]['children']['TARGET-VERSION'][0]['children'];
@@ -140,7 +140,7 @@ class parser_xml
 			$changelog_version = (isset($changelog_version_ary['MAJOR'][0]['data'])) ? trim($changelog_version_ary['MAJOR'][0]['data']) : 0;
 			$changelog_version .= '.' . ((isset($changelog_version_ary['MINOR'][0]['data'])) ? trim($changelog_version_ary['MINOR'][0]['data']) : 0);
 			$changelog_version .= '.' . ((isset($changelog_version_ary['REVISION'][0]['data'])) ? trim($changelog_version_ary['REVISION'][0]['data']) : 0);
-			$changelog_version .= (isset($changelog_version_ary['RELEASE'][0]['data'])) ? $changelog_version_ary['RELEASE'][0]['data'] : '';
+			$changelog_version .= (isset($changelog_version_ary['RELEASE'][0]['data'])) ? trim($changelog_version_ary['RELEASE'][0]['data']) : '';
 
 			$mod_history[] = array(
 				'DATE'		=> $entry['DATE'][0]['data'],

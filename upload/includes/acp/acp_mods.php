@@ -213,7 +213,7 @@ class acp_mods
 	*/
 	function mod_details($mod_ident, $find_children = true)
 	{
-		global $phpbb_root_path, $phpEx;
+		global $phpbb_root_path, $phpEx, $user;
 
 		if (is_int($mod_ident))
 		{
@@ -230,7 +230,7 @@ class acp_mods
 				$details = array(
 					'MOD_ID'			=> $row['mod_id'],
 					'MOD_PATH'			=> $row['mod_path'],
-					'MOD_INSTALL_TIME'	=> $row['mod_time'],
+					'MOD_INSTALL_TIME'	=> $user->format_date($row['mod_time']),
 					'MOD_DEPENDENCIES'	=> unserialize($row['mod_dependencies']), // ?
 					'MOD_NAME'			=> htmlspecialchars($row['mod_name']),
 					'MOD_DESCRIPTION'	=> htmlspecialchars($row['mod_description']),
@@ -432,7 +432,7 @@ class acp_mods
 					$template->assign_block_vars('edit_files', array(
 						'S_MISSING_FILE' => true,
 						
-						'FILENAME'	=> $file
+						'FILENAME'	=> $file,
 					));
 				}
 				else
@@ -443,19 +443,11 @@ class acp_mods
 				
 					$editor->open_file($file);
 
-					$editor->fold_edits($file, $dependenices);
-			
 					foreach ($finds as $find => $action)
 					{
-						if (!$editor->check_find($file, $find))
-						{
-							$template->assign_block_vars('edit_files.finds', array(
-								'S_MISSING_FIND'	=> true,
+						$find_location = $editor->find($find);
 
-								'FIND_STRING'		=> htmlspecialchars($find)
-							));
-						}
-						else
+						if ($find_location)
 						{
 							$template->assign_block_vars('edit_files.finds', array(
 								'FIND_STRING'	=> htmlspecialchars($find)
@@ -471,15 +463,9 @@ class acp_mods
 										'COMMAND'	=> (is_array($inline_find)) ? htmlspecialchars(implode('<br />', $inline_find)) : htmlspecialchars($inline_find),
 									));
 
-									if (!$editor->check_find($file, $inline_find))
-									{
-										$template->assign_block_vars('edit_files.finds', array(
-											'S_MISSING_FIND'	=> true,
+									$inline_find_location = $editor->inline_find($find, $inline_find, $find_location['start'], $find_location['end']);
 
-											'FIND_STRING'		=> htmlspecialchars($inline_find)
-										));
-									}
-									else
+									if ($inline_find_location)
 									{
 										foreach ($inline_action_ary as $inline_action => $inline_command)
 										{
@@ -488,6 +474,15 @@ class acp_mods
 												'COMMAND'	=> (is_array($inline_command)) ? htmlspecialchars(implode('<br />', $inline_command)) : htmlspecialchars($inline_command),
 											));
 										}
+
+									}
+									else
+									{
+										$template->assign_block_vars('edit_files.finds', array(
+											'S_MISSING_FIND'	=> true,
+
+											'FIND_STRING'		=> htmlspecialchars($inline_find)
+										));
 									}
 								}
 							}
@@ -502,9 +497,15 @@ class acp_mods
 								}
 							}
 						}
+						else
+						{
+							$template->assign_block_vars('edit_files.finds', array(
+								'S_MISSING_FIND'	=> true,
+
+								'FIND_STRING'		=> htmlspecialchars($find)
+							));
+						}
 					}
-					
-					$editor->unfold_edits($file, $dependenices);
 
 					$editor->close_file($file);
 				}
@@ -547,14 +548,14 @@ class acp_mods
 			'mod_author_email'	=> (string) $details['AUTHOR_EMAIL'],
 			'mod_author_url'	=> (string) $details['AUTHOR_URL'],
 			'mod_actions'		=> (string) serialize($actions),
-			'mod_languages'		=> (string) implode(',', $elements['languages']),
-			'mod_styles'		=> (string) implode(',', $elements['templates']),
+			'mod_languages'		=> (string) (sizeof($elements['languages'])) ? implode(',', $elements['languages']) : '',
+			'mod_templates'		=> (string) (sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
 		));
-		$db->sql_query($sql);
+//		$db->sql_query($sql);
 
 		// get mod id
 		$mod_id = $db->sql_nextid();
-		
+
 		include($phpbb_root_path . 'includes/editor.' . $phpEx);
 		$editor = new editor($phpbb_root_path);
 
@@ -591,14 +592,12 @@ class acp_mods
 					$template->assign_block_vars('edit_files', array(
 						'FILENAME'	=> $filename,
 					));
-			
+
 					$file_ext = substr(strrchr($filename, '.'), 1);
 					
 					$editor->open_file($filename);
 
-					$editor->fold_edits($filename, $dependenices);
-				
-					foreach ($finds as $string => $commands)
+					foreach ($finds as $find => $commands)
 					{
 						$template->assign_block_vars('edit_files.finds', array(
 							'FIND_STRING'	=> htmlspecialchars($string),
@@ -613,31 +612,33 @@ class acp_mods
 							switch (strtoupper($type)) // LANG!
 							{
 								case 'AFTER ADD':
-									$contents = $editor->add_anchor($contents, $file_ext, $mod_phpbb_id);
-									$status = $editor->add_string($filename, $string, $contents, 'AFTER');
+									$status = $editor->add_string($find, $contents, 'AFTER');
 								break;
-								
+
 								case 'BEFORE ADD':
-									$contents = $editor->add_anchor($contents, $file_ext, $mod_phpbb_id);
-									$status = $editor->add_string($filename, $string, $contents, 'BEFORE', false);
+									$status = $editor->add_string($find, $contents, 'BEFORE');
 								break;
 
 								case 'INCREMENT':
 									//$contents = "";
-									$status = $editor->inc_string($filename, $string, $contents);
+									$status = $editor->inc_string($filename, $find, $contents);
 								break;
 
 								case 'REPLACE WITH':
-									//$contents = $editor->add_wrap($string, $file_ext, $mod_phpbb_id) . "\n{$contents}";
-									$contents = $editor->add_anchor($contents, $file_ext, $mod_phpbb_id);
-									$status = $editor->replace_string($filename, $string, $contents);
+									$status = $editor->replace_string($find, $contents);
 								break;
 
 								case 'IN-LINE-EDIT':
 									// these aren't quite as straight forward.  Still have multi-level arrays to sort through
 									foreach ($contents as $inline_find => $inline_edit)
 									{
-										$line = $editor->check_find($filename, $inline_find, true);
+										$line = $editor->inline_find($find, $inline_find);
+
+										if (!$line)
+										{
+											// find failed
+											continue;
+										}
 
 										foreach ($inline_edit as $inline_action => $inline_contents)
 										{
@@ -646,15 +647,15 @@ class acp_mods
 											switch (strtoupper($inline_action))
 											{
 												case 'IN-LINE-BEFORE-ADD':
-													$status = $editor->add_string($filename, $inline_find, $inline_contents, 'BEFORE', true, $line['start'], $line['end']);
+													$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
 												break;
 
 												case 'IN-LINE-AFTER-ADD':
-													$status = $editor->add_string($filename, $inline_find, $inline_contents, 'AFTER', true, $line['start'], $line['end']);
+													$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
 												break;
 
 												case 'IN-LINE-REPLACE':
-													$status = $editor->replace_string($filename, $inline_find, $inline_contents, $line['start'], $line['end']);
+													$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
 												break;
 
 												default:
@@ -694,9 +695,7 @@ class acp_mods
 						}
 					}
 
-					$editor->unfold_edits($filename, $dependenices);
-
-					$editor->close_file($filename, "$edited_root$filename");
+					$editor->close_file("$edited_root$filename");
 				}
 			}
 		}
@@ -903,8 +902,6 @@ class acp_mods
 				
 					$editor->open_file($file);
 
-					$editor->fold_edits($file, $dependenices);
-			
 					foreach ($finds as $find => $action)
 					{
 						if (!$editor->check_find($file, $find))
@@ -963,10 +960,8 @@ class acp_mods
 							}
 						}
 					}
-					
-					$editor->unfold_edits($file, $dependenices);
 
-					$editor->close_file($file);
+					$editor->close_file($edited_root . $file);
 				}
 
 
