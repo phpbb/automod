@@ -817,7 +817,7 @@ function get_schema_struct()
 			'mod_author_url'		=> array('XSTEXT_UNI', ''),
 			'mod_actions'			=> array('MTEXT_UNI', ''),
 			'mod_languages'			=> array('STEXT_UNI', ''),
-			'mod_styles'			=> array('STEXT_UNI', ''),
+			'mod_template'			=> array('STEXT_UNI', ''),
 			'mod_path'				=> array('STEXT_UNI', ''),
 		),
 		'PRIMARY_KEY'	=> array('mod_id'),

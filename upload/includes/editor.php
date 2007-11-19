@@ -3,7 +3,7 @@
 *
 * @package mods_manager
 * @version $Id$
-* @copyright (c) 2005 phpBB Group
+* @copyright (c) 2007 phpBB Group
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License 
 *
 */
@@ -12,245 +12,23 @@
 //define('AFTER',		1);
 //define('BEFORE',	2);
 
-/**
-* Base IO class
-* @package mods_manager
-* @todo: use FTP & functions_transfer.php
-* @todo: implement an error handler
-*/
-class io
-{
-	var $root;
-	var $data = array();
-	var $transfer;
-
-	/**
-	* Set Root
-	*/
-	function io($root)
-	{
-		$this->root = $root;
-
-		if (!class_exists('transfer'))
-		{
-			global $phpbb_root_path, $phpEx;
-			include("{$phpbb_root_path}includes/functions_transfer.$phpEx");
-		}
-
-		$this->transfer = new transfer();
-	}
-
-	/**
-	* Return a file's content (could be already loaded)
-	*/
-	function get_content($filename)
-	{
-		if (isset($this->data[$filename]))
-		{
-			return $this->data[$filename];
-		}
-		else
-		{
-			$this->data[$filename] = $this->load_content($filename);
-			return $this->data[$filename];
-		}
-	}
-
-	/**
-	* Actually load a files content
-	*/
-	function load_content($filename)
-	{
-		if (!file_exists($this->root . $filename))
-		{
-			die('Cannot locate File: ' . $this->root . $filename);
-		}
-
-		$contents = trim(@file_get_contents($this->root . $filename));
-		return $contents;
-	}
-
-	/**
-	* Write given string to file (rewriting old content)
-	*/
-	function write_content($filename, $content)
-	{
-		// handle any uncreated dirs up to file
-		$sub_dirs = explode('/', $filename);
-		array_pop($sub_dirs);
-		$sub_dirs = implode('/', $sub_dirs);
-
-		if (!is_dir("$this->root$sub_dirs/"))
-		{
-			$this->create_dir("$sub_dirs/", 0666);
-		}
-
-		if (!is_writable("$this->root$sub_dirs/"))
-		{
-			@chmod("$this->root$sub_dirs/", 0666);
-			if (!is_writable("$this->root$sub_dirs/"))
-			{
-				return false;
-			}
-		}
-
-		if (!is_writable("$this->root$filename"))
-		{
-			@chmod("$this->root$filename", 0666);
-			if (!is_writable("$this->root$filename"))
-			{
-//				return false;
-			}
-		}
-
-		if (function_exists('file_put_contents'))
-		{
-			file_put_contents("$this->root$filename", trim($content));
-		}
-		else
-		{
-			if ($fp = @fopen("$this->root$filename", 'wb'))
-			{
-				@flock($fp, LOCK_EX);
-				@fwrite($fp, trim($content));
-				@flock($fp, LOCK_UN);
-				@fclose($fp);
-
-				@umask(0);
-				@chmod("$this->root$filename", 0644);
-			}
-		}
-	}
-
-	/**
-	* Copies all files in source sub  directroy of root to target sub directory of store
-	* Alternative, if first arg is a file, copies file to target sub dir of store
-	* Any files named in $exceptions are excluded
-	* @param string $src Source File (relative path)
-	* @param string $to File Destination
-	* @param array $exceptions Files to ignore in operation
-	*/
-	function copy_content($src, $to, $exceptions = array())
-	{
-		if (@is_dir("$this->root$src"))
-		{
-			$dp = opendir($this->root . $src);
-			while (($file = readdir($dp)) !== false)
-			{
-				if (($file{0} != '.') && sizeof($exceptions) && !in_array($file, $exceptions))
-				{
-					if (is_dir("$this->root$src$file"))
-					{
-						$this->copy_content("$src$file/", "$to$file/", $exceptions);
-					}
-					else
-					{
-						$new_content = $this->get_content("./$src$file");
-						$this->write_content("$to$file", $new_content);
-					}
-				}
-			}
-		}
-		else
-		{
-			$new_content = $this->get_content($src);
-			$this->write_content($to, $new_content);
-		}
-
-		return true; // need to put false erroring in write_content etc....
-	}
-
-	/**
-	* Unload file content
-	*/
-	function clear_content($filename)
-	{
-		unset($this->data[$filename]);
-	}
-
-	/**
-	* Creates a folder (recursive, if root folder is not there)
-	*/
-	function create_dir($dir, $perms = 0644)
-	{
-		$dir = preg_replace('#(/){2,}|(\\\)+#', '/', $dir); // only forward-slash
-		
-		$dirs = array();
-		$dirs = explode("/", $dir);
-		$path = $this->root;
-		
-		foreach ($dirs as $subdir)
-		{
-			$path .= "$subdir/";
-			if (!is_dir($path))
-			{
-				mkdir($path, $perms);
-			}
-		}
-	}
-	
-	/**
-	* Remove content (files or folders)
-	*/
-	function remove($target)
-	{
-		if (strpos($target, $this->root) === false)
-		{
-			$target = "$this->root$target";
-		}
-
-		if (!is_dir($target))
-		{
-			@unlink($target);
-			return;
-		}
-
-		$dir = $target;
-		$dir = preg_replace('#(/){2,}|(\\\)+#', '/', $dir); // only forward-slash (php.net)
-
-		if (substr($dir, -1 != '/'))
-		{
-			$dir .= '/';
-		}
-
-		$handle = opendir($dir);
-		while (false !== ($file = readdir($handle)))
-		{
-			if ($file != '.' && $file != '..')
-			{
-				$path = "$dir$file";
-
-				if (is_dir("$path/"))
-				{
-					$this->remove($path);
-				}
-				else
-				{
-					unlink($path);
-				}
-			}
-		}
-		closedir($handle);
-
-		rmdir($dir);    //Remove dir
-	}
-}
 
 /**
-* Editor Class, extends IO
+* Editor Class
 * Runs through file sequential, ie new finds must come after previous finds
 * SQL and file copying not handled
 * @package mods_manager
 * @todo: implement some string checkin, way too much can go wild here
 */
-class editor extends io
+class editor
 {
+	var $file_contents = '';
 	var $unprocessed;
 	var $processed;
 	var $previous_edits;
 
 	/**
-	* Make all line endings the same
+	* Make all line endings the same - UNIX
 	*/
 	function normalize($string)
 	{
@@ -259,279 +37,270 @@ class editor extends io
 	}
 
 	/**
-	* Checks if a find is present
-	*/
-	function check_find($filename, $find, $inline = false)
-	{
-		$find_location = strpos($this->unprocessed[$filename], trim($find)); 
-
-		if ($find_location === false)
-		{
-			return false;
-		}
-
-		if ($inline)
-		{
-			return array(
-				'start'	=> $find_location,
-				'end'	=> strpos($this->unprocessed[$filename], "\n", $find_location),
-			);
-		}
-		// implicit else
-
-		return true;
-	}
-
-	/**
 	* Open a file with IO, for processing
 	*/
 	function open_file($filename)
 	{
-		$this->unprocessed[$filename] = $this->normalize($this->get_content($filename));
-		$this->processed[$filename] = '';
+		global $phpbb_root_path;
+
+		$this->file_contents = $this->normalize(@file($phpbb_root_path . $filename));
 	}
 
-//	/**
-//	* Wraps the string in the appriopriate commenting out
-//	*/
-//	function add_wrap($string, $file_ext, $id)
-//	{
-//		global $phpEx;
-//		
-//		$command_id = mt_rand();
-//	
-//		switch($file_ext)
-//		{
-//			case $phpEx;
-//			case 'js':
-//			case 'css':
-//				$string = str_replace('*/', '*\/', $string);
-//				$string = "/*{{$id}:{$command_id}\n{$string}\n{$id}:{$command_id}}*/";
-//			break;
-//
-//			case 'html':
-//			case 'htm':
-//				$string = str_replace('-->', '--/>', $string);
-//				$string = "<!--{{$id}:{$command_id}\n{$string}\n{$id}:{$command_id}}-->";
-//			break;
-//			
-//			case 'cfg':
-//				$string = "{{$id}:{$command_id}\n{$string}\n{$id}:{$command_id}}";
-//				$lines = explode("\n", $string);
-//				$string = "#\n" . implode("\n#", $lines);
-//			break;
-//		}
-//		
-//		return $string;
-//	}
-
-	/**
-	* Wraps the string in the appropriate anchor
-	* Could be a little better me thinks, than just having a stab, due to the file extension
-	* bug: this breaks while in an SQL query
-	*/
-	function add_anchor($string, $file_ext, $id)
+	function copy_content()
 	{
-		global $phpEx;
-		
-		$command_id = mt_rand();
-	
-		switch ($file_ext)
-		{
-			case $phpEx;
-			case 'js':
-				$string = "// $id:$command_id\n$string\n// {$id}:$command_id";
-			break;
-			
-			case 'html':
-			case 'htm':
-				$string = "<!-- $id:$command_id -->\n$string\n<!-- $id:$command_id -->";
-			break;
-			
-			case 'css':
-				$string = "/* $id:$command_id */\n$string\n/* $id:$command_id */";
-			break;
-			
-			case 'cfg':
-				$string = "# $id:$command_id\n$string\n# $id:$command_id";
-			break;
-		}
-		
-		return $string;
-	}
-	
-	/**
-	* Cut and store all previous package edits in file, unless preformed by a package with an ID in the exceptions array
-	*/
-	function fold_edits($filename, $exceptions)
-	{
-		if (empty($exceptions))
-		{
-		
-		}
-		
-		return;
+		// let's avoid fatal errors for the moment...better features coming soon
 	}
 
 	/**
-	* Inserted stored previous package edits back into file
+	* Checks if a find is present
+	* Keep in mind partial finds and multi-line finds
 	*/
-	function unfold_edits($filename, $exceptions)
+	function find($find)
 	{
-		if (empty($exceptions))
+		$find_success = 0;
+
+		$find = $this->normalize($find);
+		$find_ary = explode("\n", $find);
+
+		$total_lines = sizeof($this->file_contents);
+		$find_lines = sizeof($find_ary);
+
+		for ($i = 0; $i < $total_lines; $i++)
 		{
-		
+			for ($j = 0; $j < $find_lines; $j++)
+			{
+				// using $this->file_contents[$i + $j] to keep the array pointer where I want it
+				// if the first line of the find (index 0) is being looked at, $i + $j = $i.
+				// if $j is > 0, we look at the next line of the file being inspected
+				// hopefully, this is a decent performer.
+
+				if (!$find_ary[$j])
+				{
+					// line is blank.  Assume we can find a blank line, and continue on
+					$find_success += 1;
+					continue;
+				}
+
+				if (strpos($this->file_contents[$i + $j], $find_ary[$j]) !== false)
+				{
+					// we found this part of the line
+					$find_success += 1;
+
+					if ($find_success == $find_lines)
+					{
+						// we found the proper number of lines
+						// return our array offsets
+
+						return array(
+							'start' => $i,
+							'end' => $i + $j,
+						);
+					}
+				}
+				else
+				{
+					// the find failed.  Reset $find_success
+					$find_success = false;
+
+					// skip to next iteration of outer loop, that is, skip to the next line
+					break;
+				}
+
+			}
 		}
-		
-		return;
+
+		// if return has not been previously invoked, the find failed.
+		return false;
 	}
+
+	// this function might need an additional argument $inline_find
+	function inline_find($find, $inline_find, $start_offset = false, $end_offset = false)
+	{
+		$find = $this->normalize($find);
+
+		if ($start_offset === false || $end_offset === false)
+		{
+			$offsets = $this->find($find);
+
+			if (!$offsets)
+			{
+				// the find failed, so no further action can occur.
+				return false;
+			}
+
+			$start_offset = $offsets['start'];
+			$end_offset = $offsets['end'];
+
+			unset($offsets);
+		}
+
+		// similar method to find().  Just much more limited scope
+		for ($i = $start_offset; $i <= $end_offset; $i++)
+		{
+			$string_offset = strpos($this->file_contents[$i], $inline_find);
+			if ($string_offset !== false)
+			{
+				// if we find something, return the line number, string offset, and find length
+				return array(
+					'array_offset'	=> $i,
+					'string_offset'	=> $string_offset,
+					'find_length'	=> strlen($inline_find),
+				);
+			}
+		}
+
+		return false;
+	}
+
 
 	/**
 	* Add a string to the file, BEFORE/AFTER the given find string
 	* @param string $filename - The file to be altered
-	* @param string $find - The string to be found in the original file
 	* @param string $add - The string to be added before or after $find
 	* @param string $pos - BEFORE or AFTER
-	* @param bool $inline - Whether to add new lines ("\n") or not
-	* @param int $start_offset - Only valid if $inline is true.  Beginning of the relevant line
-	* @param int $end_offset - Only valid if $inline is true.  End of the relevant line
+	* @param int $start_offset - First line in the FIND
+	* @param int $end_offset - Last line in the FIND
 	*/
-	function add_string($filename, $find, $add, $pos, $inline = false, $start_offset = 0, $end_offset = 0)
+	function add_string($find, $add, $pos, $start_offset = false, $end_offset = false)
 	{
-		$find = $this->normalize($find);
-		if (!$this->check_find($filename, $find, $inline))
+		// this seems pretty simple...throughly test
+		$add = $this->normalize($add);
+
+		if ($start_offset === false || $end_offset === false)
 		{
-			return false;
+			$offsets = $this->find($find);
+
+			if (!$offsets)
+			{
+				// the find failed, so the add cannot occur.
+				return false;
+			}
+
+			$start_offset = $offsets['start'];
+			$end_offset = $offsets['end'];
+
+			unset($offsets);
 		}
 
-		$data = explode($find, ' ' . $this->unprocessed[$filename] . ' ');
-
-		$this->processed[$filename] .= substr($data[0], 1);
-
-		array_shift($data);
-		$this->unprocessed[$filename] = substr(implode($find, $data), 0, -1);
-
-		$newline = (!$inline) ? $newline = "\n" : '';
+		// make sure our new lines are correct
+		$add = "\n" . $add . "\n";
 
 		if ($pos == 'AFTER')
 		{
-			$this->unprocessed[$filename] = $find . $newline . $add . $newline . $this->unprocessed[$filename];
-		}
-		else if ($pos == 'BEFORE')
-		{
-			$this->unprocessed[$filename] = $add . $newline . $find . $newline . $this->unprocessed[$filename];
+			$this->file_contents[$end_offset] .= $add;
 		}
 
-		return true;
+		if ($pos == 'BEFORE')
+		{
+			$this->file_contents[$start_offset] = $add . $this->file_contents[$start_offset];
+		}
 	}
 
 	/**
 	* Increment (or perform custom operation) on  the given wildcard
 	* Support multiple wildcards {%:1}, {%:2} etc...
-	* @todo: fully review this function...I'm not liking the regex in a loop
 	*/
-	function inc_string($filename, $find, $operation)
+	function inc_string($find, $operation)
 	{
-		$find = trim($this->normalize($find));
-		$operation = trim($operation);
-
-		if (strpos($operation, ' ') !== false)
-		{
-			list($token) = explode(' ', $operation);
-			$token = str_replace('%:', '', $token);
-		}
-		else
-		{
-			$token = str_replace('%:', '', $operation);
-		}
-
-		// Complicated find (simplfy out other searches)
-		preg_match_all('#%:(\d*?)#', $find, $match);
-		if (count($match[0]) > 1)
-		{
-			$find_segs = explode("{%:$token}", $find);
-			
-			foreach ($find_segs as $find_string)
-			{
-				$find_string = '#' . preg_replace('#{%:(.*?)}#' , '(.*?)', preg_quote($find_string)) . '#';
-				preg_match_all($find_string, $this->unprocessed[$filename], $match);
-				$found[] = $match[0][0];
-			}
-			
-			// find is now search string with one widlcard to operate on
-			$find = $found[0] . '{%:' . $token . '}' . $found[1];
-		}
-
-		// Get the old nuumber
-		$num_find = '#' . str_replace('\{%\:' . $token . '\}', '(.*?)', preg_quote($find)) . '#';
-		preg_match($num_find, $this->unprocessed[$filename], $m);
-		$old_num = $m[1];
-		
-		if (strpos($operation, '+') !== false)
-		{
-			list(, $add) = explode('+', $operation);
-			$new_num = $old_num + $add;
-		}
-		elseif (strpos($operation, '-') !== false)
-		{
-			list(, $sub) = explode('-', $operation);
-			$new_num = $old_num - $sub;
-		}
-		else
-		{
-			$new_num = $old_num + 1;
-		}
-
-		$replace = str_replace("{%:$token}", $new_num, $find);
-		$find = '#' . str_replace('\{%\:' . $token . '\}', '(.*?)', preg_quote($find)) . '#';
-
-		// insert back in
-		$this->unprocessed[$filename] = preg_replace($find, $replace, $this->unprocessed[$filename]);
-	
-		return true;
+		// not currently implemented
 	}
 
 	/**
 	* Replace a string
 	*/
-	function replace_string($filename, $find, $replace, $inline = false, $start_offset = 0, $end_offset = 0)
+	function replace_string($find, $replace, $start_offset = false, $end_offset = false)
 	{
-		$find = trim($this->normalize($find));
-		
-		if (!$this->check_find($filename, $find, $inline))
+		$replace = $this->normalize($replace);
+
+		if ($start_offset === false || $end_offset === false)
 		{
+			$offsets = $this->find($find);
+
+			if (!$offsets)
+			{
+				return false;
+			}
+
+			$start_offset = $offsets['start'];
+			$end_offset = $offsets['end'];
+			unset($offsets);
+		}
+
+		for ($i = $start_offset; $i < $end_offset; $i++)
+		{
+			unset($this->file_contents[$i]);
+		}
+
+		$this->file_contents[$start_offset] = $replace;
+	}
+
+
+	function inline_replace($find, $inline_find, $inline_replace, $array_offset = false, $string_offset = false, $length = false)
+	{
+		if ($string_offset === false || $length === false)
+		{
+			// look for the inline find
+			$inline_offsets = $this->inline_find($find, $inline_find);
+
+			if (!$inline_offsets)
+			{
+				return false;
+			}
+
+			$array_offset = $inline_offsets['array_offset'];
+			$string_offset = $inline_offsets['string_offset'];
+			$length = $inline_offsets['find_length'];
+			unset($inline_offsets);
+		}
+
+		$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_replace, $string_offset, $length);
+	}
+
+	function inline_add($find, $inline_find, $inline_add, $pos, $array_offset = false, $string_offset = false, $length = false)
+	{
+		if ($string_offset === false || $length === false)
+		{
+			// look for the inline find
+			$inline_offsets = $this->inline_find($find, $inline_find);
+
+			if (!$inline_offsets)
+			{
+				return false;
+			}
+
+			$array_offset = $inline_offsets['array_offset'];
+			$string_offset = $inline_offsets['string_offset'];
+			$length = $inline_offsets['find_length'];
+			unset($inline_offsets);
+		}
+
+		if ($string_offset + $length > strlen($this->file_contents[$array_offset]))
+		{
+			// we have an invalid string offset.  rats.
 			return false;
 		}
 
-		if ($inline)
+		if ($pos == 'AFTER')
 		{
-			$this->unprocessed[$filename] = substr_replace($find, $replace, $start_offset, strlen($find));	
+			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset + $length, 0);
 		}
-		else
+		else if ($pos == 'BEFORE')
 		{
-			$this->unprocessed[$filename] = str_replace($find, $replace, $this->unprocessed[$filename]);
+			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset, 0);
 		}
-	
-		return true;
 	}
 
 	/**
 	* Write & close file
 	*/
-	function close_file($filename, $new_filename = '')
+	function close_file($new_filename)
 	{
-		if (!empty($new_filename))
-		{
-			$this->write_content($new_filename, $this->processed[$filename] . $this->unprocessed[$filename]);
-		}
-		else
-		{
-			$this->write_content($filename, $this->processed[$filename] . $this->unprocessed[$filename]);
-		}
+		global $phpbb_root_path;
 
-		$this->clear_content($filename);
-		unset($this->processed[$filename]);
-		unset($this->unprocessed[$filename]);
+		// highly temporary.  probably be gone within a week ish
+		$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
+		@fwrite($fr, implode('', $this->file_contents));
+		@fclose($fr);
 	}
 }
 
