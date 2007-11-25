@@ -560,6 +560,7 @@ class acp_mods
 // remember to uncomment this
 //		$db->sql_query($sql);
 
+
 		// get mod id
 		$mod_id = $db->sql_nextid();
 
@@ -635,7 +636,7 @@ class acp_mods
 
 								case 'INCREMENT':
 									//$contents = "";
-									$status = $editor->inc_string($filename, $find, $contents);
+									$status = $editor->inc_string($find, $contents);
 								break;
 
 								case 'REPLACE WITH':
@@ -670,6 +671,10 @@ class acp_mods
 
 												case 'IN-LINE-REPLACE':
 													$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
+												break;
+
+												case 'IN-LINE-OPERATION':
+													$status = $editor->inc_string($find, $inline_find, $inline_contents);
 												break;
 
 												default:

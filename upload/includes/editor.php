@@ -38,6 +38,8 @@ class editor
 
 	/**
 	* Open a file with IO, for processing
+	* 
+	* @param string $filename - relative path from phpBB Root to the file to open
 	*/
 	function open_file($filename)
 	{
@@ -93,6 +95,9 @@ class editor
 	/**
 	* Checks if a find is present
 	* Keep in mind partial finds and multi-line finds
+	* 
+	* @param string $find - string to find
+	* @return mixed : array with position information if $find is found; false otherwise
 	*/
 	function find($find)
 	{
@@ -152,7 +157,16 @@ class editor
 		return false;
 	}
 
-	// this function might need an additional argument $inline_find
+	/**
+	* Find a string within a given line
+	*
+	* @param string $find Complete find - narrows the scope of the inline search
+	* @param string $inline_find - the substring to find
+	* @param int $start_offset - the line number where $find starts
+	* @param int $end_offset - the line number where $find ends
+	* 
+	* @return bool success or failure of find
+	*/ 
 	function inline_find($find, $inline_find, $start_offset = false, $end_offset = false)
 	{
 		$find = $this->normalize($find);
@@ -194,11 +208,13 @@ class editor
 
 	/**
 	* Add a string to the file, BEFORE/AFTER the given find string
-	* @param string $filename - The file to be altered
+	* @param string $find - Complete find - narrows the scope of the inline search
 	* @param string $add - The string to be added before or after $find
 	* @param string $pos - BEFORE or AFTER
 	* @param int $start_offset - First line in the FIND
 	* @param int $end_offset - Last line in the FIND
+	* 
+	* @return bool success or failure of add
 	*/
 	function add_string($find, $add, $pos, $start_offset = false, $end_offset = false)
 	{
@@ -233,21 +249,85 @@ class editor
 		{
 			$this->file_contents[$start_offset] = $add . $this->file_contents[$start_offset];
 		}
-		
+
 		return true;
 	}
 
 	/**
 	* Increment (or perform custom operation) on  the given wildcard
 	* Support multiple wildcards {%:1}, {%:2} etc...
+	* This method is a variation on the inline find and replace methods
+	* 
+	* @param string $find - Complete find - contains $inline_find
+	* @param string $inline_find - contains tokens to be replaced
+	* @param string $operation - tokens to do some math
+	* @param int $start_offset - First line in the FIND
+	* @param int $end_offset - Last line in the FIND
+	* 
+	* @return bool
 	*/
-	function inc_string($find, $operation)
+	function inc_string($find, $inline_find, $operation, $start_offset = false, $end_offset = false)
 	{
-		// not currently implemented
+		if ($start_offset === false || $end_offset === false)
+		{
+			$offsets = $this->find($find);
+
+			if (!$offsets)
+			{
+				// the find failed, so the add cannot occur.
+				return false;
+			}
+
+			$start_offset = $offsets['start'];
+			$end_offset = $offsets['end'];
+
+			unset($offsets);
+		}
+
+		// parse the MODX operator
+		preg_match('#{%:(\d)+} ?([+-]) ?(\d*)#', $operation, $action);
+		// make sure there is actually a number here
+		$action[3] = ($action[3]) ? $action[3] : 1;
+
+		$matches = 0;
+		// $start_offset _should_ equal $end_offset, but we allow other cases
+		for ($i = $start_offset; $i <= $end_offset; $i++)
+		{
+			$inline_find = preg_replace('#{%:(\d+)}#', '(\d+)', $inline_find);
+
+			if (preg_match('#' . $inline_find . '#is', $this->file_contents[$i], $find_contents))
+			{
+				// now we can do some math
+				// $find_contents[1] is the original number, $action[2] is the operator
+				$new_number = eval('return ' . ((int) $find_contents[1]) . $action[2] . ((int) $action[3]) . ';');
+
+				// now we replace
+				$new_contents = str_replace($find_contents[1], $new_number, $find_contents[0]);
+
+				$this->file_contents[$i] = str_replace($find_contents[0], $new_contents, $this->file_contents[$i]);
+
+				$matches += 1;
+			}
+		}
+
+		if (!$matches)
+		{
+			return false;
+		}
+
+		return true;
 	}
 
+
 	/**
-	* Replace a string
+	* Replace a string - replaces the entirety of $find with $replace
+	* 
+	* @param string $find - Complete find - contains $inline_find
+	* @param string $replace - Will replace $find
+	* @param int $start_offset - First line in the FIND
+	* @param int $end_offset - Last line in the FIND
+	* 
+	* @return bool
 	*/
 	function replace_string($find, $replace, $start_offset = false, $end_offset = false)
 	{
@@ -273,11 +353,14 @@ class editor
 		}
 
 		$this->file_contents[$start_offset] = $replace;
-		
+
 		return true;
 	}
 
-
+	/*
+	* Replace $inline_find with $inline_replace
+	* Arguments are very similar to inline_add, below
+	*/
 	function inline_replace($find, $inline_find, $inline_replace, $array_offset = false, $string_offset = false, $length = false)
 	{
 		if ($string_offset === false || $length === false)
@@ -301,6 +384,19 @@ class editor
 		return true;
 	}
 
+	/**
+	* Adds a string inline before or after a given find
+	* 
+	* @param string $find Complete find - narrows the scope of the inline search
+	* @param string $inline_find - the string to add before or after
+	* @param string $inline_add - added before or after $inline_find
+	* @param string $pos - 'BEFORE' or 'AFTER'
+	* @param int $array_offset - line number where $inline_find may be found (optional)
+	* @param int $string_offset - location within the line where $inline_find begins (optional)
+	* @param int $length - essentially strlen($inline_find) (optional)
+	* 
+	* @return bool success or failure of action
+	*/
 	function inline_add($find, $inline_find, $inline_add, $pos, $array_offset = false, $string_offset = false, $length = false)
 	{
 		if ($string_offset === false || $length === false)
@@ -333,7 +429,7 @@ class editor
 		{
 			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset, 0);
 		}
-		
+
 		return true;
 	}
 
@@ -385,9 +481,12 @@ function find_files($directory, $pattern, $max_levels = 3, $_current_level = 1)
 	if (is_dir($directory))
 	{
 		$handle = @opendir($directory);
-		while(($file = @readdir($handle)) !== false)	// Yep! !== requires 4.0.0-RC2 or greater!
+		while (($file = @readdir($handle)) !== false)
 		{
-			if( $file == '.' || $file == '..' ) continue;
+			if ( $file == '.' || $file == '..' )
+			{
+				continue;
+			}
 
 			$fullname = $directory . $file;
 

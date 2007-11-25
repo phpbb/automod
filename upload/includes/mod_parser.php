@@ -179,7 +179,7 @@ class parser_xml
 		$xml_actions = $this->data[0]['children']['ACTION-GROUP'][0]['children'];
 
 		// sql
-		$sql_info = (!empty($xml_actions['SQL'])) ? $xml_actions['SQL'] : '';
+		$sql_info = (!empty($xml_actions['SQL'])) ? $xml_actions['SQL'] : array();
 		for ($i = 0; $i < sizeof($sql_info); $i++)
 		{
 			$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim(str_replace('phpbb_', $table_prefix, $sql_info[$i]['data'])) : '';
@@ -198,7 +198,6 @@ class parser_xml
 			}
 		}
 
-
 		// open
 		$open_info = (!empty($xml_actions['OPEN'])) ? $xml_actions['OPEN'] : array();
 		for ($i = 0; $i < sizeof($open_info); $i++)
@@ -211,7 +210,7 @@ class parser_xml
 			for ($j = 0; $j < sizeof($edit_info); $j++)
 			{
 				$action_info = (!empty($edit_info[$j]['children'])) ? $edit_info[$j]['children'] : array();
-	
+
 				// straight edit, no inline
 				if (isset($action_info['ACTION']))
 				{
@@ -278,7 +277,7 @@ class xml_array
 		$this->XML = xml_parse($this->parser, $XML);
 		if (!$this->XML)
 		{
-			die(sprintf("XML error: %s at line %d", xml_error_string(xml_get_error_code($this->parser)), xml_get_current_line_number($this->parser)));
+			die(sprintf("<strong>XML error</strong: %s at line %d.  View the file in a web browser for a more detailed error message.", xml_error_string(xml_get_error_code($this->parser)), xml_get_current_line_number($this->parser)));
 		}
 
 		xml_parser_free($this->parser);
