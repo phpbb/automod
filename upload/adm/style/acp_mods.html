@@ -178,6 +178,15 @@
 	<!-- ENDIF -->
 
 	<form id="acp_mods" method="post" action="{U_INSTALL}">
+	<!-- IF S_GET_FTP -->
+	<fieldset>
+		<legend>{L_FTP_INFORMATION}</legend>
+		<dl>
+			<dt></dt>
+			<dd></dd>
+		</dl>
+	</fieldset>
+	<!-- ENDIF -->
 	<fieldset class="submit-buttons">
 		<legend>{L_INSTALL}</legend>
 		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
