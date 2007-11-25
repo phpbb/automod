@@ -159,6 +159,7 @@ class parser_xml
 			'MOD_DEPENDENCIES'	=> htmlspecialchars(trim($header['TITLE'][0]['data'])),
 
 			'AUTHOR_DETAILS'	=> $author_details,
+			'AUTHOR_NOTES'		=> htmlspecialchars(trim($header['AUTHOR-NOTES'][0]['data'])),
 			'MOD_HISTORY'		=> $mod_history,
 			'PHPBB_VERSION'		=> $phpbb_version,
 		);
@@ -251,7 +252,6 @@ class parser_xml
 		}
 
 		return $actions;
-		var_dump($actions);
 	}
 }
 

@@ -372,6 +372,12 @@ class acp_mods
 				'AUTHOR_NOTES'		=> $details['AUTHOR_NOTES'],
 			));
 		}
+		
+		// get FTP information if we need it
+		if (!is_writeable($phpbb_root_path))
+		{
+			$template->assign_var('S_GET_FTP', true);
+		}
 
 		// Only display full actions if the user has requested them.
 		if (!defined('DEBUG') || !isset($_GET['full_details']))
@@ -544,13 +550,14 @@ class acp_mods
 			'mod_version'		=> (string) $details['MOD_VERSION'],
 			'mod_path'			=> (string) $details['MOD_PATH'],
 			'mod_author_notes'	=> (string) $details['AUTHOR_NOTES'],
-			'mod_author_name'	=> (string) $details['AUTHOR_NAME'],
-			'mod_author_email'	=> (string) $details['AUTHOR_EMAIL'],
-			'mod_author_url'	=> (string) $details['AUTHOR_URL'],
+			'mod_author_name'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_NAME'],
+			'mod_author_email'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_EMAIL'],
+			'mod_author_url'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_WEBSITE'],
 			'mod_actions'		=> (string) serialize($actions),
-			'mod_languages'		=> (string) (sizeof($elements['languages'])) ? implode(',', $elements['languages']) : '',
-			'mod_templates'		=> (string) (sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
+			'mod_languages'		=> (string) (isset($elements['languages']) && sizeof($elements['languages'])) ? implode(',', $elements['languages']) : '',
+			'mod_templates'		=> (string) (isset($elements['templates']) && sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
 		));
+// remember to uncomment this
 //		$db->sql_query($sql);
 
 		// get mod id
@@ -565,6 +572,13 @@ class acp_mods
 		array_pop($mod_root);
 		$mod_root = implode('/', $mod_root) . '/';
 		$edited_root = "{$mod_root}_edited/";
+		
+		// see if directory exists
+		if (!file_exists($phpbb_root_path . $edited_root))
+		{
+			mkdir($phpbb_root_path . $edited_root, 0777);
+			chmod($phpbb_root_path . $edited_root, 0777);
+		}
 
 		// get mod dependencies
 		// This will be the _PHPBB ID_ for any mod that this mod requires
@@ -600,7 +614,7 @@ class acp_mods
 					foreach ($finds as $find => $commands)
 					{
 						$template->assign_block_vars('edit_files.finds', array(
-							'FIND_STRING'	=> htmlspecialchars($string),
+							'FIND_STRING'	=> htmlspecialchars($find),
 						));
 
 						foreach ($commands as $type => $contents)
@@ -659,7 +673,7 @@ class acp_mods
 												break;
 
 												default:
-													die("Error, unrecognised command $type"); // ERROR!
+													trigger_error("Error, unrecognised command $type"); // ERROR!
 												break;
 											}
 
@@ -672,7 +686,7 @@ class acp_mods
 								break;
 
 								default:
-									die("Error, unrecognised command $type"); // ERROR!
+									trigger_error("Error, unrecognised command $type"); // ERROR!
 								break;
 							}
 

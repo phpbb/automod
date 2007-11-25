@@ -46,9 +46,48 @@ class editor
 		$this->file_contents = $this->normalize(@file($phpbb_root_path . $filename));
 	}
 
-	function copy_content()
+	/**
+	* Moves files or complete directories
+	*
+	* @param $from string Can be a file or a directory. Will move either the file or all files within the directory
+	* @param $to string Where to move the file(s) to. If not specified then will get moved to the root folder
+	*/
+	function copy_content($from, $to = '')
 	{
-		// let's avoid fatal errors for the moment...better features coming soon
+		global $phpbb_root_path;
+
+		$files = array();
+		if (is_dir($phpbb_root_path . $from))
+		{
+			// get all of the files within the directory
+			$files = find_files($phpbb_root_path . $from , '.*', 5);
+			$to = $phpbb_root_path . $to;
+		}
+		else if (is_file($phpbb_root_path . $from))
+		{
+			$files = array($phpbb_root_path . $from);
+			$to = $phpbb_root_path . dirname($to);
+		}
+		
+		if (empty($files))
+		{
+			return false;
+		}
+		
+		// is the directory writeable? if so, then we don't have to deal with FTP
+		if (is_writeable($phpbb_root_path))
+		{
+			foreach($files as $file)
+			{
+				copy($file, $to . $file);
+			}
+			echo 'here';
+		}
+		else
+		{
+			// ftp
+			echo 'here2';
+		}
 	}
 
 	/**
@@ -194,6 +233,8 @@ class editor
 		{
 			$this->file_contents[$start_offset] = $add . $this->file_contents[$start_offset];
 		}
+		
+		return true;
 	}
 
 	/**
@@ -232,6 +273,8 @@ class editor
 		}
 
 		$this->file_contents[$start_offset] = $replace;
+		
+		return true;
 	}
 
 
@@ -254,6 +297,8 @@ class editor
 		}
 
 		$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_replace, $string_offset, $length);
+		
+		return true;
 	}
 
 	function inline_add($find, $inline_find, $inline_add, $pos, $array_offset = false, $string_offset = false, $length = false)
@@ -288,6 +333,8 @@ class editor
 		{
 			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset, 0);
 		}
+		
+		return true;
 	}
 
 	/**
@@ -301,7 +348,69 @@ class editor
 		$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
 		@fwrite($fr, implode('', $this->file_contents));
 		@fclose($fr);
+		@chmod($phpbb_root_path . $new_filename, 0777);
 	}
+}
+
+/**
+* List files matching specified PCRE pattern.
+*
+* @access public
+* @param string Relative or absolute path to the directory to be scanned.
+* @param string Search pattern (perl compatible regular expression).
+* @param integer Number of subdirectory levels to scan (set to 1 to scan only current).
+* @param integer This one is used internally to control recursion level.
+* @return array List of all files found matching the specified pattern.
+*/
+function find_files($directory, $pattern, $max_levels = 3, $_current_level = 1)
+{
+	if ($_current_level <= 1)
+	{
+		if (strpos($directory, '\\') !== false)
+		{
+			$directory = str_replace('\\', '/', $directory);
+		}
+		if (empty($directory))
+		{
+			$directory = './';
+		}
+		else if (substr($directory, -1) != '/')
+		{
+			$directory .= '/';
+		}
+	}
+
+	$files = array();
+	$subdir = array();
+	if (is_dir($directory))
+	{
+		$handle = @opendir($directory);
+		while(($file = @readdir($handle)) !== false)	// Yep! !== requires 4.0.0-RC2 or greater!
+		{
+			if( $file == '.' || $file == '..' ) continue;
+
+			$fullname = $directory . $file;
+
+			if (is_dir($fullname))
+			{
+				if ($_current_level < $max_levels)
+				{
+					$subdir = array_merge($subdir, find_files($fullname . '/', $pattern, $max_levels, $_current_level + 1));
+				}
+			}
+			else
+			{
+				if (preg_match('/^' . $pattern . '$/i', $file))
+				{
+					$files[] = $fullname;
+				}
+			}
+		}
+		@closedir($handle);
+		sort($files);
+	}
+
+	return array_merge($files, $subdir);
 }
 
 ?>
