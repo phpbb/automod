@@ -4,6 +4,24 @@
 <!-- IF TITLE --><h1>{TITLE}</h1><!-- ENDIF -->
 <!-- IF BODY --><p>{BODY}</p><!-- ENDIF -->
 
+<!-- IF S_OVERVIEW -->
+<fieldset>
+	<legend>{L_FTP_INFORMATION}</legend>
+	<dl>
+		<dt><label for="ftp_host">{L_FTP_HOST}</label></dt>
+		<dd><input type="text" id="ftp_host" name="ftp_host" /></dd>
+	</dl>
+	<dl>
+		<dt><label for="ftp_username">{L_FTP_USERNAME}</label></dt>
+		<dd><input type="text" id="ftp_username" name="ftp_username" /></d>
+	</dl>
+	<dl>
+		<dt><label for="ftp_port">{L_FTP_PORT}</label></dt>
+		<dd><input type="text" id="ftp_port" name="ftp_port" value="21" /></dd>
+	</dl>
+</fieldset>
+<!-- ENDIF -->
+
 <!-- IF S_REQUIREMENTS -->
 	<p>Requirements will be listed here with yes and no. Not checking for these at this point.</p>
 <!-- ENDIF -->
@@ -16,15 +34,6 @@
 	<p>The SQL queries have been performed. If you didn't get an error, then they were done successfully I hope.</p>
 <!-- ENDIF -->
 
-<!-- IF S_ADVANCE -->
-	<fieldset>
-		<legend>{L_ROLE}</legend>
-		<dl>
-			<dt><label for="role_id">{L_ROLE}</label></dt>
-			<dd><select id="role_id" name="role_id">{S_ROLE_OPTIONS}</select></dd>
-		</dl>
-	</fieldset>
-<!-- ENDIF -->
 
 <!-- IF S_FINAL -->
 	<p>{L_INSTALLATION_SUCCESSFUL}</p>

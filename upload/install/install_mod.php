@@ -127,6 +127,11 @@ class install_mod extends module
 	{
 		global $lang, $template, $phpbb_root_path, $phpEx, $language, $db;
 
+		// we should have some config variables from the previous step
+		set_config('ftp_host',		request_var('ftp_host', ''));
+		set_config('ftp_username',	request_var('ftp_username', ''));
+		set_config('ftp_port',		request_var('ftp_password', ''));
+
 		$this->page_title = $lang['FILE_EDITS'];
 
 		// using some package manager code in the installation :D
@@ -139,7 +144,7 @@ class install_mod extends module
 		$add = 'define(\'MODS_TABLE\',				$table_prefix . \'mods\');';
 
 		$editor->open_file("includes/constants.$phpEx");
-		$editor->add_string("includes/constants.$phpEx", $find, $add, 'AFTER');
+		$editor->add_string($find, $add, 'AFTER');
 		$editor->close_file($filename); 
 
 		$template->assign_vars(array(
