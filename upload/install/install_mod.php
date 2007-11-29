@@ -134,7 +134,7 @@ class install_mod extends module
 
 		$this->page_title = $lang['FILE_EDITS'];
 
-		// using some package manager code in the installation :D
+		// using some mods manager code in the installation :D
 		include("{$phpbb_root_path}includes/editor.$phpEx");
 
 		$editor = new editor($phpbb_root_path);
@@ -145,7 +145,7 @@ class install_mod extends module
 
 		$editor->open_file("includes/constants.$phpEx");
 		$editor->add_string($find, $add, 'AFTER');
-		$editor->close_file($filename); 
+		$editor->close_file("includes/constants.$phpEx"); 
 
 		$template->assign_vars(array(
 			'S_FILE_EDITS'		=> true,
