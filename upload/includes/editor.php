@@ -23,9 +23,28 @@
 class editor
 {
 	var $file_contents = '';
-	var $unprocessed;
-	var $processed;
-	var $previous_edits;
+	var $start_index = 0;
+	var $transfer;
+
+	function editor()
+	{
+		global $phpbb_root_path;
+
+		if (!class_exists('transfer'))
+		{
+			global $phpEx;
+			include($phpbb_root_path . 'include/functions_transfer.' . $phpEx);
+		}
+
+		if (is_writable($phpbb_root_path . 'store'))
+		{
+			$this->transfer = new ftp($config['ftp_host'], $config['ftp_username'], request_var('password', ''), $config['ftp_port']);
+		}
+		else
+		{
+			$this->transfer = new ftp_fsock($config['ftp_host'], $config['ftp_username'], request_var('password', ''), $config['ftp_port']);
+		}
+	}
 
 	/**
 	* Make all line endings the same - UNIX
@@ -46,6 +65,7 @@ class editor
 		global $phpbb_root_path;
 
 		$this->file_contents = $this->normalize(@file($phpbb_root_path . $filename));
+		$this->start_index = 0;
 	}
 
 	/**
@@ -58,38 +78,47 @@ class editor
 	{
 		global $phpbb_root_path;
 
+		if (strpos($phpbb_root_path, $from) !== 0)
+		{
+			$from = $phpbb_root_path . $from;
+		}
+
 		$files = array();
-		if (is_dir($phpbb_root_path . $from))
+		if (is_dir($from))
 		{
 			// get all of the files within the directory
-			$files = find_files($phpbb_root_path . $from , '.*', 5);
+			$files = find_files($from , '.*', 5);
 			$to = $phpbb_root_path . $to;
 		}
-		else if (is_file($phpbb_root_path . $from))
+		else if (is_file($from))
 		{
-			$files = array($phpbb_root_path . $from);
-			$to = $phpbb_root_path . dirname($to);
+			$files = array($from);
+			$to = $phpbb_root_path . $to;
 		}
-		
+
 		if (empty($files))
 		{
 			return false;
 		}
-		
+
 		// is the directory writeable? if so, then we don't have to deal with FTP
 		if (is_writeable($phpbb_root_path))
 		{
-			foreach($files as $file)
+			foreach ($files as $file)
 			{
-				copy($file, $to . $file);
+				if (!@copy($file, $to))
+				{
+					return false;
+				}
 			}
-			echo 'here';
 		}
 		else
 		{
 			// ftp
-			echo 'here2';
+			return $this->transfer->write_file($to, file_get_contents($from));
 		}
+
+		return true;
 	}
 
 	/**
@@ -109,7 +138,8 @@ class editor
 		$total_lines = sizeof($this->file_contents);
 		$find_lines = sizeof($find_ary);
 
-		for ($i = 0; $i < $total_lines; $i++)
+		// we process the file sequentially ... so we keep track of 
+		for ($i = $this->start_index; $i < $total_lines; $i++)
 		{
 			for ($j = 0; $j < $find_lines; $j++)
 			{
@@ -133,8 +163,9 @@ class editor
 					if ($find_success == $find_lines)
 					{
 						// we found the proper number of lines
-						// return our array offsets
+						$this->start_index = $i;
 
+						// return our array offsets
 						return array(
 							'start' => $i,
 							'end' => $i + $j,
@@ -285,7 +316,7 @@ class editor
 		}
 
 		// parse the MODX operator
-		preg_match('#{%:(\d)+} ?([+-]) ?(\d*)#', $operation, $action);
+		preg_match('#{%:(\d+)} ?([+-]) ?(\d*)#', $operation, $action);
 		// make sure there is actually a number here
 		$action[3] = ($action[3]) ? $action[3] : 1;
 
@@ -440,11 +471,22 @@ class editor
 	{
 		global $phpbb_root_path;
 
-		// highly temporary.  probably be gone within a week ish
-		$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
-		@fwrite($fr, implode('', $this->file_contents));
-		@fclose($fr);
-		@chmod($phpbb_root_path . $new_filename, 0777);
+		if (!file_exists($phpbb_root_path . dirname($new_filename)))
+		{
+			recursive_mkdir($phpbb_root_path . dirname($new_filename), 0666);
+		}
+
+		if (is_writable($phpbb_root_path . $new_filename) || is_writable($phpbb_root_path . dirname($new_filename)))
+		{
+			// skip FTP, use local file functions
+			$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
+			@fwrite($fr, implode('', $this->file_contents));
+			@fclose($fr);
+		}
+		else
+		{
+			$this->transfer->write_file($new_filename, implode('', $this->file_contents));
+		}
 	}
 }
 
@@ -510,6 +552,31 @@ function find_files($directory, $pattern, $max_levels = 3, $_current_level = 1)
 	}
 
 	return array_merge($files, $subdir);
+}
+
+/**
+* @author Michal Nazarewicz (from the php manual)
+* Creates all non-existant directories in a path
+*/
+function recursive_mkdir($path, $mode = 0777)
+{
+	// remove $phpbb_root_path - addition by A_Jelly_Doughnut
+	$path = str_replace($phpbb_root_path, '', $path);
+
+
+	$dirs = explode('/', $path);
+	$count = sizeof($dirs);
+	$path = '.';
+	for ($i = 0; $i < $count; $i++)
+	{
+		$path .= '/' . $dirs[$i];
+
+		if (!is_dir($path) && !mkdir($path, $mode))
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 ?>

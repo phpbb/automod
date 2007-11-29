@@ -48,10 +48,11 @@ $lang = array_merge($lang, array(
 
 	'ERROR'			=> 'Error',
 
-	'FILE_EDITS'	=> 'File edits',	
-	'FILE_MISSING'	=> 'Cannot locate file',
-	'FIND'			=> 'Find',
-	'FIND_MISSING'	=> 'Cannot locate find string',
+	'FILE_EDITS'		=> 'File edits',	
+	'FILE_MISSING'		=> 'Cannot locate file',
+	'FIND'				=> 'Find',
+	'FIND_MISSING'		=> 'Cannot locate find string',
+	'FTP_INFORMATION'	=> 'FTP Information',
 
 	'INSTALL_MOD'		=> 'Install this MOD',
 	'INSTALLED'			=> 'MOD installed',

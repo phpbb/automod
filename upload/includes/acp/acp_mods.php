@@ -314,7 +314,11 @@ class acp_mods
 			$actions = array();
 			$ext = substr(strrchr($mod_path, '.'), 1);
 
-			include_once($phpbb_root_path . 'includes/mod_parser.' . $phpEx);
+			if (!class_exists('parser'))
+			{
+				include($phpbb_root_path . 'includes/mod_parser.' . $phpEx);
+			}
+
 			$parser = new parser($ext);
 			$parser->set_file($mod_path);
 			
@@ -330,7 +334,7 @@ class acp_mods
 	*/
 	function pre_install($mod_path)
 	{
-		global $phpbb_root_path, $phpEx, $template, $db;
+		global $phpbb_root_path, $phpEx, $template, $db, $config;
 
 		// mod_path empty?
 		if (empty($mod_path))
@@ -353,7 +357,7 @@ class acp_mods
 		$mod_root = implode('/', $mod_root) . '/';
 		
 		$dependenices = $details['MOD_DEPENDENCIES'];
-						
+
 		$template->assign_vars(array(
 			'S_PRE_INSTALL'	=> true,
 			
@@ -376,7 +380,12 @@ class acp_mods
 		// get FTP information if we need it
 		if (!is_writeable($phpbb_root_path))
 		{
-			$template->assign_var('S_GET_FTP', true);
+			$template->assign_vars(array(
+				'S_GET_FTP'		=> true,
+				'FTP_USERNAME'	=> $config['ftp_username'],
+				'FTP_HOST'		=> $config['ftp_host'],
+				'FTP_PORT'		=> $config['ftp_port'],
+			));
 		}
 
 		// Only display full actions if the user has requested them.
@@ -396,7 +405,7 @@ class acp_mods
 				{
 					$template->assign_block_vars('new_files', array(
 						'S_MISSING_FILE' => true,
-						
+
 						'SOURCE'		=> $source,
 						'TARGET'		=> $target,
 					));
@@ -535,34 +544,14 @@ class acp_mods
 			return false;
 		}
 
+		// assume the MOD was installed properly.
+		$mod_installed = true;
+
 		$actions = $this->mod_actions($mod_path);
 		// check for "child" MODX files and attempt to decide which ones we need
 		$elements = $this->find_children($mod_path, $actions, 'install');
 
 		$details = $this->mod_details($mod_path, false);
-
-		// Insert database data
-		$sql = 'INSERT INTO ' . MODS_TABLE . ' ' . $db->sql_build_array('INSERT', array(
-			'mod_time'			=> (int) time(),
-			'mod_dependencies'	=> (string) serialize($details['MOD_DEPENDENCIES']),
-			'mod_name'			=> (string) $details['MOD_NAME'],
-			'mod_description'	=> (string) $details['MOD_DESCRIPTION'],
-			'mod_version'		=> (string) $details['MOD_VERSION'],
-			'mod_path'			=> (string) $details['MOD_PATH'],
-			'mod_author_notes'	=> (string) $details['AUTHOR_NOTES'],
-			'mod_author_name'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_NAME'],
-			'mod_author_email'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_EMAIL'],
-			'mod_author_url'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_WEBSITE'],
-			'mod_actions'		=> (string) serialize($actions),
-			'mod_languages'		=> (string) (isset($elements['languages']) && sizeof($elements['languages'])) ? implode(',', $elements['languages']) : '',
-			'mod_templates'		=> (string) (isset($elements['templates']) && sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
-		));
-// remember to uncomment this
-//		$db->sql_query($sql);
-
-
-		// get mod id
-		$mod_id = $db->sql_nextid();
 
 		include($phpbb_root_path . 'includes/editor.' . $phpEx);
 		$editor = new editor($phpbb_root_path);
@@ -581,12 +570,6 @@ class acp_mods
 			chmod($phpbb_root_path . $edited_root, 0777);
 		}
 
-		// get mod dependencies
-		// This will be the _PHPBB ID_ for any mod that this mod requires
-		// The fold/unfold edit functions below will ignore any edits preformed by any mod with the ID in this array
-		$dependenices = $details['MOD_DEPENDENCIES'];
-		$mod_phpbb_id = (!empty($details['PHPBB_ID'])) ? $details['PHPBB_ID'] : $mod_id;
-
 		// perform file edits
 		if (isset($actions['EDITS']) && !empty($actions['EDITS'])) // this is some beefy looping
 		{
@@ -601,6 +584,7 @@ class acp_mods
 						
 						'FILENAME'	=> $filename,
 					));
+					$mod_installed = false;
 				}
 				else
 				{
@@ -702,6 +686,11 @@ class acp_mods
 								'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
 							));
 
+							if (!$status)
+							{
+								$mod_installed = false;
+							}
+
 							// since these vars must be assigned after the parent block or else things break
 							if (sizeof($inline_template_ary))
 							{
@@ -732,6 +721,7 @@ class acp_mods
 						'SOURCE'		=> $source,
 						'TARGET'		=> $target,
 					));
+					$mod_installed = false;
 				}
 				else
 				{
@@ -759,9 +749,11 @@ class acp_mods
 				if (!$db->sql_query($query)) // more than this please
 				{
 					$template->assign_block_vars('sql_queries', array(
-						//'QUERY'		=> $row['mod_id'],
+						'S_SUCCESS'	=> false,
 						'QUERY'		=> $query,
 					));
+
+					$mod_installed = false;
 				}
 				else
 				{
@@ -784,23 +776,45 @@ class acp_mods
 			foreach ($actions['DIY_INSTRUCTIONS'] as $instruction)
 			{
 				$template->assign_block_vars('diy_instructions', array(
-					'DIY_INSTRUCTION'	=> $instruction,
+					'DIY_INSTRUCTION'	=> htmlspecialchars($instruction),
 				));
 			}
 		}
 
 		// Move edited files back, and delete temp stoarge folder
-		$editor->copy_content($edited_root, '');
-		
-		// Add log
-		add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);
+		//$editor->copy_content($edited_root, '');
 		
 		// Finish, by sending template data
 		$template->assign_vars(array(
 			'S_INSTALL'		=> true,
 
-			'U_RETURN'		=> $this->u_action
+			'U_RETURN'		=> $this->u_action,
 		));
+
+		// if MOD installed successfully, make a record.
+		if ($mod_installed)
+		{
+			// Insert database data
+			$sql = 'INSERT INTO ' . MODS_TABLE . ' ' . $db->sql_build_array('INSERT', array(
+				'mod_time'			=> (int) time(),
+				'mod_dependencies'	=> (string) serialize($details['MOD_DEPENDENCIES']),
+				'mod_name'			=> (string) $details['MOD_NAME'],
+				'mod_description'	=> (string) $details['MOD_DESCRIPTION'],
+				'mod_version'		=> (string) $details['MOD_VERSION'],
+				'mod_path'			=> (string) $details['MOD_PATH'],
+				'mod_author_notes'	=> (string) $details['AUTHOR_NOTES'],
+				'mod_author_name'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_NAME'],
+				'mod_author_email'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_EMAIL'],
+				'mod_author_url'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_WEBSITE'],
+				'mod_actions'		=> (string) serialize($actions),
+				'mod_languages'		=> (string) (isset($elements['languages']) && sizeof($elements['languages'])) ? implode(',', $elements['languages']) : '',
+				'mod_templates'		=> (string) (isset($elements['templates']) && sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
+			));
+			// remember to uncomment this
+			//$db->sql_query($sql);
+
+			// Add log
+			add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);
 	}
 
 	/**
