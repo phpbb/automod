@@ -782,7 +782,7 @@ class acp_mods
 		}
 
 		// Move edited files back, and delete temp stoarge folder
-		//$editor->copy_content($edited_root, '');
+		$editor->copy_content($edited_root, '');
 		
 		// Finish, by sending template data
 		$template->assign_vars(array(
@@ -808,13 +808,13 @@ class acp_mods
 				'mod_author_url'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_WEBSITE'],
 				'mod_actions'		=> (string) serialize($actions),
 				'mod_languages'		=> (string) (isset($elements['languages']) && sizeof($elements['languages'])) ? implode(',', $elements['languages']) : '',
-				'mod_templates'		=> (string) (isset($elements['templates']) && sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
+				'mod_template'		=> (string) (isset($elements['templates']) && sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
 			));
-			// remember to uncomment this
-			//$db->sql_query($sql);
+			$db->sql_query($sql);
 
 			// Add log
 			add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);
+		}
 	}
 
 	/**

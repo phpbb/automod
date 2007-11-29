@@ -28,21 +28,24 @@ class editor
 
 	function editor()
 	{
-		global $phpbb_root_path;
+		global $phpbb_root_path, $config;
 
 		if (!class_exists('transfer'))
 		{
 			global $phpEx;
-			include($phpbb_root_path . 'include/functions_transfer.' . $phpEx);
+			include($phpbb_root_path . 'includes/functions_transfer.' . $phpEx);
 		}
 
+		// user needs to select ftp or ftp using fsock
 		if (is_writable($phpbb_root_path . 'store'))
 		{
-			$this->transfer = new ftp($config['ftp_host'], $config['ftp_username'], request_var('password', ''), $config['ftp_port']);
+			$this->transfer = new ftp(request_var('ftp_host', $config['ftp_host']), request_var('ftp_username', $config['ftp_username']), request_var('ftp_password', ''), request_var('ftp_root_path', ''), request_var('ftp_port', $config['ftp_port']));
+			$this->transfer->open_session();
 		}
 		else
 		{
-			$this->transfer = new ftp_fsock($config['ftp_host'], $config['ftp_username'], request_var('password', ''), $config['ftp_port']);
+			$this->transfer = new ftp_fsock($config['ftp_host'], $config['ftp_username'], request_var('ftp_password', ''), $config['ftp_port']);
+			$this->transfer->open_session();
 		}
 	}
 
@@ -76,11 +79,16 @@ class editor
 	*/
 	function copy_content($from, $to = '')
 	{
-		global $phpbb_root_path;
+		global $phpbb_root_path, $edited_root;
 
-		if (strpos($phpbb_root_path, $from) !== 0)
+		if (strpos($from, $phpbb_root_path) !== 0)
 		{
 			$from = $phpbb_root_path . $from;
+		}
+		
+		if (strpos($to, $phpbb_root_path) !== 0)
+		{
+			$to = $phpbb_root_path . $to;
 		}
 
 		$files = array();
@@ -88,12 +96,10 @@ class editor
 		{
 			// get all of the files within the directory
 			$files = find_files($from , '.*', 5);
-			$to = $phpbb_root_path . $to;
 		}
 		else if (is_file($from))
 		{
 			$files = array($from);
-			$to = $phpbb_root_path . $to;
 		}
 
 		if (empty($files))
@@ -115,7 +121,13 @@ class editor
 		else
 		{
 			// ftp
-			return $this->transfer->write_file($to, file_get_contents($from));
+			$to = str_replace($phpbb_root_path, '', $to);
+			foreach ($files as $file)
+			{
+				$file = str_replace($edited_root, '', $file);
+				
+				$this->transfer->overwrite_file($file, $to . $file);
+			}
 		}
 
 		return true;
