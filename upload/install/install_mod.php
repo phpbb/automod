@@ -125,7 +125,17 @@ class install_mod extends module
 
 	function perform_edits($mode, $sub)
 	{
-		global $lang, $template, $phpbb_root_path, $phpEx, $language, $db;
+		global $lang, $template, $phpbb_root_path, $phpEx, $language, $db, $config;
+
+		// get the config, we don't want the cached config
+		$sql = 'SELECT config_name, config_value
+			FROM ' . CONFIG_TABLE;
+		$result = $db->sql_query($sql);
+		while($row = $db->sql_fetchrow($result))
+		{
+			$config[$row['config_name']] = $row['config_value'];
+		}
+		$db->sql_freeresult($result);
 
 		// we should have some config variables from the previous step
 		set_config('ftp_host',		request_var('ftp_host', ''));
