@@ -25,7 +25,7 @@ if (!empty($setmodules))
 		'module_filename'	=> substr(basename(__FILE__), 0, -strlen($phpEx)-1),
 		'module_order'		=> 30,
 		'module_subs'		=> '',
-		'module_stages'		=> array('INTRO', 'REQUIREMENTS', 'FILE_EDITS', 'ADVANCED', 'CREATE_TABLE', 'FINAL'),
+		'module_stages'		=> array('INTRO', 'FILE_EDITS', 'CREATE_TABLE', 'FINAL'),
 		'module_reqs'		=> ''
 	);
 }
@@ -45,7 +45,8 @@ class install_mod extends module
 	{
 		global $lang, $template, $language, $phpbb_root_path, $phpEx, $db;
 
-		//include($phpbb_root_path . 'language/' . $language . '/acp/mods.' . $phpEx);
+		// $user is not set up at this point
+		include($phpbb_root_path . 'language/' . $language . '/acp/mods.' . $phpEx);
 		include($phpbb_root_path . 'language/' . $language . '/acp/permissions.' . $phpEx);
 
 		require($phpbb_root_path . 'config.' . $phpEx);
@@ -65,31 +66,37 @@ class install_mod extends module
 					'TITLE'				=> $lang['MODMANAGER_INSTALLATION'],
 					'BODY'				=> $lang['MODMANAGER_INSTALLATION_EXPLAIN'],
 					'L_SUBMIT'			=> $lang['NEXT_STEP'],
-					'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=requirements&amp;language=$language",
+					'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=file_edits&amp;language=$language",
 				));
 			break;
 
+			/* requirements are not currently in use...I don't expect to bring them back, but just in case
 			case 'requirements':
 				$this->check_requirements($mode, $sub);
 			break;
+			*/
 
 			case 'file_edits':
-				$this->preform_edits($mode, $sub);
+				$this->perform_edits($mode, $sub);
 			break;
 
+			/* advanced not currently in use.
 			case 'advanced':
 				$this->advanced_settings($mode, $sub);
 			break;
+			*/
 
 			case 'create_table':
 				$this->perform_sql($mode, $sub);
 			break;
 
 			case 'final':
-
 				$template->assign_vars(array(
-					'S_FINAL'	=> true,
-					'TITLE'				=> $lang['STAGE_FINAL'],
+					'S_FINAL'		=> true,
+					'TITLE'			=> $lang['STAGE_FINAL'],
+					'L_INDEX'		=> $lang['INDEX'],
+					'L_INSTALLATION_SUCCESSFUL'	=> $lang['INSTALLATION_SUCCESSFUL'],
+					'U_INDEX'		=> "{$phpbb_root_path}index.$phpEx",
 				));
 			break;
 		}
@@ -97,6 +104,9 @@ class install_mod extends module
 		$this->tpl_name = 'install_mod';
 	}
 
+	/**
+	* Commented out until such a time as there are additional requirements for the Package Manager
+	*
 	function check_requirements($mode, $sub)
 	{
 		global $lang, $template, $phpbb_root_path, $phpEx, $language, $db;
@@ -111,22 +121,54 @@ class install_mod extends module
 			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=file_edits&amp;language=$language",
 		));
 	}
+	*/
 
-	function preform_edits($mode, $sub)
+	function perform_edits($mode, $sub)
 	{
-		global $lang, $template, $phpbb_root_path, $phpEx, $language, $db;
+		global $lang, $template, $phpbb_root_path, $phpEx, $language, $db, $config;
 
-		$this->page_title = $lang['SUB_INTRO'];
+		// get the config, we don't want the cached config
+		$sql = 'SELECT config_name, config_value
+			FROM ' . CONFIG_TABLE;
+		$result = $db->sql_query($sql);
+		while($row = $db->sql_fetchrow($result))
+		{
+			$config[$row['config_name']] = $row['config_value'];
+		}
+		$db->sql_freeresult($result);
+
+		// we should have some config variables from the previous step
+		set_config('ftp_host',		request_var('ftp_host', ''));
+		set_config('ftp_username',	request_var('ftp_username', ''));
+		set_config('ftp_port',		request_var('ftp_password', ''));
+
+		$this->page_title = $lang['FILE_EDITS'];
+
+		// using some mods manager code in the installation :D
+		include("{$phpbb_root_path}includes/editor.$phpEx");
+
+		$editor = new editor($phpbb_root_path);
+
+		$filename = "includes/constants.$phpEx";
+		$find = '// Additional tables';
+		$add = 'define(\'MODS_TABLE\',				$table_prefix . \'mods\');';
+
+		$editor->open_file("includes/constants.$phpEx");
+		$editor->add_string($find, $add, 'AFTER');
+		$editor->close_file("includes/constants.$phpEx");
 
 		$template->assign_vars(array(
 			'S_FILE_EDITS'		=> true,
 			//'TITLE'				=> $lang['MODMANAGER_INSTALLATION'],
 			//'BODY'				=> $lang['MODMANAGER_INSTALLATION_EXPLAIN'],
 			'L_SUBMIT'			=> $lang['NEXT_STEP'],
-			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=advanced&amp;language=$language",
+			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=create_table&amp;language=$language",
 		));
 	}
 
+	/*
+	* I see no reason to keep this role selection.
+	*
 	function advanced_settings($mode, $sub)
 	{
 		global $lang, $template, $phpbb_root_path, $phpEx, $language, $db;
@@ -154,9 +196,10 @@ class install_mod extends module
 			'BODY'				=> $lang['STAGE_ADVANCED_EXPLAIN'],
 			'S_ROLE_OPTIONS'	=> $s_role_options,
 			'L_SUBMIT'			=> $lang['NEXT_STEP'],
-			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=create_table&amp;language=$language",
+			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=advanced&amp;language=$language",
 		));
 	}
+	*/
 
 	function perform_sql($mode, $sub)
 	{
@@ -216,84 +259,97 @@ class install_mod extends module
 		}
 		// end borrow from phpBB core
 
-		// Get some Module info
-		$sql = 'SELECT MAX(module_id) AS last_m_id, MAX(right_id) AS last_r_id
-			FROM ' . MODULES_TABLE;
-		$result = $db->sql_query($sql);
-		$row = $db->sql_fetchrow($result);
-		$db->sql_freeresult($result);
+		$sql = 'SELECT module_id FROM ' . MODULES_TABLE . "
+			WHERE module_langname = 'ACP_CAT_MODS'";
+  		$result = $db->sql_query($sql);
 
-		// Insert Category Module
-		$module_data = array(
-			'module_id'			=> ($row['last_m_id'] + 1),
-			'module_enabled'	=> 1,
-			'module_display'	=> 1,
-			'module_class'		=> 'acp',
-			'parent_id'			=> 0,
-			'module_langname'	=> 'ACP_CAT_MODS',
-			'left_id'			=> ($row['last_r_id'] + 1),
-			'right_id'			=> ($row['last_r_id'] + 6),
-		);
+		if (!$db->sql_fetchrow($result))
+		{
+			// Get some Module info
+			$sql = 'SELECT MAX(module_id) AS last_m_id, MAX(right_id) AS last_r_id
+				FROM ' . MODULES_TABLE;
+			$result = $db->sql_query($sql);
+			$row = $db->sql_fetchrow($result);
+			$db->sql_freeresult($result);
 
-		$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
-		$db->sql_query($sql);
+			// Insert Category Module
+			$module_data = array(
+				'module_id'			=> ($row['last_m_id'] + 1),
+				'module_enabled'	=> 1,
+				'module_display'	=> 1,
+				'module_class'		=> 'acp',
+				'parent_id'			=> 0,
+				'module_langname'	=> 'ACP_CAT_MODS',
+				'left_id'			=> ($row['last_r_id'] + 1),
+				'right_id'			=> ($row['last_r_id'] + 6),
+			);
 
-		// Insert Parent Module
-		$module_data = array(
-			'module_id'			=> ($row['last_m_id'] + 2),
-			'module_enabled'	=> 1,
-			'module_display'	=> 1,
-			'module_class'		=> 'acp',
-			'parent_id'			=> ($row['last_m_id'] + 1),
-			'module_langname'	=> 'ACP_MODS',
-			'left_id'			=> ($row['last_r_id'] + 2),
-			'right_id'			=> ($row['last_r_id'] + 5),
-		);
+			$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
+			$db->sql_query($sql);
 
-		$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
-		$db->sql_query($sql);
+			// Insert Parent Module
+			$module_data = array(
+				'module_id'			=> ($row['last_m_id'] + 2),
+				'module_enabled'	=> 1,
+				'module_display'	=> 1,
+				'module_class'		=> 'acp',
+				'parent_id'			=> ($row['last_m_id'] + 1),
+				'module_langname'	=> 'ACP_MODS',
+				'left_id'			=> ($row['last_r_id'] + 2),
+				'right_id'			=> ($row['last_r_id'] + 5),
+			);
 
-		// Frontend Module
-		$module_data = array(
-			'module_id'			=> ($row['last_m_id'] + 3),
-			'module_enabled'	=> 1,
-			'module_display'	=> 1,
-			'module_class'		=> 'acp',
-			'parent_id'			=> ($row['last_m_id'] + 2),
-			'module_langname'	=> 'ACP_MOD_MANAGEMENT',
-			'left_id'			=> ($row['last_r_id'] + 3),
-			'right_id'			=> ($row['last_r_id'] + 4),
+			$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
+			$db->sql_query($sql);
 
-			'module_basename'	=> 'mods',
-			'module_mode'		=> 'frontend',
-			'module_auth'		=> '',
-		);
+			// Frontend Module
+			$module_data = array(
+				'module_id'			=> ($row['last_m_id'] + 3),
+				'module_enabled'	=> 1,
+				'module_display'	=> 1,
+				'module_class'		=> 'acp',
+				'parent_id'			=> ($row['last_m_id'] + 2),
+				'module_langname'	=> 'ACP_MOD_MANAGEMENT',
+				'left_id'			=> ($row['last_r_id'] + 3),
+				'right_id'			=> ($row['last_r_id'] + 4),
 
-		$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
-		$db->sql_query($sql);
+				'module_basename'	=> 'mods',
+				'module_mode'		=> 'frontend',
+				'module_auth'		=> '',
+			);
 
-		// Insert the auth option
-		$auth_data = array(
-			'auth_option'		=> 'a_mods',
-			'is_global'			=> 1,
-			'is_local'			=> 0,
-			'founder_only'		=> 0,
-		);
+			$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
+			$db->sql_query($sql);
 
-		$sql = 'INSERT INTO ' . ACL_OPTIONS_TABLE . ' ' . $db->sql_build_array('INSERT', $auth_data);
-		$db->sql_query($sql);
+			// Insert the auth option
+			$auth_data = array(
+				'auth_option'		=> 'a_mods',
+				'is_global'			=> 1,
+				'is_local'			=> 0,
+				'founder_only'		=> 0,
+			);
 
-		$auth_option_id = $db->sql_nextid();
+			$sql = 'INSERT INTO ' . ACL_OPTIONS_TABLE . ' ' . $db->sql_build_array('INSERT', $auth_data);
+			$db->sql_query($sql);
 
-		// Give the wanted role its option
-		$roles_data = array(
-			'role_id'			=> request_var('role_id', 0),
-			'auth_option_id'	=> $auth_option_id,
-			'auth_setting'		=> 1,
-		);
+			$auth_option_id = $db->sql_nextid();
 
-		$sql = 'INSERT INTO ' . ACL_ROLES_DATA_TABLE . ' ' . $db->sql_build_array('INSERT', $roles_data);
-		$db->sql_query($sql);
+			$sql = 'SELECT role_id FROM ' . ACL_ROLES_TABLE . "
+				WHERE role_name = 'ROLE_ADMIN_FULL'";
+			$result = $db->sql_query($sql);
+			$role_id = (int) $db->sql_fetchfield('role_id');
+			$db->sql_freeresult($result);
+
+			// Give the wanted role its option
+			$roles_data = array(
+				'role_id'			=> $role_id,
+				'auth_option_id'	=> $auth_option_id,
+				'auth_setting'		=> 1,
+			);
+
+			$sql = 'INSERT INTO ' . ACL_ROLES_DATA_TABLE . ' ' . $db->sql_build_array('INSERT', $roles_data);
+			$db->sql_query($sql);
+		}
 
 		// Reset cache so we can actaully see the lovely new tab in the ACP
 		$cache->purge();
