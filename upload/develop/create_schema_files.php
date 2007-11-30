@@ -674,7 +674,7 @@ foreach ($supported_dbms as $dbms)
 						}
 
 						$line .= ($key_data[0] == 'INDEX') ? 'CREATE INDEX' : '';
-						
+
 						$line .= " {$table_name}_{$key_name} ON {$table_name} (" . implode(', ', $key_data[1]) . ")\n";
 						$line .= "/\n";
 					break;
@@ -820,11 +820,12 @@ function get_schema_struct()
 			'mod_template'			=> array('STEXT_UNI', ''),
 			'mod_path'				=> array('STEXT_UNI', ''),
 		),
-		'PRIMARY_KEY'	=> array('mod_id'),
+		'PRIMARY_KEY'	=> 'mod_id',
 	);
 
 	return $schema_data;
 }
+
 
 /**
 * Data put into the header for various dbms
