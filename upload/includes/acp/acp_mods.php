@@ -373,7 +373,7 @@ class acp_mods
 			$template->assign_vars(array(
 				'S_AUTHOR_NOTES'	=> $details['AUTHOR_NOTES'],
 				
-				'AUTHOR_NOTES'		=> $details['AUTHOR_NOTES'],
+				'AUTHOR_NOTES'		=> nl2br($details['AUTHOR_NOTES']),
 			));
 		}
 		

@@ -572,11 +572,6 @@ function find_files($directory, $pattern, $max_levels = 3, $_current_level = 1)
 */
 function recursive_mkdir($path, $mode = 0777)
 {
-	global $phpbb_root_path;
-	// remove $phpbb_root_path - addition by A_Jelly_Doughnut
-	$path = str_replace($phpbb_root_path, '', $path);
-
-
 	$dirs = explode('/', $path);
 	$count = sizeof($dirs);
 	$path = '.';
