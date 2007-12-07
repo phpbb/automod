@@ -5,21 +5,31 @@
 <!-- IF BODY --><p>{BODY}</p><!-- ENDIF -->
 
 <!-- IF S_OVERVIEW -->
-<fieldset>
-	<legend>{L_FTP_INFORMATION}</legend>
+<!-- IF .data -->
+	<!-- IF S_CONNECTION_SUCCESS -->
+		<div class="successbox">
+			<p>{L_CONNECTION_SUCCESS}</p>
+		</div>
+	<!-- ELSEIF S_CONNECTION_FAILED -->
+		<div class="errorbox">
+			<p>{L_CONNECTION_FAILED}<br />{ERROR_MSG}</p>
+		</div>
+	<!-- ENDIF -->
+	
+	<fieldset>
+		<legend>{L_FTP_SETTINGS}</legend>
 	<dl>
-		<dt><label for="ftp_host">{L_FTP_HOST}</label></dt>
-		<dd><input type="text" id="ftp_host" name="ftp_host" /></dd>
+		<dt><label>{L_UPLOAD_METHOD}:</label></dt>
+		<dd><strong>{UPLOAD_METHOD}</strong></dd>
 	</dl>
+	<!-- BEGIN data -->
 	<dl>
-		<dt><label for="ftp_username">{L_FTP_USERNAME}</label></dt>
-		<dd><input type="text" id="ftp_username" name="ftp_username" /></d>
+		<dt><label for="{data.DATA}">{data.NAME}:</label><br /><span>{data.EXPLAIN}</span></dt>
+		<dd><input type="<!-- IF data.DATA == 'password' -->password<!-- ELSE -->text<!-- ENDIF -->" id="{data.DATA}" name="{data.DATA}" value="{data.DEFAULT}" /></dd>
 	</dl>
-	<dl>
-		<dt><label for="ftp_port">{L_FTP_PORT}</label></dt>
-		<dd><input type="text" id="ftp_port" name="ftp_port" value="21" /></dd>
-	</dl>
+	<!-- END data -->
 </fieldset>
+<!-- ENDIF -->
 <!-- ENDIF -->
 
 <!-- IF S_REQUIREMENTS -->
@@ -44,7 +54,11 @@
 	<fieldset class="submit-buttons">
 		<legend>{L_SUBMIT}</legend>
 		{S_HIDDEN}
-		<!-- IF L_SUBMIT --><input class="button1" type="submit" id="submit" onclick="this.className = 'button1 disabled';" name="submit" value="{L_SUBMIT}" /><!-- ENDIF -->
+		{S_HIDDEN_FIELDS}
+		<!-- IF .data -->
+		<input class="button1" type="submit" name="test_connection" value="{L_TEST_CONNECTION}" />
+		<!-- ENDIF -->
+		<input class="button1" type="submit" id="submit" name="submit" value="{L_SUBMIT}" />
 	</fieldset>
 <!-- ENDIF -->
 </form>
