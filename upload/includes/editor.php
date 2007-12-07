@@ -37,14 +37,9 @@ class editor
 		}
 
 		// user needs to select ftp or ftp using fsock
-		if (is_writable($phpbb_root_path . 'store'))
+		if (!is_writable($phpbb_root_path) && $config['ftp_method'])
 		{
-			$this->transfer = new ftp(request_var('ftp_host', $config['ftp_host']), request_var('ftp_username', $config['ftp_username']), request_var('ftp_password', ''), request_var('ftp_root_path', ''), request_var('ftp_port', $config['ftp_port']));
-			$this->transfer->open_session();
-		}
-		else
-		{
-			$this->transfer = new ftp_fsock($config['ftp_host'], $config['ftp_username'], request_var('ftp_password', ''), $config['ftp_port']);
+			$this->transfer = new $config['ftp_method'](request_var('host', $config['ftp_host']), request_var('username', $config['ftp_username']), request_var('password', ''), request_var('root_path', $config['ftp_root_path']), request_var('port', $config['ftp_port']), request_var('timeout', $config['ftp_timeout']));
 			$this->transfer->open_session();
 		}
 	}
@@ -497,7 +492,7 @@ class editor
 		}
 		else
 		{
-			$this->transfer->write_file($new_filename, implode('', $this->file_contents));
+			return $this->transfer->write_file($new_filename, implode('', $this->file_contents));
 		}
 	}
 }

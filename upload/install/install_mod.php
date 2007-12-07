@@ -16,6 +16,21 @@ if (!defined('IN_INSTALL'))
 
 if (!empty($setmodules))
 {
+	// If phpBB is not installed we do not include this module
+	if (@file_exists($phpbb_root_path . 'config.' . $phpEx) && !@file_exists($phpbb_root_path . 'cache/install_lock'))
+	{
+		include_once($phpbb_root_path . 'config.' . $phpEx);
+
+		if (!defined('PHPBB_INSTALLED'))
+		{
+			return;
+		}
+	}
+	else
+	{
+		return;
+	}
+	
 	global $language, $lang;
 	include($phpbb_root_path . 'language/' . $language . '/acp/mods.' . $phpEx);
 
@@ -43,31 +58,128 @@ class install_mod extends module
 
 	function main($mode, $sub)
 	{
-		global $lang, $template, $language, $phpbb_root_path, $phpEx, $db;
+		global $template, $phpEx, $phpbb_root_path, $user, $db, $config, $cache, $auth, $language;
 
-		// $user is not set up at this point
-		include($phpbb_root_path . 'language/' . $language . '/acp/mods.' . $phpEx);
-		include($phpbb_root_path . 'language/' . $language . '/acp/permissions.' . $phpEx);
+		//include($phpbb_root_path . 'language/' . $language . '/acp/permissions.' . $phpEx);
 
 		require($phpbb_root_path . 'config.' . $phpEx);
 		require($phpbb_root_path . 'includes/constants.' . $phpEx);
 		require($phpbb_root_path . 'includes/db/' . $dbms . '.' . $phpEx);
 		require($phpbb_root_path . 'includes/functions_convert.' . $phpEx);
+		include_once($phpbb_root_path . 'includes/functions_transfer.' . $phpEx);
 
 		$db = new $sql_db();
 		$db->sql_connect($dbhost, $dbuser, $dbpasswd, $dbname, $dbport, false, true);
 		unset($dbpasswd);
+
+		$config = array();
+
+		$sql = 'SELECT config_name, config_value
+			FROM ' . CONFIG_TABLE;
+		$result = $db->sql_query($sql);
+
+		while ($row = $db->sql_fetchrow($result))
+		{
+			$config[$row['config_name']] = $row['config_value'];
+		}
+		$db->sql_freeresult($result);
+
+		// Force template recompile
+		$config['load_tplcompile'] = 1;
+		
+		// First of all, init the user session
+		$user->session_begin();
+		$auth->acl($user->data);
+
+		$user->setup(array('install', 'acp/mods'));
+		
+		// Set custom template again. ;)
+		$template->set_custom_template('../adm/style', 'admin');
+		
+		$test_ftp_connection = request_var('test_connection', '');
+		$submit = request_var('submit', '');
+		$method = basename(request_var('method', ''));
+		
+		if (!$method || !class_exists($method))
+		{
+			$method = 'ftp';
+			$methods = transfer::methods();
+
+			if (!in_array('ftp', $methods))
+			{
+				$method = $methods[0];
+			}
+		}
+
+		$test_connection = false;
+		if (!empty($test_ftp_connection) || (!is_writeable($phpbb_root_path) && $sub == 'file_edits'))
+		{
+			$transfer = new $method(request_var('host', ''), request_var('username', ''), request_var('password', ''), request_var('root_path', ''), request_var('port', ''), request_var('timeout', ''));
+			$test_connection = $transfer->open_session();
+
+			// Make sure that the directory is correct by checking for the existence of common.php
+			if ($test_connection === true)
+			{
+				// Check for common.php file
+				if (!$transfer->file_exists($phpbb_root_path, 'common.' . $phpEx))
+				{
+					$test_connection = 'ERR_WRONG_PATH_TO_PHPBB';
+				}
+			}
+
+			$transfer->close_session();
+
+			// Make sure the login details are correct before continuing
+			if ($test_connection !== true)
+			{
+				$sub = 'intro';
+				$test_ftp_connection = true;
+			}
+		}
 
 		switch ($sub)
 		{
 			case 'intro':
 				$template->assign_vars(array(
 					'S_OVERVIEW'		=> true,
-					'TITLE'				=> $lang['MODMANAGER_INSTALLATION'],
-					'BODY'				=> $lang['MODMANAGER_INSTALLATION_EXPLAIN'],
-					'L_SUBMIT'			=> $lang['NEXT_STEP'],
+					'TITLE'				=> $user->lang['MODMANAGER_INSTALLATION'],
+					'BODY'				=> $user->lang['MODMANAGER_INSTALLATION_EXPLAIN'],
+					'L_SUBMIT'			=> $user->lang['NEXT_STEP'],
 					'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=file_edits&amp;language=$language",
 				));
+				
+				if (!is_writeable($phpbb_root_path))
+				{
+					$s_hidden_fields = build_hidden_fields(array('method' => $method));
+	
+					$this->page_title = 'SELECT_FTP_SETTINGS';
+	
+					if (!class_exists($method))
+					{
+						trigger_error('Method does not exist.', E_USER_ERROR);
+					}
+	
+					$requested_data = call_user_func(array($method, 'data'));
+					foreach ($requested_data as $data => $default)
+					{
+						$template->assign_block_vars('data', array(
+							'DATA'		=> $data,
+							'NAME'		=> $user->lang[strtoupper($method . '_' . $data)],
+							'EXPLAIN'	=> $user->lang[strtoupper($method . '_' . $data) . '_EXPLAIN'],
+							'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
+						));
+					}
+	
+					$template->assign_vars(array(
+						'S_CONNECTION_SUCCESS'		=> ($test_ftp_connection && $test_connection === true) ? true : false,
+						'S_CONNECTION_FAILED'		=> ($test_ftp_connection && $test_connection !== true) ? true : false,
+						'ERROR_MSG'					=> ($test_ftp_connection && $test_connection !== true) ? $user->lang[$test_connection] : '',
+	
+						'S_FTP_UPLOAD'		=> true,
+						'UPLOAD_METHOD'		=> $method,
+						'S_HIDDEN_FIELDS'	=> $s_hidden_fields)
+					);
+				}
 			break;
 
 			/* requirements are not currently in use...I don't expect to bring them back, but just in case
@@ -93,9 +205,9 @@ class install_mod extends module
 			case 'final':
 				$template->assign_vars(array(
 					'S_FINAL'		=> true,
-					'TITLE'			=> $lang['STAGE_FINAL'],
-					'L_INDEX'		=> $lang['INDEX'],
-					'L_INSTALLATION_SUCCESSFUL'	=> $lang['INSTALLATION_SUCCESSFUL'],
+					'TITLE'			=> $user->lang['STAGE_FINAL'],
+					'L_INDEX'		=> $user->lang['INDEX'],
+					'L_INSTALLATION_SUCCESSFUL'	=> $user->lang['INSTALLATION_SUCCESSFUL'],
 					'U_INDEX'		=> "{$phpbb_root_path}index.$phpEx",
 				));
 			break;
@@ -125,24 +237,23 @@ class install_mod extends module
 
 	function perform_edits($mode, $sub)
 	{
-		global $lang, $template, $phpbb_root_path, $phpEx, $language, $db, $config;
-
-		// get the config, we don't want the cached config
-		$sql = 'SELECT config_name, config_value
-			FROM ' . CONFIG_TABLE;
-		$result = $db->sql_query($sql);
-		while($row = $db->sql_fetchrow($result))
-		{
-			$config[$row['config_name']] = $row['config_value'];
-		}
-		$db->sql_freeresult($result);
-
+		global $template, $phpbb_root_path, $phpEx, $language, $db, $config;
+		
 		// we should have some config variables from the previous step
-		set_config('ftp_host',		request_var('ftp_host', ''));
-		set_config('ftp_username',	request_var('ftp_username', ''));
-		set_config('ftp_port',		request_var('ftp_password', ''));
+		$config['ftp_method']		= request_var('method', '');
+		$config['ftp_host']			= request_var('host', '');
+		$config['ftp_username']		= request_var('username', '');
+		$config['ftp_root_path']	= request_var('root_path', '');
+		$config['ftp_port']			= request_var('port', 21);
+		$config['ftp_timeout']		= request_var('timeout', 10);
+		set_config('ftp_method',	$config['ftp_method']);
+		set_config('ftp_host',		$config['ftp_host']);
+		set_config('ftp_username',	$config['ftp_username']);
+		set_config('ftp_root_path', $config['ftp_root_path']);
+		set_config('ftp_port',		$config['ftp_port']);
+		set_config('ftp_timeout',	$config['ftp_timeout']);
 
-		$this->page_title = $lang['FILE_EDITS'];
+		$this->page_title = $user->lang['FILE_EDITS'];
 
 		// using some mods manager code in the installation :D
 		include("{$phpbb_root_path}includes/editor.$phpEx");
@@ -155,13 +266,16 @@ class install_mod extends module
 
 		$editor->open_file("includes/constants.$phpEx");
 		$editor->add_string($find, $add, 'AFTER');
-		$editor->close_file("includes/constants.$phpEx");
+		if (!$editor->close_file("includes/constants.$phpEx"))
+		{
+			trigger_error('error writing file');
+		}
 
 		$template->assign_vars(array(
 			'S_FILE_EDITS'		=> true,
 			//'TITLE'				=> $lang['MODMANAGER_INSTALLATION'],
 			//'BODY'				=> $lang['MODMANAGER_INSTALLATION_EXPLAIN'],
-			'L_SUBMIT'			=> $lang['NEXT_STEP'],
+			'L_SUBMIT'			=> $user->lang['NEXT_STEP'],
 			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=create_table&amp;language=$language",
 		));
 	}
@@ -203,15 +317,15 @@ class install_mod extends module
 
 	function perform_sql($mode, $sub)
 	{
-		global $lang, $template, $phpbb_root_path, $phpEx, $language, $db, $cache;
+		global $template, $phpbb_root_path, $phpEx, $language, $db, $cache;
 
 		$this->page_title = $lang['STAGE_CREATE_TABLE'];
 
 		$template->assign_vars(array(
 			'S_CREATE_TABLES'	=> true,
-			'TITLE'				=> $lang['STAGE_CREATE_TABLE'],
-			'BODY'				=> $lang['STAGE_CREATE_TABLE_EXPLAIN'],
-			'L_SUBMIT'			=> $lang['NEXT_STEP'],
+			'TITLE'				=> $user->lang['STAGE_CREATE_TABLE'],
+			'BODY'				=> $user->lang['STAGE_CREATE_TABLE_EXPLAIN'],
+			'L_SUBMIT'			=> $user->lang['NEXT_STEP'],
 			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=final&amp;language=$language",
 		));
 
