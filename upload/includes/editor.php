@@ -495,7 +495,7 @@ class editor
 			$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
 			@fwrite($fr, implode('', $this->file_contents));
 			@fclose($fr);
-			chmod($phpbb_root_path . $new_filename, 0777);
+			@chmod($phpbb_root_path . $new_filename, 0777);
 		}
 		else
 		{
@@ -583,7 +583,7 @@ function recursive_mkdir($path, $mode = 0777)
 
 		if (!is_dir($path))
 		{
-			mkdir($path, $mode);
+			@mkdir($path, $mode);
 			@chmod($path, $mode);
 			
 			if (!is_dir($path))
