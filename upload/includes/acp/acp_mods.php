@@ -19,9 +19,10 @@ class acp_mods
 	{
 		global $config, $db, $user, $auth, $template, $cache;
 		global $phpbb_root_path, $phpbb_admin_path, $phpEx, $table_prefix;
+		global $method, $test_ftp_connection, $test_connection;
 
 		// start the page
-		$user->add_lang('acp/mods');
+		$user->add_lang(array('acp/mods', 'install'));
 		$this->tpl_name = 'acp_mods';
 		$this->page_title = 'ACP_CAT_MODS';
 
@@ -32,15 +33,56 @@ class acp_mods
 		$mod_id = request_var('mod_id', 0);
 		$mod_url = request_var('mod_url', '');
 		$mod_path = request_var('mod_path', '');
-
+		
 		switch ($mode)
 		{
 			case 'frontend':
+				$test_ftp_connection = request_var('test_connection', '');
+				$submit = request_var('submit', '');
+				$method = basename(request_var('method', ''));
+				
+				if (!$method || !class_exists($method))
+				{
+					$method = 'ftp';
+					$methods = transfer::methods();
+		
+					if (!in_array('ftp', $methods))
+					{
+						$method = $methods[0];
+					}
+				}
+		
+				$test_connection = false;
+				$action = (!empty($test_ftp_connection)) ? 'pre_install' : $action;
+				if (!empty($test_ftp_connection) || (!is_writeable($phpbb_root_path) && $action == 'install'))
+				{
+					$transfer = new $method(request_var('host', ''), request_var('username', ''), request_var('password', ''), request_var('root_path', ''), request_var('port', ''), request_var('timeout', ''));
+					$test_connection = $transfer->open_session();
+		
+					// Make sure that the directory is correct by checking for the existence of common.php
+					if ($test_connection === true)
+					{
+						// Check for common.php file
+						if (!$transfer->file_exists($phpbb_root_path, 'common.' . $phpEx))
+						{
+							$test_connection = 'ERR_WRONG_PATH_TO_PHPBB';
+						}
+					}
+		
+					$transfer->close_session();
+		
+					// Make sure the login details are correct before continuing
+					if ($test_connection !== true)
+					{
+						$action = 'pre_install';
+						$test_ftp_connection = true;
+					}
+				}
 
 				switch ($action)
 				{
 					case 'pre_install':
-						$this->pre_install($mod_path);
+						$this->pre_install($mod_path, $method);
 					break;
 					
 					case 'install':
@@ -334,7 +376,7 @@ class acp_mods
 	*/
 	function pre_install($mod_path)
 	{
-		global $phpbb_root_path, $phpEx, $template, $db, $config;
+		global $phpbb_root_path, $phpEx, $template, $db, $config, $user, $method, $test_ftp_connection, $test_connection;
 
 		// mod_path empty?
 		if (empty($mod_path))
@@ -376,16 +418,39 @@ class acp_mods
 				'AUTHOR_NOTES'		=> nl2br($details['AUTHOR_NOTES']),
 			));
 		}
-		
+
 		// get FTP information if we need it
 		if (!is_writeable($phpbb_root_path))
 		{
+			$s_hidden_fields = build_hidden_fields(array('method' => $method));
+
+			if (!class_exists($method))
+			{
+				trigger_error('Method does not exist.', E_USER_ERROR);
+			}
+
+			$requested_data = call_user_func(array($method, 'data'));
+			foreach ($requested_data as $data => $default)
+			{
+				$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+				
+				$template->assign_block_vars('data', array(
+					'DATA'		=> $data,
+					'NAME'		=> $user->lang[strtoupper($method . '_' . $data)],
+					'EXPLAIN'	=> $user->lang[strtoupper($method . '_' . $data) . '_EXPLAIN'],
+					'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
+				));
+			}
+
 			$template->assign_vars(array(
-				'S_GET_FTP'		=> true,
-				'FTP_USERNAME'	=> $config['ftp_username'],
-				'FTP_HOST'		=> $config['ftp_host'],
-				'FTP_PORT'		=> $config['ftp_port'],
-			));
+				'S_CONNECTION_SUCCESS'		=> ($test_ftp_connection && $test_connection === true) ? true : false,
+				'S_CONNECTION_FAILED'		=> ($test_ftp_connection && $test_connection !== true) ? true : false,
+				'ERROR_MSG'					=> ($test_ftp_connection && $test_connection !== true) ? $user->lang[$test_connection] : '',
+
+				'S_FTP_UPLOAD'		=> true,
+				'UPLOAD_METHOD'		=> $method,
+				'S_HIDDEN_FIELDS'	=> $s_hidden_fields)
+			);
 		}
 
 		// Only display full actions if the user has requested them.
@@ -543,6 +608,19 @@ class acp_mods
 			// ERROR
 			return false;
 		}
+		
+		$config['ftp_method']		= request_var('method', '');
+		$config['ftp_host']			= request_var('host', '');
+		$config['ftp_username']		= request_var('username', '');
+		$config['ftp_root_path']	= request_var('root_path', '');
+		$config['ftp_port']			= request_var('port', 21);
+		$config['ftp_timeout']		= request_var('timeout', 10);
+		set_config('ftp_method',	$config['ftp_method']);
+		set_config('ftp_host',		$config['ftp_host']);
+		set_config('ftp_username',	$config['ftp_username']);
+		set_config('ftp_root_path', $config['ftp_root_path']);
+		set_config('ftp_port',		$config['ftp_port']);
+		set_config('ftp_timeout',	$config['ftp_timeout']);
 
 		// assume the MOD was installed properly.
 		$mod_installed = true;
@@ -782,7 +860,7 @@ class acp_mods
 		}
 
 		// Move edited files back, and delete temp stoarge folder
-		$editor->copy_content($edited_root, '');
+		$editor->copy_content($edited_root, '', $edited_root);
 		
 		// Finish, by sending template data
 		$template->assign_vars(array(

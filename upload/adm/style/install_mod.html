@@ -18,17 +18,17 @@
 	
 	<fieldset>
 		<legend>{L_FTP_SETTINGS}</legend>
-	<dl>
-		<dt><label>{L_UPLOAD_METHOD}:</label></dt>
-		<dd><strong>{UPLOAD_METHOD}</strong></dd>
-	</dl>
-	<!-- BEGIN data -->
-	<dl>
-		<dt><label for="{data.DATA}">{data.NAME}:</label><br /><span>{data.EXPLAIN}</span></dt>
-		<dd><input type="<!-- IF data.DATA == 'password' -->password<!-- ELSE -->text<!-- ENDIF -->" id="{data.DATA}" name="{data.DATA}" value="{data.DEFAULT}" /></dd>
-	</dl>
-	<!-- END data -->
-</fieldset>
+		<dl>
+			<dt><label>{L_UPLOAD_METHOD}:</label></dt>
+			<dd><strong>{UPLOAD_METHOD}</strong></dd>
+		</dl>
+		<!-- BEGIN data -->
+		<dl>
+			<dt><label for="{data.DATA}">{data.NAME}:</label><br /><span>{data.EXPLAIN}</span></dt>
+			<dd><input type="<!-- IF data.DATA == 'password' -->password<!-- ELSE -->text<!-- ENDIF -->" id="{data.DATA}" name="{data.DATA}" value="{data.DEFAULT}" /></dd>
+		</dl>
+		<!-- END data -->
+	</fieldset>
 <!-- ENDIF -->
 <!-- ENDIF -->
 

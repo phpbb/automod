@@ -178,34 +178,38 @@
 	<!-- ENDIF -->
 
 	<form id="acp_mods" method="post" action="{U_INSTALL}">
-	<!-- IF S_GET_FTP -->
-	<fieldset>
-		<legend>{L_FTP_INFORMATION}</legend>
-		<dl>
-			<dt><label for="ftp_host">{L_FTP_HOST}</label></dt>
-			<dd><input type="text" value="{FTP_HOST}" id="ftp_host" name="ftp_host" /></dd>
-		</dl>
-		<dl>
-			<dt><label for="ftp_username">{L_FTP_USERNAME}</label></dt>
-			<dd><input type="text" value="{FTP_USERNAME}" id="ftp_username" name="ftp_username" /></dd>
-		</dl>
-		<dl>
-			<dt><label for="ftp_password">{L_FTP_PASSWORD}</label></dt>
-			<dd><input type="password" id="ftp_password" name="ftp_password" /></dd>
-		</dl>
-		<dl>
-			<dt><label for="ftp_root_path">{L_FTP_ROOT_PATH}</label></dt>
-			<dd><input type="text" id="ftp_root_path" name="ftp_root_path" /></dd>
-		</dl>
-		<dl>
-			<dt><label for="ftp_port">{L_FTP_PORT}</label></dt>
-			<dd><input type="text" value="{FTP_PORT}" id="ftp_port" name="ftp_port" /></dd>
-		</dl>
-	</fieldset>
+<!-- IF .data -->
+	<!-- IF S_CONNECTION_SUCCESS -->
+		<div class="successbox">
+			<p>{L_CONNECTION_SUCCESS}</p>
+		</div>
+	<!-- ELSEIF S_CONNECTION_FAILED -->
+		<div class="errorbox">
+			<p>{L_CONNECTION_FAILED}<br />{ERROR_MSG}</p>
+		</div>
 	<!-- ENDIF -->
+	
+	<fieldset>
+		<legend>{L_FTP_SETTINGS}</legend>
+		<dl>
+			<dt><label>{L_UPLOAD_METHOD}:</label></dt>
+			<dd><strong>{UPLOAD_METHOD}</strong></dd>
+		</dl>
+		<!-- BEGIN data -->
+		<dl>
+			<dt><label for="{data.DATA}">{data.NAME}:</label><br /><span>{data.EXPLAIN}</span></dt>
+			<dd><input type="<!-- IF data.DATA == 'password' -->password<!-- ELSE -->text<!-- ENDIF -->" id="{data.DATA}" name="{data.DATA}" value="{data.DEFAULT}" /></dd>
+		</dl>
+		<!-- END data -->
+	</fieldset>
+<!-- ENDIF -->
 	<fieldset class="submit-buttons">
 		<legend>{L_INSTALL}</legend>
+		{S_HIDDEN_FIELDS}
 		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
+		<!-- IF .data -->
+		<input class="button1" type="submit" name="test_connection" value="{L_TEST_CONNECTION}" />
+		<!-- ENDIF -->
 		<input class="button1" type="submit" name="install" value="{L_INSTALL}" />
 	</fieldset>
 	</form>
