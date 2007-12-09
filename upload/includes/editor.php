@@ -39,7 +39,7 @@ class editor
 		// user needs to select ftp or ftp using fsock
 		if (!is_writable($phpbb_root_path) && $config['ftp_method'])
 		{
-			$this->transfer = new $config['ftp_method'](request_var('host', $config['ftp_host']), request_var('username', $config['ftp_username']), request_var('password', ''), request_var('root_path', $config['ftp_root_path']), request_var('port', $config['ftp_port']), request_var('timeout', $config['ftp_timeout']));
+			$this->transfer = new $config['ftp_method']($config['ftp_host'], $config['ftp_username'], request_var('password', ''),  $config['ftp_root_path'], $config['ftp_port'], $config['ftp_timeout']);
 			$this->transfer->open_session();
 		}
 	}
@@ -72,7 +72,7 @@ class editor
 	* @param $from string Can be a file or a directory. Will move either the file or all files within the directory
 	* @param $to string Where to move the file(s) to. If not specified then will get moved to the root folder
 	*/
-	function copy_content($from, $to = '')
+	function copy_content($from, $to = '', $strip = '')
 	{
 		global $phpbb_root_path, $edited_root;
 
@@ -116,12 +116,18 @@ class editor
 		else
 		{
 			// ftp
-			$to = str_replace($phpbb_root_path, '', $to);
 			foreach ($files as $file)
 			{
-				$file = str_replace($edited_root, '', $file);
-				
-				$this->transfer->overwrite_file($file, $to . $file);
+				if (is_dir($to))
+				{
+					$to_file = str_replace($strip, '', $file);
+				}
+				else
+				{
+					$to_file = $to;
+				}
+
+				$this->transfer->overwrite_file($file, $to_file);
 			}
 		}
 
@@ -480,7 +486,7 @@ class editor
 
 		if (!file_exists($phpbb_root_path . dirname($new_filename)))
 		{
-			recursive_mkdir($phpbb_root_path . dirname($new_filename), 0666);
+			recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777);
 		}
 
 		if (is_writable($phpbb_root_path . $new_filename) || is_writable($phpbb_root_path . dirname($new_filename)))
@@ -489,6 +495,7 @@ class editor
 			$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
 			@fwrite($fr, implode('', $this->file_contents));
 			@fclose($fr);
+			chmod($phpbb_root_path . $new_filename, 0777);
 		}
 		else
 		{
@@ -574,9 +581,15 @@ function recursive_mkdir($path, $mode = 0777)
 	{
 		$path .= '/' . $dirs[$i];
 
-		if (!is_dir($path) && !mkdir($path, $mode))
+		if (!is_dir($path))
 		{
-			return false;
+			mkdir($path, $mode);
+			@chmod($path, $mode);
+			
+			if (!is_dir($path))
+			{
+				return false;
+			}
 		}
 	}
 	return true;
