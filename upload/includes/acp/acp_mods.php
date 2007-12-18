@@ -33,6 +33,7 @@ class acp_mods
 		$mod_id = request_var('mod_id', 0);
 		$mod_url = request_var('mod_url', '');
 		$mod_path = request_var('mod_path', '');
+		$parent = request_var('parent', 0);
 		
 		switch ($mode)
 		{
@@ -86,7 +87,7 @@ class acp_mods
 					break;
 					
 					case 'install':
-						$this->install($mod_path);
+						$this->install($mod_path, $parent);
 					break;
 					
 					case 'pre_uninstall':
@@ -104,8 +105,8 @@ class acp_mods
 					
 					default:
 						$template->assign_vars(array(
-							'S_FRONTEND'		=> true)
-						);
+							'S_FRONTEND'		=> true,
+						));
 						
 						$this->list_installed();
 						$this->list_uninstalled();
@@ -287,7 +288,7 @@ class acp_mods
 				if ($find_children)
 				{
 					$actions = false;
-					$this->find_children($row['mod_path'], $actions, 'details');
+					$this->find_children($row['mod_path'], $actions, 'details', $mod_id);
 				}
 			}
 			else
@@ -598,7 +599,7 @@ class acp_mods
 	/**
 	* Preforms all Edits, Copies, and SQL queries
 	*/
-	function install($mod_path)
+	function install($mod_path, $parent = 0)
 	{
 		global $phpbb_root_path, $phpEx, $db, $template;
 
@@ -626,8 +627,12 @@ class acp_mods
 		$mod_installed = true;
 
 		$actions = $this->mod_actions($mod_path);
-		// check for "child" MODX files and attempt to decide which ones we need
-		$elements = $this->find_children($mod_path, $actions, 'install');
+		// only supporting one level of hierarchy here
+		if (!$parent)
+		{
+			// check for "child" MODX files and attempt to decide which ones we need
+			$elements = $this->find_children($mod_path, $actions, 'install');
+		}
 
 		$details = $this->mod_details($mod_path, false);
 
@@ -870,7 +875,7 @@ class acp_mods
 		));
 
 		// if MOD installed successfully, make a record.
-		if ($mod_installed)
+		if ($mod_installed && !$parent)
 		{
 			// Insert database data
 			$sql = 'INSERT INTO ' . MODS_TABLE . ' ' . $db->sql_build_array('INSERT', array(
@@ -889,10 +894,42 @@ class acp_mods
 				'mod_template'		=> (string) (isset($elements['templates']) && sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
 			));
 			$db->sql_query($sql);
-
-			// Add log
-			add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);
 		}
+		else if ($parent)
+		{
+			$sql = 'SELECT * FROM ' . MODS_TABLE . " WHERE mod_id = $parent";
+			$result = $db->sql_query($sql);
+
+			$row = $db->sql_fetchrow($result);
+			$db->sql_freeresult($result);
+
+			if (!$row)
+			{
+				trigger_error('NO_MOD');
+			}
+
+			$sql_ary = array();
+			// this may be an insufficient match...
+			if (strpos('language/', $mod_path) !== false)
+			{
+				$sql_ary['mod_languages'] = $row['mod_languages'] . ',' . core_basename($mod_path);
+			}
+			else if (strpos('template/', $mod_path) !== false)
+			{
+				$sql_ary['mod_template'] = $row['mod_template'] . ',' . core_basename($mod_path);
+			}
+
+			$prior_mod_actions = unserialize($row['mod_actions']);
+			$sql_ary['mod_actions'] = serialize(array_merge_recursive($prior_mod_actions, $actions));
+			unset($prior_mod_actions);
+
+			$sql = 'UPDATE ' . MODS_TABLE . ' ' . $db->sql_build_array('UPDATE', $sql_ary);
+			$db->sql_query($sql);
+		}
+
+
+		// Add log
+		add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);
 	}
 
 	/**
@@ -1416,8 +1453,9 @@ class acp_mods
 	* @param array &$actions - the current actions this MOD is using. 
 	*  -- Run through array_merge_recursive() to produce a final array after all calls to this method
 	*  @param string $action - 'pre_install' || 'install' || 'details'
+	*  @param int $parent_id - only valid in details mode, provides install link
 	*/
-	function find_children($mod_path, &$actions, $action)
+	function find_children($mod_path, &$actions, $action, $parent_id = 0)
 	{
 		global $db, $template;
 
@@ -1432,7 +1470,7 @@ class acp_mods
 			foreach ($children['contrib'] as $xml_file)
 			{
 				$child_details = $this->mod_details($xml_file, false);
-				$child_details['U_INSTALL'] = $this->u_action . '&amp;action=install&amp;mod_path=' . $xml_file;
+				$child_details['U_INSTALL'] = $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file";
 
 				$template->assign_block_vars('contrib', $child_details);
 			}
