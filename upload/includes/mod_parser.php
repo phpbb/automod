@@ -114,15 +114,15 @@ class parser_xml
 		for ($i = 0; $i < sizeof($author_info); $i++)
 		{
 			$author_details[] = array(
-				'AUTHOR_NAME'		=> trim($author_info[$i]['children']['USERNAME'][0]['data']),
-				'AUTHOR_EMAIL'		=> trim($author_info[$i]['children']['EMAIL'][0]['data']),
-				'AUTHOR_REALNAME'	=> trim($author_info[$i]['children']['REALNAME'][0]['data']),
-				'AUTHOR_WEBSITE'	=> trim($author_info[$i]['children']['HOMEPAGE'][0]['data']),
+				'AUTHOR_NAME'		=> isset($author_info[$i]['children']['USERNAME'][0]['data']) ? trim($author_info[$i]['children']['USERNAME'][0]['data']) : '',
+				'AUTHOR_EMAIL'		=> isset($author_info[$i]['children']['EMAIL'][0]['data']) ? trim($author_info[$i]['children']['EMAIL'][0]['data']) : '',
+				'AUTHOR_REALNAME'	=> isset($author_info[$i]['children']['REALNAME'][0]['data']) ? trim($author_info[$i]['children']['REALNAME'][0]['data']) : '',
+				'AUTHOR_WEBSITE'	=> isset($author_info[$i]['children']['HOMEPAGE'][0]['data']) ? trim($author_info[$i]['children']['HOMEPAGE'][0]['data']) : '',
 			);
 		}
 
 		// history
-		$history_info = $header['HISTORY'][0]['children']['ENTRY'];
+		$history_info = isset($header['HISTORY'][0]['children']['ENTRY']) ? $header['HISTORY'][0]['children']['ENTRY'] : array();
 
 		$mod_history = array();
 		for ($i = 0; $i < sizeof($history_info); $i++)
