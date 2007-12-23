@@ -277,7 +277,7 @@ class xml_array
 		$this->XML = xml_parse($this->parser, $XML);
 		if (!$this->XML)
 		{
-			die(sprintf("<strong>XML error</strong: %s at line %d.  View the file in a web browser for a more detailed error message.", xml_error_string(xml_get_error_code($this->parser)), xml_get_current_line_number($this->parser)));
+			die(sprintf("<strong>XML error</strong>: %s at line %d.  View the file in a web browser for a more detailed error message.", xml_error_string(xml_get_error_code($this->parser)), xml_get_current_line_number($this->parser)));
 		}
 
 		xml_parser_free($this->parser);
