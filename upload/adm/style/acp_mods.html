@@ -378,7 +378,7 @@
 								<!-- BEGIN inline -->
 									<fieldset>
 										<legend>{edit_files.finds.actions.inline.NAME}</legend>
-										<pre>{edit_files.finds.actions.inline.COMMAND}</pre>
+										<!-- IF edit_files.finds.actions.S_SUCCESS --><pre>{edit_files.finds.actions.inline.COMMAND}</pre><!-- ELSE --><span>{L_FIND_FAILED}</span><!-- ENDIF -->
 									</fieldset>
 								<!-- END inline -->
 							</fieldset>

@@ -39,7 +39,7 @@ class editor
 		// user needs to select ftp or ftp using fsock
 		if (!is_writable($phpbb_root_path) && $config['ftp_method'])
 		{
-			$this->transfer = new $config['ftp_method']($config['ftp_host'], $config['ftp_username'], request_var('password', ''),  $config['ftp_root_path'], $config['ftp_port'], $config['ftp_timeout']);
+			$this->transfer = new $config['ftp_method']($config['ftp_host'], $config['ftp_username'], request_var('password', ''), $config['ftp_root_path'], $config['ftp_port'], $config['ftp_timeout']);
 			$this->transfer->open_session();
 		}
 	}

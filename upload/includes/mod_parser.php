@@ -95,6 +95,13 @@ class parser_xml
 			$this->set_file($this->mod_file);
 		}
 
+		$header = array(
+			'MOD-VERSION'	=> array(0 => array('children' => array())),
+			'INSTALLATION'	=> array(0 => array('children' => array('TARGET-VERSION' => array(0 => array('data' => ''))))),
+			'AUTHOR-GROUP'	=> array(0 => array('children' => array('AUTHOR' => array()))),
+			'HISTORY'		=> array(0 => array('children' => array('ENTRY' => array()))),
+		);
+
 		$header = $this->data[0]['children']['HEADER'][0]['children'];
 
 		// get MOD version information
@@ -105,7 +112,7 @@ class parser_xml
 		$version .= (isset($version_info['RELEASE'][0]['data'])) ? trim($version_info['RELEASE'][0]['data']) : '';
 
 		// get phpBB version recommendation
-		$phpbb_version = $header['INSTALLATION'][0]['children']['TARGET-VERSION'][0]['children'];
+		$phpbb_version = isset($header['INSTALLATION'][0]['children']['TARGET-VERSION'][0]['children']) ? $header['INSTALLATION'][0]['children']['TARGET-VERSION'][0]['children'] : array();
 
 		$author_info = $header['AUTHOR-GROUP'][0]['children']['AUTHOR'];
 
@@ -122,7 +129,7 @@ class parser_xml
 		}
 
 		// history
-		$history_info = isset($header['HISTORY'][0]['children']['ENTRY']) ? $header['HISTORY'][0]['children']['ENTRY'] : array();
+		$history_info = !empty($header['HISTORY'][0]['children']['ENTRY']) ? $header['HISTORY'][0]['children']['ENTRY'] : array();
 
 		$mod_history = array();
 		for ($i = 0; $i < sizeof($history_info); $i++)
@@ -153,13 +160,13 @@ class parser_xml
 		// try not to hardcode schema?
 		$details = array(
 			'MOD_PATH' 		=> $this->file,
-			'MOD_NAME'		=> htmlspecialchars(trim($header['TITLE'][0]['data'])),
-			'MOD_DESCRIPTION'	=> htmlspecialchars(trim($header['DESCRIPTION'][0]['data'])),
+			'MOD_NAME'		=> (isset($header['TITLE'][0]['data'])) ? htmlspecialchars(trim($header['TITLE'][0]['data'])) : '',
+			'MOD_DESCRIPTION'	=> (isset($header['DESCRIPTION'][0]['data'])) ? htmlspecialchars(trim($header['DESCRIPTION'][0]['data'])) : '',
 			'MOD_VERSION'		=> htmlspecialchars(trim($version)),
-			'MOD_DEPENDENCIES'	=> htmlspecialchars(trim($header['TITLE'][0]['data'])),
+			'MOD_DEPENDENCIES'	=> (isset($header['TITLE'][0]['data'])) ? htmlspecialchars(trim($header['TITLE'][0]['data'])) : '',
 
 			'AUTHOR_DETAILS'	=> $author_details,
-			'AUTHOR_NOTES'		=> htmlspecialchars(trim($header['AUTHOR-NOTES'][0]['data'])),
+			'AUTHOR_NOTES'		=> (isset($header['AUTHOR-NOTES'][0]['data'])) ? htmlspecialchars(trim($header['AUTHOR-NOTES'][0]['data'])) : '',
 			'MOD_HISTORY'		=> $mod_history,
 			'PHPBB_VERSION'		=> $phpbb_version,
 		);
@@ -271,13 +278,11 @@ class xml_array
 		xml_set_element_handler($this->parser, "tag_open", "tag_closed");
 		xml_set_character_data_handler($this->parser, "tag_data");
 
-		$XML = str_replace('&lt;', '<![CDATA[&lt;]]>', $XML);
-		$XML = str_replace('&gt;', '<![CDATA[&gt;]]>', $XML);
-
 		$this->XML = xml_parse($this->parser, $XML);
 		if (!$this->XML)
 		{
-			die(sprintf("<strong>XML error</strong>: %s at line %d.  View the file in a web browser for a more detailed error message.", xml_error_string(xml_get_error_code($this->parser)), xml_get_current_line_number($this->parser)));
+			die(sprintf("<strong>XML error</strong>: %s at line %d.  View the file in a web browser for a more detailed error message.", 
+				xml_error_string(xml_get_error_code($this->parser)), xml_get_current_line_number($this->parser)));
 		}
 
 		xml_parser_free($this->parser);

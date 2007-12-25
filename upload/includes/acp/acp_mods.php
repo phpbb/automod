@@ -313,7 +313,7 @@ class acp_mods
 
 			if ($find_children)
 			{
-				$actions = false;
+				$actions = array();
 				$this->find_children($mod_path, $actions, 'details');
 			}
 
@@ -601,7 +601,7 @@ class acp_mods
 	*/
 	function install($mod_path, $parent = 0)
 	{
-		global $phpbb_root_path, $phpEx, $db, $template;
+		global $phpbb_root_path, $phpEx, $db, $template, $user;
 
 		// mod_path empty?
 		if (empty($mod_path))
@@ -719,6 +719,7 @@ class acp_mods
 										if (!$line)
 										{
 											// find failed
+											$status = false;
 											continue;
 										}
 
@@ -726,6 +727,7 @@ class acp_mods
 										{
 											$inline_contents = $inline_contents[0];
 											$contents = $contents_orig = $inline_contents;
+
 											switch (strtoupper($inline_action))
 											{
 												case 'IN-LINE-BEFORE-ADD':
@@ -749,10 +751,13 @@ class acp_mods
 												break;
 											}
 
-											$inline_template_ary[] = array(
-												'NAME'		=> $inline_action, // LANG!
-												'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
-											);
+											if ($status)
+											{
+												$inline_template_ary[] = array(
+													'NAME'		=> $inline_action, // LANG!
+													'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
+												);
+											}
 										}
 									}
 								break;
@@ -774,7 +779,7 @@ class acp_mods
 								$mod_installed = false;
 							}
 
-							// since these vars must be assigned after the parent block or else things break
+							// these vars must be assigned after the parent block or else things break
 							if (sizeof($inline_template_ary))
 							{
 								foreach ($inline_template_ary as $inline_template)
@@ -1092,6 +1097,7 @@ class acp_mods
 												'NAME'		=> $inline_action, // LANG!
 												'COMMAND'	=> (is_array($inline_command)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_command),
 											));
+
 										}
 									}
 								}
@@ -1519,7 +1525,7 @@ class acp_mods
 				}
 			}
 
-			if (sizeof($process_languages) && (defined('DEBUG') || isset($_GET['full_details']) || $action == 'install'))
+			if (sizeof($process_languages) && (defined('DEBUG') || isset($_GET['full_details'])) && $action == 'install')
 			{
 				// add the actions to our $actions array...give praise to array_merge_recursive
 				foreach ($process_languages as $key => $void)
@@ -1565,7 +1571,7 @@ class acp_mods
 				}
 			}
 
-			if (sizeof($process_templates) && (defined('DEBUG') || isset($_GET['full_details']) || $action == 'install'))
+			if (sizeof($process_templates) && (defined('DEBUG') || isset($_GET['full_details'])) && $action == 'install')
 			{
 				// add the template actions to our $actions array...
 				foreach ($process_templates as $key => $void)
