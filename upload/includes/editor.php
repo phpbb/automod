@@ -12,35 +12,78 @@
 //define('AFTER',		1);
 //define('BEFORE',	2);
 
+define('WRITE_DIRECT', 1);
+define('WRITE_FTP', 2);
+define('WRITE_MANUAL', 3);
+
 
 /**
 * Editor Class
 * Runs through file sequential, ie new finds must come after previous finds
-* SQL and file copying not handled
+* Handles placing the files after being edited
 * @package mods_manager
 * @todo: implement some string checkin, way too much can go wild here
 */
 class editor
 {
 	var $file_contents = '';
+	var $write_method = 0;
 	var $start_index = 0;
 	var $transfer;
+	var $compress;
+	var $install_time = 0;
 
-	function editor()
+	/**
+	* Constructor method
+	* Creates transfer and/or compress instances
+	*/
+	function editor($phpbb_root_path)
 	{
-		global $phpbb_root_path, $config;
+		global $config, $user;
 
-		if (!class_exists('transfer'))
+		$this->install_time = time();
+
+		// to be truly correct, we should scan all files ...
+		if (is_writable($phpbb_root_path))
 		{
-			global $phpEx;
-			include($phpbb_root_path . 'includes/functions_transfer.' . $phpEx);
+			$this->write_method = WRITE_DIRECT;
 		}
-
 		// user needs to select ftp or ftp using fsock
-		if (!is_writable($phpbb_root_path) && $config['ftp_method'])
+		else if (!is_writable($phpbb_root_path) && $config['ftp_method'])
 		{
+			$this->write_method = WRITE_FTP;
+			if (!class_exists('transfer'))
+			{
+				global $phpEx;
+				include($phpbb_root_path . 'includes/functions_transfer.' . $phpEx);
+			}
+
 			$this->transfer = new $config['ftp_method']($config['ftp_host'], $config['ftp_username'], request_var('password', ''), $config['ftp_root_path'], $config['ftp_port'], $config['ftp_timeout']);
-			$this->transfer->open_session();
+			$error = $this->transfer->open_session();
+
+			if (is_string($error))
+			{
+				// FTP login failed
+				trigger_error(sprintf($user->lang['MODS_FTP_FAIL'], $user->lang[$error]), E_USER_ERROR);
+			}
+		}
+		// or zip or tarballs
+		else if (!$config['ftp_method'] && $config['compress_method'])
+		{
+			$this->write_method = WRITE_MANUAL;
+			if (!class_exists('compress'))
+			{
+				global $phpEx;
+				include($phpbb_root_path . 'includes/functions_compress.' . $phpEx);
+			}
+
+			$class = 'compress_' . $config['compress_method'];
+
+			$this->compress = new $class('w', $phpbb_root_path . 'store/mod_' . $this->install_time . '.' . $config['compress_method']);
+		}
+		else
+		{
+			trigger_error('MODS_SETUP_INCOMPLETE', E_USER_ERROR);
 		}
 	}
 
@@ -63,6 +106,13 @@ class editor
 		global $phpbb_root_path;
 
 		$this->file_contents = $this->normalize(@file($phpbb_root_path . $filename));
+
+		if (!sizeof($this->file_contents))
+		{
+			global $user;
+			trigger_error(sprintf($user->lang['MOD_OPEN_FILE_FAIL'], "$phpbb_root_path$filename"), E_USER_WARNING);
+		}
+
 		$this->start_index = 0;
 	}
 
@@ -74,13 +124,13 @@ class editor
 	*/
 	function copy_content($from, $to = '', $strip = '')
 	{
-		global $phpbb_root_path, $edited_root;
+		global $phpbb_root_path;
 
 		if (strpos($from, $phpbb_root_path) !== 0)
 		{
 			$from = $phpbb_root_path . $from;
 		}
-		
+
 		if (strpos($to, $phpbb_root_path) !== 0)
 		{
 			$to = $phpbb_root_path . $to;
@@ -103,7 +153,7 @@ class editor
 		}
 
 		// is the directory writeable? if so, then we don't have to deal with FTP
-		if (is_writeable($phpbb_root_path))
+		if ($this->write_method == WRITE_DIRECT)
 		{
 			foreach ($files as $file)
 			{
@@ -113,7 +163,7 @@ class editor
 				}
 			}
 		}
-		else
+		else if ($this->write_method == WRITE_FTP)
 		{
 			// ftp
 			foreach ($files as $file)
@@ -129,6 +179,10 @@ class editor
 
 				$this->transfer->overwrite_file($file, $to_file);
 			}
+		}
+		else
+		{
+			return NULL;
 		}
 
 		return true;
@@ -151,16 +205,11 @@ class editor
 		$total_lines = sizeof($this->file_contents);
 		$find_lines = sizeof($find_ary);
 
-		// we process the file sequentially ... so we keep track of 
+		// we process the file sequentially ... so we keep track of indices 
 		for ($i = $this->start_index; $i < $total_lines; $i++)
 		{
 			for ($j = 0; $j < $find_lines; $j++)
 			{
-				// using $this->file_contents[$i + $j] to keep the array pointer where I want it
-				// if the first line of the find (index 0) is being looked at, $i + $j = $i.
-				// if $j is > 0, we look at the next line of the file being inspected
-				// hopefully, this is a decent performer.
-
 				if (!$find_ary[$j])
 				{
 					// line is blank.  Assume we can find a blank line, and continue on
@@ -168,30 +217,48 @@ class editor
 					continue;
 				}
 
+				// using $this->file_contents[$i + $j] to keep the array pointer where I want it
+				// if the first line of the find (index 0) is being looked at, $i + $j = $i.
+				// if $j is > 0, we look at the next line of the file being inspected
+				// hopefully, this is a decent performer.
 				if (strpos($this->file_contents[$i + $j], $find_ary[$j]) !== false)
 				{
-					// we found this part of the line
+					// we found this part of the find
 					$find_success += 1;
+				}
+				// we might have an increment operator, which requires a regular expression match
+				else if (strpos($find_ary[$j], '{%:') !== false)
+				{
+					$find_ary[$j] = preg_replace('#{%:(\d+)}#', '(\d+)', $find_ary[$j]);
 
-					if ($find_success == $find_lines)
+					if (preg_match('#' . $find_ary[$j] . '#is', $this->file_contents[$i + $j]))
 					{
-						// we found the proper number of lines
-						$this->start_index = $i;
-
-						// return our array offsets
-						return array(
-							'start' => $i,
-							'end' => $i + $j,
-						);
+						$find_success += 1;
 					}
+					else
+					{
+						$find_success = 0;
+					}	
 				}
 				else
 				{
 					// the find failed.  Reset $find_success
-					$find_success = false;
+					$find_success = 0;
 
 					// skip to next iteration of outer loop, that is, skip to the next line
 					break;
+				}
+
+				if ($find_success == $find_lines)
+				{
+					// we found the proper number of lines
+					$this->start_index = $i;
+
+					// return our array offsets
+					return array(
+						'start' => $i,
+						'end' => $i + $j,
+					);
 				}
 
 			}
@@ -209,7 +276,7 @@ class editor
 	* @param int $start_offset - the line number where $find starts
 	* @param int $end_offset - the line number where $find ends
 	* 
-	* @return bool success or failure of find
+	* @return mixed array on success or false on failure of find
 	*/ 
 	function inline_find($find, $inline_find, $start_offset = false, $end_offset = false)
 	{
@@ -391,7 +458,8 @@ class editor
 			unset($offsets);
 		}
 
-		for ($i = $start_offset; $i < $end_offset; $i++)
+		// remove each line 
+		for ($i = $start_offset; $i <= $end_offset; $i++)
 		{
 			unset($this->file_contents[$i]);
 		}
@@ -482,26 +550,84 @@ class editor
 	*/
 	function close_file($new_filename)
 	{
-		global $phpbb_root_path;
+		global $phpbb_root_path, $edited_root;
 
 		if (!file_exists($phpbb_root_path . dirname($new_filename)))
 		{
-			recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777);
+			$this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777);
+		}
+$this->write_method = WRITE_MANUAL;
+		// to be on the "safe side" here, probably need to do more than this.
+		if ($this->write_method == WRITE_DIRECT && (!is_writable($phpbb_root_path . $new_filename) || !is_writable($phpbb_root_path . dirname($new_filename))))
+		{
+			$this->write_method = WRITE_MANUAL;
 		}
 
-		if (is_writable($phpbb_root_path . $new_filename) || is_writable($phpbb_root_path . dirname($new_filename)))
+		$file_contents = implode('', $this->file_contents);
+
+		if ($this->write_method == WRITE_DIRECT)
 		{
 			// skip FTP, use local file functions
 			$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
-			@fwrite($fr, implode('', $this->file_contents));
+			@fwrite($fr, $file_contents);
 			@fclose($fr);
-			@chmod($phpbb_root_path . $new_filename, 0777);
+		}
+		else if ($this->write_method == WRITE_FTP)
+		{
+			return $this->transfer->write_file($new_filename, $file_contents);
+		}
+		else if ($this->write_method == WRITE_MANUAL)
+		{
+			// don't include extra dirs in zip file
+			$new_filename = str_replace($edited_root, '', $new_filename);
+
+			return $this->compress->add_data($file_contents, $new_filename);
 		}
 		else
 		{
-			return $this->transfer->write_file($new_filename, implode('', $this->file_contents));
+			trigger_error('MODS_SETUP_INCOMPLETE', E_USER_ERROR);
 		}
 	}
+
+	/**
+	* @author Michal Nazarewicz (from the php manual)
+	* Creates all non-existant directories in a path
+	*/
+	function recursive_mkdir($path, $mode = 0777)
+	{
+		// if files aren't writable, we can't do this...
+		if ($this->write_method == WRITE_FTP)
+		{
+			// ... luckily, the FTP class provides an alternative
+			$this->transfer->make_dir($path);
+			return;
+		}
+		else if ($this->write_method == WRITE_MANUAL)
+		{
+			return;
+		}
+
+		$dirs = explode('/', $path);
+		$count = sizeof($dirs);
+		$path = '.';
+		for ($i = 0; $i < $count; $i++)
+		{
+			$path .= '/' . $dirs[$i];
+
+			if (!is_dir($path))
+			{
+				@mkdir($path, $mode);
+				@chmod($path, $mode);
+
+				if (!is_dir($path))
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
 }
 
 /**
@@ -539,7 +665,7 @@ function find_files($directory, $pattern, $max_levels = 3, $_current_level = 1)
 		$handle = @opendir($directory);
 		while (($file = @readdir($handle)) !== false)
 		{
-			if ( $file == '.' || $file == '..' )
+			if ($file == '.' || $file == '..')
 			{
 				continue;
 			}
@@ -566,33 +692,6 @@ function find_files($directory, $pattern, $max_levels = 3, $_current_level = 1)
 	}
 
 	return array_merge($files, $subdir);
-}
-
-/**
-* @author Michal Nazarewicz (from the php manual)
-* Creates all non-existant directories in a path
-*/
-function recursive_mkdir($path, $mode = 0777)
-{
-	$dirs = explode('/', $path);
-	$count = sizeof($dirs);
-	$path = '.';
-	for ($i = 0; $i < $count; $i++)
-	{
-		$path .= '/' . $dirs[$i];
-
-		if (!is_dir($path))
-		{
-			@mkdir($path, $mode);
-			@chmod($path, $mode);
-			
-			if (!is_dir($path))
-			{
-				return false;
-			}
-		}
-	}
-	return true;
 }
 
 ?>

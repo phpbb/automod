@@ -66,9 +66,13 @@ $lang = array_merge($lang, array(
 	'MOD_DETAILS_EXPLAIN'		=> 'Here you can view all known information about the MOD you selected.',
 	'MOD_MANAGER'				=> 'MOD Manager',
 	'MOD_NAME'					=> 'MOD Name',
+	'MOD_OPEN_FILE_FAIL'		=> 'MODs Manager was unable to open %s.',
 	'MODMANAGER_INSTALLATION'	=> 'MOD Manager Installation',
 	'MODMANAGER_INSTALLATION_EXPLAIN'	=> 'Welcome to the MOD Manager Installation. The installer will perform the following steps, and you will need the following information... bleh. Please select a role to apply MOD manager access to, then click install to proceed.',
+
 	'MODS_EXPLAIN'				=> '<p>Here you can manage the available MODs on your board. MODs allow you to customize your board by automatically installing modifications produced by the phpBB community. For further information on MODs and the MOD Manager please visit the <a href="http://www.phpbb.com/mods">phpBB website</a>.</p>',
+	'MODS_FTP_FAIL'				=> 'MODs Manager was unable to connect to your FTP server.  The error was %s',
+	'MODS_SETUP_INCOMPLETE'		=> 'A problem was found with your configuration, and the MODs Manager cannot operate.  This should only occur when settings (e.g.FTP username) have changed, and can be corrected in the MODs Manager configuration page.',
 
 	'NAME'		=> 'Name',
 	'NEW_FILES'		=> 'New Files',
