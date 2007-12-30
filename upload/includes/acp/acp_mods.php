@@ -869,10 +869,18 @@ class acp_mods
 			}
 		}
 
-		// Move edited files back, and delete temp stoarge folder
-		$editor->copy_content($edited_root, '', $edited_root);
-		
-		// Finish, by sending template data
+		if ($editor->write_method != WRITE_MANUAL)
+		{
+			// Move edited files back, and delete temp storage folder
+			$editor->copy_content($edited_root, '', $edited_root);
+		}
+		else
+		{
+			// download the compressed file
+			$editor->compress->close();
+		}
+
+		// Finish by sending template data
 		$template->assign_vars(array(
 			'S_INSTALL'		=> true,
 
@@ -884,7 +892,7 @@ class acp_mods
 		{
 			// Insert database data
 			$sql = 'INSERT INTO ' . MODS_TABLE . ' ' . $db->sql_build_array('INSERT', array(
-				'mod_time'			=> (int) time(),
+				'mod_time'			=> (int) $editor->install_time,
 				'mod_dependencies'	=> (string) serialize($details['MOD_DEPENDENCIES']),
 				'mod_name'			=> (string) $details['MOD_NAME'],
 				'mod_description'	=> (string) $details['MOD_DESCRIPTION'],
@@ -899,7 +907,11 @@ class acp_mods
 				'mod_template'		=> (string) (isset($elements['templates']) && sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
 			));
 			$db->sql_query($sql);
+
+			// Add log
+			add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);
 		}
+		// in this case, we are installing an additional template or language
 		else if ($parent)
 		{
 			$sql = 'SELECT * FROM ' . MODS_TABLE . " WHERE mod_id = $parent";
@@ -930,11 +942,15 @@ class acp_mods
 
 			$sql = 'UPDATE ' . MODS_TABLE . ' ' . $db->sql_build_array('UPDATE', $sql_ary);
 			$db->sql_query($sql);
+
+			add_log('admin', 'LOG_MOD_CHANGE', $row['mod_name']);
 		}
 
-
-		// Add log
-		add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);
+		if ($editor->write_method == WRITE_MANUAL && $mod_installed)
+		{
+			$editor->compress->download('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
+			exit;
+		}
 	}
 
 	/**
@@ -954,10 +970,9 @@ class acp_mods
 		$template->assign_vars(array(
 			'S_PRE_UNINSTALL'		=> true,
 			
-			'MOD_ID'	=> $mod_id,
-
-			'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
-			'U_BACK'			=> $this->u_action,
+			'MOD_ID'		=> $mod_id,
+			'U_UNINSTALL'	=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
+			'U_BACK'		=> $this->u_action,
 		));
 
 		$actions = $this->mod_actions($mod_id);
@@ -1117,58 +1132,6 @@ class acp_mods
 
 					$editor->close_file($edited_root . $file);
 				}
-
-
-			/*	if (!file_exists("$phpbb_root_path$file"))
-				{
-					$template->assign_block_vars('edit_files', array(
-						'S_MISSING_FILE' => true,
-						
-						'FILENAME'	=> $file,
-					));
-				}
-				else
-				{
-					$template->assign_block_vars('edit_files', array(
-						'FILENAME'	=> $file,
-					));
-				
-					$editor->open_file($file);
-
-					$editor->fold_edits($file, $dependenices);
-	
-					foreach ($finds as $find => $actions)
-					{
-						if (!$editor->check_find($file, $find))
-						{
-							$template->assign_block_vars('edit_files.finds', array(
-								'S_MISSING_FIND'	=> true,
-
-								'FIND_STRING'	=> htmlspecialchars($find),
-							));
-						}
-						else
-						{
-							$template->assign_block_vars('edit_files.finds', array(
-								'FIND_STRING'	=> htmlspecialchars($find)
-							));
-							
-							foreach ($actions as $name => $command)
-							{
-								$template->assign_block_vars('edit_files.finds.actions', array(
-									'NAME'		=> $name, // LANG!
-//									'COMMAND'	=> htmlspecialchars($command),
-
-								));
-							}
-						}
-					}
-					
-					$editor->unfold_edits($file, $dependenices);
-
-					$editor->close_file($file);
-				}
-*/
 			}
 		}
 	}
