@@ -556,7 +556,7 @@ class editor
 		{
 			$this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777);
 		}
-$this->write_method = WRITE_MANUAL;
+
 		// to be on the "safe side" here, probably need to do more than this.
 		if ($this->write_method == WRITE_DIRECT && (!is_writable($phpbb_root_path . $new_filename) || !is_writable($phpbb_root_path . dirname($new_filename))))
 		{
