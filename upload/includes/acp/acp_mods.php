@@ -136,7 +136,6 @@ class acp_mods
 					'WRITE_DIRECT'		=> ($config['write_method'] == WRITE_DIRECT) ? ' checked="checked"' : '',
 					'WRITE_FTP'			=> ($config['write_method'] == WRITE_FTP) ? ' checked="checked"' : '',
 					'WRITE_MANUAL'		=> ($config['write_method'] == WRITE_MANUAL) ? ' checked="checked"' : '',
-					''
 				));
 			break;
 
@@ -522,7 +521,6 @@ class acp_mods
 			));
 		}
 
-<<<<<<< acp_mods.php
 		// get FTP information if we need it
 		if ($editor->write_method == WRITE_FTP)
 		{
@@ -557,7 +555,6 @@ class acp_mods
 			);
 		}
 
-=======
 		// get FTP information if we need it
 		if (!is_writeable($phpbb_root_path))
 		{
@@ -1022,7 +1019,6 @@ class acp_mods
 
 			'U_RETURN'		=> $this->u_action,
 		));
-<<<<<<< acp_mods.php
 
 		// if MOD installed successfully, make a record.
 		if ($mod_installed && !$parent)
@@ -1031,72 +1027,6 @@ class acp_mods
 			$sql = 'INSERT INTO ' . MODS_TABLE . ' ' . $db->sql_build_array('INSERT', array(
 				'mod_time'			=> (int) $editor->install_time,
 				// @todo: Are dependencies part of the MODX Spec?
-				'mod_dependencies'	=> (string) serialize($details['MOD_DEPENDENCIES']),
-				'mod_name'			=> (string) $details['MOD_NAME'],
-				'mod_description'	=> (string) $details['MOD_DESCRIPTION'],
-				'mod_version'		=> (string) $details['MOD_VERSION'],
-				'mod_path'			=> (string) $details['MOD_PATH'],
-				'mod_author_notes'	=> (string) $details['AUTHOR_NOTES'],
-				'mod_author_name'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_NAME'],
-				'mod_author_email'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_EMAIL'],
-				'mod_author_url'	=> (string) $details['AUTHOR_DETAILS'][0]['AUTHOR_WEBSITE'],
-				'mod_actions'		=> (string) serialize($actions),
-				'mod_languages'		=> (string) (isset($elements['languages']) && sizeof($elements['languages'])) ? implode(',', $elements['languages']) : '',
-				'mod_template'		=> (string) (isset($elements['templates']) && sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
-			));
-			$db->sql_query($sql);
-
-			// Add log
-			add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);
-		}
-		// in this case, we are installing an additional template or language
-		else if ($parent)
-		{
-			$sql = 'SELECT * FROM ' . MODS_TABLE . " WHERE mod_id = $parent";
-			$result = $db->sql_query($sql);
-
-			$row = $db->sql_fetchrow($result);
-			$db->sql_freeresult($result);
-
-			if (!$row)
-			{
-				trigger_error('NO_MOD');
-			}
-
-			$sql_ary = array();
-			// this may be an insufficient match...
-			if (strpos('language/', $mod_path) !== false)
-			{
-				$sql_ary['mod_languages'] = $row['mod_languages'] . ',' . core_basename($mod_path);
-			}
-			else if (strpos('template/', $mod_path) !== false)
-			{
-				$sql_ary['mod_template'] = $row['mod_template'] . ',' . core_basename($mod_path);
-			}
-
-			$prior_mod_actions = unserialize($row['mod_actions']);
-			$sql_ary['mod_actions'] = serialize(array_merge_recursive($prior_mod_actions, $actions));
-			unset($prior_mod_actions);
-
-			$sql = 'UPDATE ' . MODS_TABLE . ' ' . $db->sql_build_array('UPDATE', $sql_ary);
-			$db->sql_query($sql);
-
-			add_log('admin', 'LOG_MOD_CHANGE', $row['mod_name']);
-		}
-
-		if ($editor->write_method == WRITE_MANUAL && $mod_installed)
-		{
-			$editor->compress->download('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
-			exit;
-		}
-=======
-
-		// if MOD installed successfully, make a record.
-		if ($mod_installed && !$parent)
-		{
-			// Insert database data
-			$sql = 'INSERT INTO ' . MODS_TABLE . ' ' . $db->sql_build_array('INSERT', array(
-				'mod_time'			=> (int) $editor->install_time,
 				'mod_dependencies'	=> (string) serialize($details['MOD_DEPENDENCIES']),
 				'mod_name'			=> (string) $details['MOD_NAME'],
 				'mod_description'	=> (string) $details['MOD_DESCRIPTION'],

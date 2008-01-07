@@ -385,27 +385,14 @@ class editor
 
 			if (!$offsets)
 			{
-<<<<<<< editor.php
-				// the find failed, so the add cannot occur.
-				return false;
-			}
-=======
 				// the find failed, so the add cannot occur.
 				return false;
 			}
 
 			$start_offset = $offsets['start'];
 			$end_offset = $offsets['end'];
->>>>>>> 1.21
-
-<<<<<<< editor.php
-			$start_offset = $offsets['start'];
-			$end_offset = $offsets['end'];
 
 			unset($offsets);
-=======
-			unset($offsets);
->>>>>>> 1.21
 		}
 
 		// parse the MODX operator
