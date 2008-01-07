@@ -373,6 +373,7 @@ class install_mod extends module
 		}
 		// end borrow from phpBB core
 
+
 		$sql = 'SELECT module_id FROM ' . MODULES_TABLE . "
 			WHERE module_langname = 'ACP_CAT_MODS'";
   		$result = $db->sql_query($sql);
@@ -410,7 +411,7 @@ class install_mod extends module
 				'parent_id'			=> ($row['last_m_id'] + 1),
 				'module_langname'	=> 'ACP_MODS',
 				'left_id'			=> ($row['last_r_id'] + 2),
-				'right_id'			=> ($row['last_r_id'] + 5),
+				'right_id'			=> ($row['last_r_id'] + 7),
 			);
 
 			$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
@@ -429,7 +430,26 @@ class install_mod extends module
 
 				'module_basename'	=> 'mods',
 				'module_mode'		=> 'frontend',
-				'module_auth'		=> '',
+				'module_auth'		=> 'acl_a_mods',
+			);
+
+			$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
+			$db->sql_query($sql);
+
+			// Config Module
+			$module_data = array(
+				'module_id'			=> ($row['last_m_id'] + 4),
+				'module_enabled'	=> 1,
+				'module_display'	=> 1,
+				'module_class'		=> 'acp',
+				'parent_id'			=> ($row['last_m_id'] + 2),
+				'module_langname'	=> 'ACP_MOD_CONFIG',
+				'left_id'			=> ($row['last_r_id'] + 5),
+				'right_id'			=> ($row['last_r_id'] + 6),
+
+				'module_basename'	=> 'mods',
+				'module_mode'		=> 'config',
+				'module_auth'		=> 'acl_a_mods',
 			);
 
 			$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
@@ -465,8 +485,12 @@ class install_mod extends module
 			$db->sql_query($sql);
 		}
 
-		// Reset cache so we can actaully see the lovely new tab in the ACP
+		// Reset cache so we can actualy see the lovely new tab in the ACP
 		$cache->purge();
+
+		// and we need to clear the acl prefetch.  $auth does not exist here, so just do the query
+		$sql = 'UPDATE ' . USERS_TABLE . " SET user_permissions = ''";
+		$db->sql_query($sql);
 	}
 }
 

@@ -44,12 +44,12 @@ class editor
 		$this->install_time = time();
 
 		// to be truly correct, we should scan all files ...
-		if (is_writable($phpbb_root_path))
+		if (is_writable($phpbb_root_path) || $config['write_method'] == WRITE_DIRECT)
 		{
 			$this->write_method = WRITE_DIRECT;
 		}
 		// user needs to select ftp or ftp using fsock
-		else if (!is_writable($phpbb_root_path) && $config['ftp_method'])
+		else if (!is_writable($phpbb_root_path) && $config['ftp_method'] || $config['write_method'] == WRITE_FTP)
 		{
 			$this->write_method = WRITE_FTP;
 			if (!class_exists('transfer'))
@@ -68,7 +68,7 @@ class editor
 			}
 		}
 		// or zip or tarballs
-		else if (!$config['ftp_method'] && $config['compress_method'])
+		else if (!$config['ftp_method'] && $config['compress_method'] || $config['write_method'] == WRITE_MANUAL)
 		{
 			$this->write_method = WRITE_MANUAL;
 			if (!class_exists('compress'))
@@ -385,14 +385,27 @@ class editor
 
 			if (!$offsets)
 			{
+<<<<<<< editor.php
+				// the find failed, so the add cannot occur.
+				return false;
+			}
+=======
 				// the find failed, so the add cannot occur.
 				return false;
 			}
 
 			$start_offset = $offsets['start'];
 			$end_offset = $offsets['end'];
+>>>>>>> 1.21
+
+<<<<<<< editor.php
+			$start_offset = $offsets['start'];
+			$end_offset = $offsets['end'];
 
 			unset($offsets);
+=======
+			unset($offsets);
+>>>>>>> 1.21
 		}
 
 		// parse the MODX operator
@@ -557,10 +570,23 @@ class editor
 			$this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777);
 		}
 
-		// to be on the "safe side" here, probably need to do more than this.
-		if ($this->write_method == WRITE_DIRECT && (!is_writable($phpbb_root_path . $new_filename) || !is_writable($phpbb_root_path . dirname($new_filename))))
+		$file_contents = implode('', $this->file_contents);
+
+		if ($this->write_method == WRITE_DIRECT)
 		{
-			$this->write_method = WRITE_MANUAL;
+			if (is_object($this->compress))
+			{
+				$this->write_method = WRITE_MANUAL;
+			}
+			else
+			{
+				trigger_error('WRITE_DIRECT_FAIL');
+			}
+
+			// skip FTP, use local file functions
+			$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
+			@fwrite($fr, $file_contents);
+			@fclose($fr);
 		}
 
 		$file_contents = implode('', $this->file_contents);
