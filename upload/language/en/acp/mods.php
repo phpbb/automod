@@ -50,6 +50,8 @@ $lang = array_merge($lang, array(
 
 	'FILE_EDITS'		=> 'File edits',	
 	'FILE_MISSING'		=> 'Cannot locate file',
+	'FILE_TYPE'			=> 'Compressed File Type',
+	'FILE_TYPE_EXPLAIN'	=> 'This is only valid with the “Compressed File Download” write method',
 	'FIND'				=> 'Find',
 	'FIND_MISSING'		=> 'Cannot locate find string',
 	'FTP_INFORMATION'	=> 'FTP Information',
@@ -62,6 +64,7 @@ $lang = array_merge($lang, array(
 	'INSTALLATION_SUCCESSFUL'	=> 'MOD Manager Installed successfully! Please remove this <b>install/</b> directory.',
 	'INVALID_MOD_INSTRUCTION'	=> 'This MOD has an invalid instruction.',
 
+	'MOD_CONFIG'				=> 'MOD Manager Configuration',
 	'MOD_DETAILS'				=> 'MOD Details',
 	'MOD_DETAILS_EXPLAIN'		=> 'Here you can view all known information about the MOD you selected.',
 	'MOD_MANAGER'				=> 'MOD Manager',
@@ -106,6 +109,12 @@ $lang = array_merge($lang, array(
 	'UNINSTALLED_EXPLAIN'	=> 'Your MOD has been uninstalled! Here you can view some of the results from the uninstallation. Please note any errors, and seek support at <a href="http://www.phpbb.com">phpBB.com</a>.',
 
 	'VERSION'		=> 'Version',
+
+	'WRITE_METHOD'			=> 'Write Method',
+	'WRITE_METHOD_DIRECT'	=> 'Direct',
+	'WRITE_METHOD_EXPLAIN'	=> 'You can set a preferred method to write files.  If the setting you choose cannot be used on your web server, you will be prompted.  The most compatible option is “Compressed File Download”.',
+	'WRITE_METHOD_FTP'		=> 'FTP',
+	'WRITE_METHOD_MANUAL'	=> 'Compressed File Download',
 ));
 
 ?>
