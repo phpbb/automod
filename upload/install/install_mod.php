@@ -30,7 +30,7 @@ if (!empty($setmodules))
 	{
 		return;
 	}
-	
+
 	global $language, $lang;
 	include($phpbb_root_path . 'language/' . $language . '/acp/mods.' . $phpEx);
 
@@ -86,20 +86,20 @@ class install_mod extends module
 
 		// Force template recompile
 		$config['load_tplcompile'] = 1;
-		
+
 		// First of all, init the user session
 		$user->session_begin();
 		$auth->acl($user->data);
 
 		$user->setup(array('install', 'acp/mods'));
-		
+
 		// Set custom template again. ;)
 		$template->set_custom_template('../adm/style', 'admin');
-		
+
 		$test_ftp_connection = request_var('test_connection', '');
 		$submit = request_var('submit', '');
 		$method = basename(request_var('method', ''));
-		
+
 		if (!$method || !class_exists($method))
 		{
 			$method = 'ftp';
@@ -147,18 +147,18 @@ class install_mod extends module
 					'L_SUBMIT'			=> $user->lang['NEXT_STEP'],
 					'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=file_edits&amp;language=$language",
 				));
-				
+
 				if (!is_writeable($phpbb_root_path))
 				{
 					$s_hidden_fields = build_hidden_fields(array('method' => $method));
-	
+
 					$this->page_title = 'SELECT_FTP_SETTINGS';
-	
+
 					if (!class_exists($method))
 					{
 						trigger_error('Method does not exist.', E_USER_ERROR);
 					}
-	
+
 					$requested_data = call_user_func(array($method, 'data'));
 					foreach ($requested_data as $data => $default)
 					{
@@ -169,12 +169,12 @@ class install_mod extends module
 							'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
 						));
 					}
-	
+
 					$template->assign_vars(array(
 						'S_CONNECTION_SUCCESS'		=> ($test_ftp_connection && $test_connection === true) ? true : false,
 						'S_CONNECTION_FAILED'		=> ($test_ftp_connection && $test_connection !== true) ? true : false,
 						'ERROR_MSG'					=> ($test_ftp_connection && $test_connection !== true) ? $user->lang[$test_connection] : '',
-	
+
 						'S_FTP_UPLOAD'		=> true,
 						'UPLOAD_METHOD'		=> $method,
 						'S_HIDDEN_FIELDS'	=> $s_hidden_fields)
@@ -237,8 +237,11 @@ class install_mod extends module
 
 	function perform_edits($mode, $sub)
 	{
-		global $template, $phpbb_root_path, $phpEx, $language, $db, $config;
-		
+		global $template, $phpbb_root_path, $phpEx, $language, $db, $config, $user;
+
+		// using some mods manager code in the installation :D
+		include("{$phpbb_root_path}includes/editor.$phpEx");
+
 		// we should have some config variables from the previous step
 		$config['ftp_method']		= request_var('method', '');
 		$config['ftp_host']			= request_var('host', '');
@@ -246,17 +249,16 @@ class install_mod extends module
 		$config['ftp_root_path']	= request_var('root_path', '');
 		$config['ftp_port']			= request_var('port', 21);
 		$config['ftp_timeout']		= request_var('timeout', 10);
+		$config['write_method']		= (!empty($config['ftp_method'])) ? WRITE_FTP : WRITE_DIRECT;
 		set_config('ftp_method',	$config['ftp_method']);
 		set_config('ftp_host',		$config['ftp_host']);
 		set_config('ftp_username',	$config['ftp_username']);
 		set_config('ftp_root_path', $config['ftp_root_path']);
 		set_config('ftp_port',		$config['ftp_port']);
 		set_config('ftp_timeout',	$config['ftp_timeout']);
+		set_config('write_method',	$config['write_method']);
 
 		$this->page_title = $user->lang['FILE_EDITS'];
-
-		// using some mods manager code in the installation :D
-		include("{$phpbb_root_path}includes/editor.$phpEx");
 
 		$editor = new editor($phpbb_root_path);
 
@@ -317,9 +319,9 @@ class install_mod extends module
 
 	function perform_sql($mode, $sub)
 	{
-		global $template, $phpbb_root_path, $phpEx, $language, $db, $cache;
+		global $template, $phpbb_root_path, $phpEx, $language, $db, $cache, $user;
 
-		$this->page_title = $lang['STAGE_CREATE_TABLE'];
+		$this->page_title = $user->lang['STAGE_CREATE_TABLE'];
 
 		$template->assign_vars(array(
 			'S_CREATE_TABLES'	=> true,

@@ -1,10 +1,10 @@
 <?php
-/** 
+/**
 *
 * @package mods_manager
 * @version $Id$
 * @copyright (c) 2007 phpBB Group
-* @license http://opensource.org/licenses/gpl-license.php GNU Public License 
+* @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
 
@@ -98,7 +98,7 @@ class editor
 
 	/**
 	* Open a file with IO, for processing
-	* 
+	*
 	* @param string $filename - relative path from phpBB Root to the file to open
 	*/
 	function open_file($filename)
@@ -191,7 +191,7 @@ class editor
 	/**
 	* Checks if a find is present
 	* Keep in mind partial finds and multi-line finds
-	* 
+	*
 	* @param string $find - string to find
 	* @return mixed : array with position information if $find is found; false otherwise
 	*/
@@ -205,7 +205,7 @@ class editor
 		$total_lines = sizeof($this->file_contents);
 		$find_lines = sizeof($find_ary);
 
-		// we process the file sequentially ... so we keep track of indices 
+		// we process the file sequentially ... so we keep track of indices
 		for ($i = $this->start_index; $i < $total_lines; $i++)
 		{
 			for ($j = 0; $j < $find_lines; $j++)
@@ -238,7 +238,7 @@ class editor
 					else
 					{
 						$find_success = 0;
-					}	
+					}
 				}
 				else
 				{
@@ -275,9 +275,9 @@ class editor
 	* @param string $inline_find - the substring to find
 	* @param int $start_offset - the line number where $find starts
 	* @param int $end_offset - the line number where $find ends
-	* 
+	*
 	* @return mixed array on success or false on failure of find
-	*/ 
+	*/
 	function inline_find($find, $inline_find, $start_offset = false, $end_offset = false)
 	{
 		$find = $this->normalize($find);
@@ -324,7 +324,7 @@ class editor
 	* @param string $pos - BEFORE or AFTER
 	* @param int $start_offset - First line in the FIND
 	* @param int $end_offset - Last line in the FIND
-	* 
+	*
 	* @return bool success or failure of add
 	*/
 	function add_string($find, $add, $pos, $start_offset = false, $end_offset = false)
@@ -368,13 +368,13 @@ class editor
 	* Increment (or perform custom operation) on  the given wildcard
 	* Support multiple wildcards {%:1}, {%:2} etc...
 	* This method is a variation on the inline find and replace methods
-	* 
+	*
 	* @param string $find - Complete find - contains $inline_find
 	* @param string $inline_find - contains tokens to be replaced
 	* @param string $operation - tokens to do some math
 	* @param int $start_offset - First line in the FIND
 	* @param int $end_offset - Last line in the FIND
-	* 
+	*
 	* @return bool
 	*/
 	function inc_string($find, $inline_find, $operation, $start_offset = false, $end_offset = false)
@@ -432,12 +432,12 @@ class editor
 
 	/**
 	* Replace a string - replaces the entirety of $find with $replace
-	* 
+	*
 	* @param string $find - Complete find - contains $inline_find
 	* @param string $replace - Will replace $find
 	* @param int $start_offset - First line in the FIND
 	* @param int $end_offset - Last line in the FIND
-	* 
+	*
 	* @return bool
 	*/
 	function replace_string($find, $replace, $start_offset = false, $end_offset = false)
@@ -458,7 +458,7 @@ class editor
 			unset($offsets);
 		}
 
-		// remove each line 
+		// remove each line
 		for ($i = $start_offset; $i <= $end_offset; $i++)
 		{
 			unset($this->file_contents[$i]);
@@ -492,13 +492,13 @@ class editor
 		}
 
 		$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_replace, $string_offset, $length);
-		
+
 		return true;
 	}
 
 	/**
 	* Adds a string inline before or after a given find
-	* 
+	*
 	* @param string $find Complete find - narrows the scope of the inline search
 	* @param string $inline_find - the string to add before or after
 	* @param string $inline_add - added before or after $inline_find
@@ -506,7 +506,7 @@ class editor
 	* @param int $array_offset - line number where $inline_find may be found (optional)
 	* @param int $string_offset - location within the line where $inline_find begins (optional)
 	* @param int $length - essentially strlen($inline_find) (optional)
-	* 
+	*
 	* @return bool success or failure of action
 	*/
 	function inline_add($find, $inline_find, $inline_add, $pos, $array_offset = false, $string_offset = false, $length = false)
