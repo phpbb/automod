@@ -1,10 +1,10 @@
 <?php
-/** 
+/**
 *
 * @package acp
 * @version $Id$
-* @copyright (c) 2005 phpBB Group 
-* @license http://opensource.org/licenses/gpl-license.php GNU Public License 
+* @copyright (c) 2005 phpBB Group
+* @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
 
@@ -43,15 +43,17 @@ class acp_mods
 			case 'config':
 				if (isset($_POST['submit']))
 				{
-					$method			= request_var('ftp_method', '');
-					$host			= request_var('ftp_host', '');
+					$ftp_method		= request_var('ftp_method', '');
+					$ftp_host		= request_var('ftp_host', '');
 					$ftp_username	= request_var('ftp_username', '');
 					$ftp_password	= request_var('ftp_password', ''); // we don't store FTP Password
 					$ftp_root_path	= request_var('ftp_root_path', '');
 					$ftp_port		= request_var('ftp_port', 21);
 					$ftp_timeout	= request_var('ftp_timeout', 10);
 					$write_method	= request_var('write_method', 0);
+					$compress_method	= request_var('compress_method', '');
 
+					$error = array();
 					if ($write_method == WRITE_DIRECT)
 					{
 						// the very best method would be to check every file for is_writable
@@ -63,7 +65,7 @@ class acp_mods
 					else if ($write_method == WRITE_FTP)
 					{
 						// check the correctness of FTP infos
-						$transfer = new $method($host, $ftp_username, $ftp_password, $ftp_root_path, $ftp_port, $ftp_timeout);
+						$transfer = new $ftp_method($ftp_host, $ftp_username, $ftp_password, $ftp_root_path, $ftp_port, $ftp_timeout);
 						$test_connection = $transfer->open_session();
 
 						// Make sure that the directory is correct by checking for the existence of common.php
@@ -75,7 +77,7 @@ class acp_mods
 								$test_connection = 'ERR_WRONG_PATH_TO_PHPBB';
 							}
 						}
-		
+
 						$transfer->close_session();
 
 						if ($test_connection !== true)
@@ -136,6 +138,10 @@ class acp_mods
 					'WRITE_DIRECT'		=> ($config['write_method'] == WRITE_DIRECT) ? ' checked="checked"' : '',
 					'WRITE_FTP'			=> ($config['write_method'] == WRITE_FTP) ? ' checked="checked"' : '',
 					'WRITE_MANUAL'		=> ($config['write_method'] == WRITE_MANUAL) ? ' checked="checked"' : '',
+
+					'WRITE_METHOD_DIRECT'	=> WRITE_DIRECT,
+					'WRITE_METHOD_FTP'		=> WRITE_FTP,
+					'WRITE_METHOD_MANUAL'	=> WRITE_MANUAL,
 				));
 			break;
 
@@ -143,25 +149,25 @@ class acp_mods
 				$test_ftp_connection = request_var('test_connection', '');
 				$submit = request_var('submit', '');
 				$method = basename(request_var('method', ''));
-				
+
 				if (!$method || !class_exists($method))
 				{
 					$method = 'ftp';
 					$methods = transfer::methods();
-		
+
 					if (!in_array('ftp', $methods))
 					{
 						$method = $methods[0];
 					}
 				}
-		
+
 				$test_connection = false;
 				$action = (!empty($test_ftp_connection)) ? 'pre_install' : $action;
 				if (!empty($test_ftp_connection) || (!is_writeable($phpbb_root_path) && $action == 'install'))
 				{
 					$transfer = new $method(request_var('host', ''), request_var('username', ''), request_var('password', ''), request_var('root_path', ''), request_var('port', ''), request_var('timeout', ''));
 					$test_connection = $transfer->open_session();
-		
+
 					// Make sure that the directory is correct by checking for the existence of common.php
 					if ($test_connection === true)
 					{
@@ -171,9 +177,9 @@ class acp_mods
 							$test_connection = 'ERR_WRONG_PATH_TO_PHPBB';
 						}
 					}
-		
+
 					$transfer->close_session();
-		
+
 					// Make sure the login details are correct before continuing
 					if ($test_connection !== true)
 					{
@@ -187,29 +193,29 @@ class acp_mods
 					case 'pre_install':
 						$this->pre_install($mod_path, $method);
 					break;
-					
+
 					case 'install':
 						$this->install($mod_path, $parent);
 					break;
-					
+
 					case 'pre_uninstall':
 						$this->pre_uninstall($mod_id);
 					break;
-					
+
 					case 'uninstall':
 						$this->uninstall($mod_id);
 					break;
-					
+
 					case 'details':
 						$mod_ident = ($mod_id) ? $mod_id : $mod_path;
 						$this->list_details($mod_ident);
 					break;
-					
+
 					default:
 						$template->assign_vars(array(
 							'S_FRONTEND'		=> true,
 						));
-						
+
 						$this->list_installed();
 						$this->list_uninstalled();
 					break;
@@ -304,7 +310,7 @@ class acp_mods
 		$template->assign_vars(array(
 			'S_DETAILS'	=> true,
 			'U_BACK'	=> $this->u_action
-		));				
+		));
 
 		$details = $this->mod_details($mod_ident, true);
 
@@ -396,7 +402,7 @@ class acp_mods
 			else
 			{
 				// ERROR, MISSING MOD ID
-				// temporary, to be sure we don't get random blank screens 
+				// temporary, to be sure we don't get random blank screens
 				die('no mod');
 			}
 			$db->sql_freeresult($result);
@@ -435,14 +441,14 @@ class acp_mods
 		if (is_int($mod_ident))
 		{
 			global $db;
-			
+
 			$sql = 'SELECT mod_actions
 				FROM ' . MODS_TABLE . "
 					WHERE mod_id = $mod_ident";
 			$result = $db->sql_query($sql);
 			$row = $db->sql_fetchrow($result);
 			$db->sql_freeresult($result);
-			
+
 			if ($row)
 			{
 				return unserialize($row['mod_actions']);
@@ -466,14 +472,14 @@ class acp_mods
 
 			$parser = new parser($ext);
 			$parser->set_file($mod_path);
-			
+
 			$actions = $parser->get_actions();
 
 			unset($parser);
 		}
 		return $actions;
 	}
-	
+
 	/**
 	* Parses and displays all Edits, Copies, and SQL modifcations
 	*/
@@ -487,7 +493,7 @@ class acp_mods
 			// ERROR
 			return false;
 		}
-		
+
 		$actions = $this->mod_actions($mod_path);
 		$details = $this->mod_details($mod_path, false);
 
@@ -499,12 +505,12 @@ class acp_mods
 		$mod_root = explode('/', str_replace($phpbb_root_path, '', $mod_path));
 		array_pop($mod_root);
 		$mod_root = implode('/', $mod_root) . '/';
-		
+
 		$dependenices = $details['MOD_DEPENDENCIES'];
 
 		$template->assign_vars(array(
 			'S_PRE_INSTALL'	=> true,
-			
+
 			'MOD_PATH'		=> $mod_path,
 
 			'U_INSTALL'		=> $this->u_action . '&amp;action=install&amp;mod_path=' . $mod_path,
@@ -516,7 +522,7 @@ class acp_mods
 		{
 			$template->assign_vars(array(
 				'S_AUTHOR_NOTES'	=> $details['AUTHOR_NOTES'],
-				
+
 				'AUTHOR_NOTES'		=> nl2br($details['AUTHOR_NOTES']),
 			));
 		}
@@ -535,7 +541,7 @@ class acp_mods
 			foreach ($requested_data as $data => $default)
 			{
 				$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-				
+
 				$template->assign_block_vars('data', array(
 					'DATA'		=> $data,
 					'NAME'		=> $user->lang[strtoupper($method . '_' . $data)],
@@ -569,7 +575,7 @@ class acp_mods
 			foreach ($requested_data as $data => $default)
 			{
 				$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-				
+
 				$template->assign_block_vars('data', array(
 					'DATA'		=> $data,
 					'NAME'		=> $user->lang[strtoupper($method . '_' . $data)],
@@ -620,12 +626,12 @@ class acp_mods
 				}
 			}
 		}
-		
+
 		// Show SQL
 		if (isset($actions['SQL']) && !empty($actions['SQL']))
 		{
 			$template->assign_var('S_SQL', true);
-			
+
 			$this->parse_sql($actions['SQL']);
 
 			foreach ($actions['SQL'] as $query)
@@ -635,19 +641,19 @@ class acp_mods
 				));
 			}
 		}
-		
+
 		// Show edits
 		if (isset($actions['EDITS']) && !empty($actions['EDITS']))
 		{
 			$template->assign_var('S_EDITS', true);
-			
+
 			foreach ($actions['EDITS'] as $file => $finds)
 			{
 				if (!file_exists("$phpbb_root_path$file"))
 				{
 					$template->assign_block_vars('edit_files', array(
 						'S_MISSING_FILE' => true,
-						
+
 						'FILENAME'	=> $file,
 					));
 				}
@@ -656,7 +662,7 @@ class acp_mods
 					$template->assign_block_vars('edit_files', array(
 						'FILENAME'	=> $file
 					));
-				
+
 					$editor->open_file($file);
 
 					foreach ($finds as $find => $action)
@@ -669,7 +675,7 @@ class acp_mods
 								'FIND_STRING'	=> htmlspecialchars($find)
 							));
 
-							// check if we have an inline find	
+							// check if we have an inline find
 							if (isset($action['in-line-edit']))
 							{
 								foreach ($action['in-line-edit'] as $inline_find => $inline_action_ary)
@@ -744,7 +750,7 @@ class acp_mods
 			// ERROR
 			return false;
 		}
-		
+
 		$config['ftp_method']		= request_var('method', '');
 		$config['ftp_host']			= request_var('host', '');
 		$config['ftp_username']		= request_var('username', '');
@@ -778,7 +784,7 @@ class acp_mods
 		array_pop($mod_root);
 		$mod_root = implode('/', $mod_root) . '/';
 		$edited_root = "{$mod_root}_edited/";
-		
+
 		// see if directory exists
 		if (!file_exists($phpbb_root_path . $edited_root))
 		{
@@ -790,14 +796,14 @@ class acp_mods
 		if (isset($actions['EDITS']) && !empty($actions['EDITS'])) // this is some beefy looping
 		{
 			$template->assign_var('S_EDITS', true);
-	
+
 			foreach ($actions['EDITS'] as $filename => $finds)
 			{
 				if (!file_exists("$phpbb_root_path$filename"))
 				{
 					$template->assign_block_vars('edit_files', array(
 						'S_MISSING_FILE' => true,
-						
+
 						'FILENAME'	=> $filename,
 					));
 					$mod_installed = false;
@@ -809,7 +815,7 @@ class acp_mods
 					));
 
 					$file_ext = substr(strrchr($filename, '.'), 1);
-					
+
 					$editor->open_file($filename);
 
 					foreach ($finds as $find => $commands)
@@ -933,7 +939,7 @@ class acp_mods
 		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']))
 		{
 			$template->assign_var('S_NEW_FILES', true);
-	
+
 			foreach ($actions['NEW_FILES'] as $source => $target)
 			{
 				if (!$editor->copy_content($mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target)))
@@ -948,7 +954,7 @@ class acp_mods
 				{
 					$template->assign_block_vars('new_files', array(
 						'S_SUCCESS'		=> true,
-					
+
 						'SOURCE'		=> $source,
 						'TARGET'		=> $target,
 					));
@@ -960,11 +966,11 @@ class acp_mods
 		if (isset($actions['SQL']) && !empty($actions['SQL']))
 		{
 			$template->assign_var('S_SQL', true);
-			
+
 			$this->parse_sql($actions['SQL']);
-			
+
 			$db->sql_return_on_error(true);
-		
+
 			foreach ($actions['SQL'] as $query)
 			{
 				if (!$db->sql_query($query)) // more than this please
@@ -985,7 +991,7 @@ class acp_mods
 					));
 				}
 			}
-			
+
 			$db->sql_return_on_error(false);
 		}
 
@@ -1093,17 +1099,17 @@ class acp_mods
 	function pre_uninstall($mod_id)
 	{
 		global $phpbb_root_path, $phpEx, $template;
-		
+
 		// mod_id blank?
 		if (!$mod_id)
 		{
 			// ERROR
 			return false;
 		}
-		
+
 		$template->assign_vars(array(
 			'S_PRE_UNINSTALL'		=> true,
-			
+
 			'MOD_ID'		=> $mod_id,
 			'U_UNINSTALL'	=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
 			'U_BACK'		=> $this->u_action,
@@ -1120,7 +1126,7 @@ class acp_mods
 		{
 			$template->assign_vars(array(
 				'S_AUTHOR_NOTES' => true,
-				
+
 				'AUTHOR_NOTES' => $details['AUTHOR_NOTES'],
 			));
 		}
@@ -1148,18 +1154,18 @@ class acp_mods
 				}
 			}
 		}
-		
+
 		// Show SQL
 		if (isset($actions['SQL']) && !empty($actions['SQL']))
 		{
 			$template->assign_var('S_SQL', true);
-			
+
 			$this->parse_sql($actions['SQL']);
 
 			foreach ($actions['SQL'] as $query)
 			{
 				$reverse_query = $this->reverse_query($query);
-				
+
 				if ($reverse_query === false)
 				{
 					$template->assign_block_vars('sql_queries', array(
@@ -1182,7 +1188,7 @@ class acp_mods
 		if (isset($actions['EDITS']) && !empty($actions['EDITS']))
 		{
 			$template->assign_var('S_EDITS', true);
-			
+
 			$actions['EDITS'] = $this->reverse_edits($actions['EDITS']);
 
 			foreach ($actions['EDITS'] as $file => $finds)
@@ -1191,7 +1197,7 @@ class acp_mods
 				{
 					$template->assign_block_vars('edit_files', array(
 						'S_MISSING_FILE' => true,
-						
+
 						'FILENAME'	=> $file
 					));
 				}
@@ -1200,7 +1206,7 @@ class acp_mods
 					$template->assign_block_vars('edit_files', array(
 						'FILENAME'	=> $file
 					));
-				
+
 					$editor->open_file($file);
 
 					foreach ($finds as $find => $action)
@@ -1219,7 +1225,7 @@ class acp_mods
 								'FIND_STRING'	=> htmlspecialchars($find)
 							));
 
-							// check if we have an inline find	
+							// check if we have an inline find
 							if (isset($action['in-line-find']))
 							{
 								foreach ($action['in-line-find'] as $inline_find => $inline_action_ary)
@@ -1300,7 +1306,7 @@ class acp_mods
 		{
 			$template->assign_vars(array(
 				'S_AUTHOR_NOTES' => true,
-				
+
 				'AUTHOR_NOTES' => $details['AUTHOR_NOTES'])
 			);
 		}
@@ -1312,8 +1318,8 @@ class acp_mods
 
 			foreach ($actions['NEW_FILES'] as $source => $target)
 			{
-				// @todo: this will not delete files that were placed by an * command... 
-				// because the complete file list is not currently stored.  
+				// @todo: this will not delete files that were placed by an * command...
+				// because the complete file list is not currently stored.
 				if (!file_exists("$phpbb_root_path$target") && strpos($source, '*.*') !== false)
 				{
 					$template->assign_block_vars('removing_files', array(
@@ -1325,7 +1331,7 @@ class acp_mods
 				else
 				{
 					$editor->remove("$phpbb_root_path$target");
-					
+
 					$template->assign_block_vars('removing_files', array(
 						'FILENAME'		=> $target)
 					);
@@ -1337,20 +1343,20 @@ class acp_mods
 		if (isset($actions['SQL']) && !empty($actions['SQL']))
 		{
 			$template->assign_var('S_SQL', true);
-			
+
 			$this->parse_sql($actions['SQL']);
-		
+
 			foreach ($actions['SQL'] as $query)
 			{
 				$reverse_query = $this->reverse_query($query);
-				
+
 				if ($reverse_query === false)
 				{
 					continue;
 				}
-				
+
 				$db->sql_return_on_error(true);
-				
+
 				if (!$db->sql_query($reverse_query)) // more than this please
 				{
 					$template->assign_block_vars('sql_queries', array(
@@ -1365,24 +1371,24 @@ class acp_mods
 						'QUERY'		=> $reverse_query,
 					));
 				}
-				
+
 				$db->sql_return_on_error(false);
 			}
 		}
-		
+
 		// Delete from DB
 		$sql = 'DELETE FROM ' . MODS_TABLE . '
 			WHERE mod_id = ' . $mod_id;
 		$db->sql_query($sql);
-		
+
 		// Add log
 		add_log('admin', 'LOG_MOD_REMOVE', $details['MOD_NAME']);
 	}
 
 	/**
 	* Returns array of available mod install files in dir (Recursive)
-	* @param $dir string - 
-	* @param $recurse int - number of levels to recurse 
+	* @param $dir string -
+	* @param $recurse int - number of levels to recurse
 	*/
 	function find_mods($dir, $recurse = false)
 	{
@@ -1444,7 +1450,7 @@ class acp_mods
 
 		return false;
 	}
-	
+
 	/**
 	* Returns the edits array, but now filled with edits to reverse the given array
 	* @todo: Add more
@@ -1467,7 +1473,7 @@ class acp_mods
 							// replace with an empty string
 							$reverse_edits[$file][$find]['REPLACE WITH'] = '';
 						break;
-						
+
 						case 'REPLACE WITH':
 						case 'REPLACE, WITH':
 							// replace $command (new code) with $find (original code)
@@ -1521,16 +1527,16 @@ class acp_mods
 	function parse_sql(&$sql_query)
 	{
 		global $dbms, $table_prefix;
-		
+
 		if (!function_exists('get_available_dbms'))
 		{
 			global $phpbb_root_path, $phpEx;
-			
+
 			include($phpbb_root_path . 'includes/functions_install.' . $phpEx);
 		}
 
-		static $available_dbms; 
-		
+		static $available_dbms;
+
 		if (!isset($available_dbms))
 		{
 			$available_dbms = get_available_dbms($dbms);
@@ -1551,7 +1557,7 @@ class acp_mods
 	* Search on the file system for other .xml files that belong to this MOD
 	* This method currently takes three parameters.
 	* @param string $mod_path - path to the "main" MODX file, relative to phpBB Root
-	* @param array &$actions - the current actions this MOD is using. 
+	* @param array &$actions - the current actions this MOD is using.
 	*  -- Run through array_merge_recursive() to produce a final array after all calls to this method
 	*  @param string $action - 'pre_install' || 'install' || 'details'
 	*  @param int $parent_id - only valid in details mode, provides install link
@@ -1567,7 +1573,7 @@ class acp_mods
 		{
 			$template->assign_var('S_CONTRIB_AVAILABLE', true);
 
-			// there are things like upgrades...we don't care unless the MOD has previously been installed. 
+			// there are things like upgrades...we don't care unless the MOD has previously been installed.
 			foreach ($children['contrib'] as $xml_file)
 			{
 				$child_details = $this->mod_details($xml_file, false);
@@ -1640,7 +1646,7 @@ class acp_mods
 			$installed_templates = array();
 			while ($row = $db->sql_fetchrow($result))
 			{
-				$installed_templates[$row['template_id']] = $row['template_name']; 
+				$installed_templates[$row['template_id']] = $row['template_name'];
 			}
 
 			// We _must_ have language xml files that are named like "subSilver2.xml" for this to work
@@ -1681,7 +1687,7 @@ class acp_mods
 }
 
 /**
-* Helper function 
+* Helper function
 * Runs basename() on $path, then trims the extension from it
 * @param string $path - path to be basenamed
 */
