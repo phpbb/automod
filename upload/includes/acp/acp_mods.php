@@ -1028,7 +1028,7 @@ class acp_mods
 				'mod_languages'		=> (string) (isset($elements['languages']) && sizeof($elements['languages'])) ? implode(',', $elements['languages']) : '',
 				'mod_template'		=> (string) (isset($elements['templates']) && sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
 			));
-			//$db->sql_query($sql);
+			$db->sql_query($sql);
 
 			// Add log
 			add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);
