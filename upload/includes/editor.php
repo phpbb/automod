@@ -37,14 +37,14 @@ class editor
 	* Constructor method
 	* Creates transfer and/or compress instances
 	*/
-	function editor($phpbb_root_path)
+	function editor($phpbb_root_path, $pre_install = false)
 	{
 		global $config, $user;
 
 		$this->install_time = time();
 
 		// to be truly correct, we should scan all files ...
-		if (is_writable($phpbb_root_path) || $config['write_method'] == WRITE_DIRECT)
+		if (is_writable($phpbb_root_path) || $config['write_method'] == WRITE_DIRECT || $pre_install == true)
 		{
 			$this->write_method = WRITE_DIRECT;
 		}
@@ -168,6 +168,7 @@ class editor
 			// ftp
 			foreach ($files as $file)
 			{
+				$file = '/' . str_replace($phpbb_root_path, '', $file);
 				if (is_dir($to))
 				{
 					$to_file = str_replace($strip, '', $file);

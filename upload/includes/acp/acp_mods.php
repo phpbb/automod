@@ -41,25 +41,36 @@ class acp_mods
 		switch ($mode)
 		{
 			case 'config':
+				$ftp_method		= request_var('ftp_method', '');			
+				if (!$ftp_method || !class_exists($ftp_method))
+				{
+					$ftp_method = 'ftp';
+					$ftp_methods = transfer::methods();
+					
+					if (!in_array('ftp', $ftp_methods))
+					{
+						$ftp_method = $ftp_methods[0];
+					}
+				}
+			
 				if (isset($_POST['submit']))
 				{
-					$ftp_method		= request_var('ftp_method', '');
-					$ftp_host		= request_var('ftp_host', '');
-					$ftp_username	= request_var('ftp_username', '');
-					$ftp_password	= request_var('ftp_password', ''); // we don't store FTP Password
-					$ftp_root_path	= request_var('ftp_root_path', '');
-					$ftp_port		= request_var('ftp_port', 21);
-					$ftp_timeout	= request_var('ftp_timeout', 10);
+					$ftp_host		= request_var('host', '');
+					$ftp_username	= request_var('username', '');
+					$ftp_password	= request_var('password', ''); // not store, used to test connection
+					$ftp_root_path	= request_var('root_path', '');
+					$ftp_port		= request_var('port', 21);
+					$ftp_timeout	= request_var('timeout', 10);
 					$write_method	= request_var('write_method', 0);
 					$compress_method	= request_var('compress_method', '');
 
-					$error = array();
+					$error = '';
 					if ($write_method == WRITE_DIRECT)
 					{
 						// the very best method would be to check every file for is_writable
 						if (!is_writable("{$phpbb_root_path}common.$phpEx") || !is_writable("{$phpbb_root_path}adm/style/acp_groups.html"))
 						{
-							$error[] = 'FILESYSTEM_NOT_WRITABLE';
+							$error = 'FILESYSTEM_NOT_WRITABLE';
 						}
 					}
 					else if ($write_method == WRITE_FTP)
@@ -82,7 +93,7 @@ class acp_mods
 
 						if ($test_connection !== true)
 						{
-							$error[] = $test_connection;
+							$error = $test_connection;
 						}
 					}
 					else if ($write_method == WRITE_MANUAL)
@@ -90,11 +101,11 @@ class acp_mods
 						// the compress class requires write access to the /store/ dir
 						if (!is_writable("{$phpbb_root_path}store/"))
 						{
-							$error[] = 'STORE_NOT_WRITABLE';
+							$error = 'STORE_NOT_WRITABLE';
 						}
 					}
 
-					if (!sizeof($error))
+					if (empty($error))
 					{
 						set_config('ftp_method',	$ftp_method);
 						set_config('ftp_host',		$ftp_host);
@@ -108,12 +119,11 @@ class acp_mods
 					}
 					else
 					{
-						$template->assign_var('ERROR', implode('<br />', $error));
+						$template->assign_var('ERROR', $user->lang[$error]);
 					}
 				}
 
 				include("{$phpbb_root_path}includes/functions_compress.$phpEx");
-				$ftp_methods = transfer::methods();
 				$compress_methods = compress::methods();
 
 				foreach ($compress_methods as $compress_method)
@@ -122,19 +132,25 @@ class acp_mods
 						'METHOD'	=> $compress_method,
 					));
 				}
+				
+				$requested_data = call_user_func(array($ftp_method, 'data'));
+				foreach ($requested_data as $data => $default)
+				{
+					$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+					$template->assign_block_vars('data', array(
+						'DATA'		=> $data,
+						'NAME'		=> $user->lang[strtoupper($ftp_method . '_' . $data)],
+						'EXPLAIN'	=> $user->lang[strtoupper($ftp_method . '_' . $data) . '_EXPLAIN'],
+						'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
+					));
+				}
 
 				// implicit else
 				$template->assign_vars(array(
 					'S_CONFIG'			=> true,
 					'U_CONFIG'			=> $this->u_action . '&amp;mode=config',
 
-					'FTP_METHOD_FTP'	=> ($config['ftp_method'] == 'ftp' && in_array('ftp', $ftp_methods)) ? ' checked="checked"' : '',
-					'FTP_METHOD_SFTP'	=> ($config['ftp_method'] == 'ftp_fsock' && in_array('ftp_fsock', $ftp_methods)) ? ' checked="checked"' : '',
-					'FTP_HOST'			=> $config['ftp_host'],
-					'FTP_USERNAME'		=> $config['ftp_username'],
-					'FTP_ROOT_PATH'		=> $config['ftp_root_path'],
-					'FTP_PORT'			=> $config['ftp_port'],
-					'FTP_TIMEOUT'		=> $config['ftp_timeout'],
+					'UPLOAD_METHOD'		=> $ftp_method,
 					'WRITE_DIRECT'		=> ($config['write_method'] == WRITE_DIRECT) ? ' checked="checked"' : '',
 					'WRITE_FTP'			=> ($config['write_method'] == WRITE_FTP) ? ' checked="checked"' : '',
 					'WRITE_MANUAL'		=> ($config['write_method'] == WRITE_MANUAL) ? ' checked="checked"' : '',
@@ -500,8 +516,6 @@ class acp_mods
 		// check for "child" MODX files and attempt to decide which ones we need
 		$elements = $this->find_children($mod_path, $actions, 'pre_install');
 
-		$editor = new editor($phpbb_root_path);
-
 		$mod_root = explode('/', str_replace($phpbb_root_path, '', $mod_path));
 		array_pop($mod_root);
 		$mod_root = implode('/', $mod_root) . '/';
@@ -528,7 +542,7 @@ class acp_mods
 		}
 
 		// get FTP information if we need it
-		if ($editor->write_method == WRITE_FTP)
+		if ($config['write_method'] == WRITE_FTP && empty($_REQUEST['password']))
 		{
 			$s_hidden_fields = build_hidden_fields(array('method' => $method));
 
@@ -557,43 +571,11 @@ class acp_mods
 
 				'S_FTP_UPLOAD'		=> true,
 				'UPLOAD_METHOD'		=> $method,
-				'S_HIDDEN_FIELDS'	=> $s_hidden_fields)
-			);
+				'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
+			));
 		}
-
-		// get FTP information if we need it
-		if (!is_writeable($phpbb_root_path))
-		{
-			$s_hidden_fields = build_hidden_fields(array('method' => $method));
-
-			if (!class_exists($method))
-			{
-				trigger_error('Method does not exist.', E_USER_ERROR);
-			}
-
-			$requested_data = call_user_func(array($method, 'data'));
-			foreach ($requested_data as $data => $default)
-			{
-				$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-
-				$template->assign_block_vars('data', array(
-					'DATA'		=> $data,
-					'NAME'		=> $user->lang[strtoupper($method . '_' . $data)],
-					'EXPLAIN'	=> $user->lang[strtoupper($method . '_' . $data) . '_EXPLAIN'],
-					'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
-				));
-			}
-
-			$template->assign_vars(array(
-				'S_CONNECTION_SUCCESS'		=> ($test_ftp_connection && $test_connection === true) ? true : false,
-				'S_CONNECTION_FAILED'		=> ($test_ftp_connection && $test_connection !== true) ? true : false,
-				'ERROR_MSG'					=> ($test_ftp_connection && $test_connection !== true) ? $user->lang[$test_connection] : '',
-
-				'S_FTP_UPLOAD'		=> true,
-				'UPLOAD_METHOD'		=> $method,
-				'S_HIDDEN_FIELDS'	=> $s_hidden_fields)
-			);
-		}
+		
+		$editor = new editor($phpbb_root_path, true);
 
 		// Only display full actions if the user has requested them.
 		if (!defined('DEBUG') || !isset($_GET['full_details']))
@@ -1046,7 +1028,7 @@ class acp_mods
 				'mod_languages'		=> (string) (isset($elements['languages']) && sizeof($elements['languages'])) ? implode(',', $elements['languages']) : '',
 				'mod_template'		=> (string) (isset($elements['templates']) && sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
 			));
-			$db->sql_query($sql);
+			//$db->sql_query($sql);
 
 			// Add log
 			add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);

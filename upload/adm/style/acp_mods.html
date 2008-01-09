@@ -526,44 +526,40 @@
 <!-- IF S_CONFIG -->
 	<h1>{L_ACP_MODS}</h1>
 
+	<!-- IF ERROR -->
+	<div class="errorbox">
+		<p>{ERROR}</p>
+	</div>
+	<!-- ENDIF -->
+
 	<p>{L_MODS_EXPLAIN}</p>
 	<form action="{U_CONFIG}" method="post">
 	<fieldset>
 		<legend>{L_MOD_CONFIG}</legend>
 		<dl>
-			<dt><label for="write_method">{L_WRITE_METHOD}</label><br /><span>{L_WRITE_METHOD_EXPLAIN}</span></dt>
+			<dt><label for="write_method">{L_WRITE_METHOD}:</label><br /><span>{L_WRITE_METHOD_EXPLAIN}</span></dt>
 			<dd><label><input type="radio" name="write_method" value="{WRITE_METHOD_DIRECT}"{WRITE_DIRECT} /> {L_WRITE_METHOD_DIRECT}</label>
 				<label><input type="radio" name="write_method" value="{WRITE_METHOD_FTP}"{WRITE_FTP} /> {L_WRITE_METHOD_FTP}</label>
 				<label><input type="radio" name="write_method" value="{WRITE_METHOD_MANUAL}"{WRITE_MANUAL} /> {L_WRITE_METHOD_MANUAL}</label>
 			</dd>
 		</dl>
 		<dl>
-			<dt><label for="compress_method">{L_FILE_TYPE}</label><br /><span>{L_FILE_TYPE_EXPLAIN}</span></dt>
+			<dt><label for="compress_method">{L_FILE_TYPE}:</label><br /><span>{L_FILE_TYPE_EXPLAIN}</span></dt>
 			<dd><!-- BEGIN compress --><label><input type="radio" name="compress_method" <!-- IF compress.S_FIRST_ROW --> id="method" checked="checked"<!-- ENDIF -->value="{compress.METHOD}" /> {compress.METHOD}</label><!-- END compress --></dd>
 		</dl>
 	</fieldset>
 	<fieldset>
 		<legend>{L_FTP_SETTINGS}</legend>
 		<dl>
-			<dt><label for="ftp_username">{L_FTP_USERNAME}</label></dt>
-			<dd><input type="text" name="ftp_username" value="{FTP_USERNAME}" /></dd>
+			<dt><label>{L_UPLOAD_METHOD}:</label></dt>
+			<dd><strong>{UPLOAD_METHOD}</strong></dd>
 		</dl>
+		<!-- BEGIN data -->
 		<dl>
-			<dt><label for="ftp_host">{L_FTP_HOST}</label></dt>
-			<dd><input type="text" name="ftp_host" value="{FTP_HOST}" /></dd>
+			<dt><label for="{data.DATA}">{data.NAME}:</label><br /><span>{data.EXPLAIN}</span></dt>
+			<dd><input type="<!-- IF data.DATA == 'password' -->password<!-- ELSE -->text<!-- ENDIF -->" id="{data.DATA}" name="{data.DATA}" value="{data.DEFAULT}" /></dd>
 		</dl>
-		<dl>
-			<dt><label for="ftp_port">{L_FTP_PORT}</label></dt>
-			<dd><input type="text" name="ftp_port" value="{FTP_PORT}" /></dd>
-		</dl>
-		<dl>
-			<dt><label for="ftp_root_path">{L_FTP_ROOT_PATH}</label></dt>
-			<dd><input type="text" name="ftp_root_path" value="{FTP_ROOT_PATH}" /></dd>
-		</dl>
-		<dl>
-			<dt><label for="ftp_port">{L_FTP_TIMEOUT}</label></dt>
-			<dd><input type="text" name="ftp_timeout" value="{FTP_TIMEOUT}" /></dd>
-		</dl>
+		<!-- END data -->
 	</fieldset>
 	<fieldset class="submit-buttons">
 		<input type="submit" name="submit" value="{L_SUBMIT}" id="submit" class="button1" />
