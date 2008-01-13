@@ -218,6 +218,12 @@ class editor
 					continue;
 				}
 
+				// if we've reached the EOF, the find failed.
+				if (!isset($this->file_contents[$i + $j]))
+				{
+					return false;
+				}
+
 				// using $this->file_contents[$i + $j] to keep the array pointer where I want it
 				// if the first line of the find (index 0) is being looked at, $i + $j = $i.
 				// if $j is > 0, we look at the next line of the file being inspected
@@ -462,7 +468,7 @@ class editor
 		// remove each line
 		for ($i = $start_offset; $i <= $end_offset; $i++)
 		{
-			unset($this->file_contents[$i]);
+			$this->file_contents[$i] = '';
 		}
 
 		$this->file_contents[$start_offset] = $replace;
@@ -560,31 +566,25 @@ class editor
 
 		$file_contents = implode('', $this->file_contents);
 
-		if ($this->write_method == WRITE_DIRECT)
+		if ($this->write_method == WRITE_DIRECT && file_exists($new_filename) && !is_writable($new_filename))
 		{
 			if (is_object($this->compress))
 			{
+				// this possibility is not currently ... possible :/
 				$this->write_method = WRITE_MANUAL;
 			}
 			else
 			{
 				trigger_error('WRITE_DIRECT_FAIL');
 			}
-
-			// skip FTP, use local file functions
-			$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
-			@fwrite($fr, $file_contents);
-			@fclose($fr);
 		}
-
-		$file_contents = implode('', $this->file_contents);
 
 		if ($this->write_method == WRITE_DIRECT)
 		{
 			// skip FTP, use local file functions
 			$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
 			@fwrite($fr, $file_contents);
-			@fclose($fr);
+			return @fclose($fr);
 		}
 		else if ($this->write_method == WRITE_FTP)
 		{
