@@ -33,6 +33,7 @@ if (!empty($setmodules))
 
 	global $language, $lang;
 	include($phpbb_root_path . 'language/' . $language . '/acp/mods.' . $phpEx);
+	$user->lang = array_merge($user->lang, $lang);
 
 	$module[] = array(
 		'module_type'		=> 'install',
@@ -58,7 +59,7 @@ class install_mod extends module
 
 	function main($mode, $sub)
 	{
-		global $template, $phpEx, $phpbb_root_path, $user, $db, $config, $cache, $auth, $language;
+		global $template, $phpEx, $phpbb_root_path, $user, $language, $db, $config, $cache, $auth;
 
 		//include($phpbb_root_path . 'language/' . $language . '/acp/permissions.' . $phpEx);
 
@@ -182,21 +183,9 @@ class install_mod extends module
 				}
 			break;
 
-			/* requirements are not currently in use...I don't expect to bring them back, but just in case
-			case 'requirements':
-				$this->check_requirements($mode, $sub);
-			break;
-			*/
-
 			case 'file_edits':
 				$this->perform_edits($mode, $sub);
 			break;
-
-			/* advanced not currently in use.
-			case 'advanced':
-				$this->advanced_settings($mode, $sub);
-			break;
-			*/
 
 			case 'create_table':
 				$this->perform_sql($mode, $sub);
@@ -216,24 +205,6 @@ class install_mod extends module
 		$this->tpl_name = 'install_mod';
 	}
 
-	/**
-	* Commented out until such a time as there are additional requirements for the Package Manager
-	*
-	function check_requirements($mode, $sub)
-	{
-		global $lang, $template, $phpbb_root_path, $phpEx, $language, $db;
-
-		$this->page_title = $lang['REQUIREMENTS_TITLE'];
-
-		$template->assign_vars(array(
-			'S_REQUIREMENTS'	=> true,
-			'TITLE'				=> $lang['REQUIREMENTS_TITLE'],
-			'BODY'				=> $lang['REQUIREMENTS_EXPLAIN'],
-			'L_SUBMIT'			=> $lang['NEXT_STEP'],
-			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=file_edits&amp;language=$language",
-		));
-	}
-	*/
 
 	function perform_edits($mode, $sub)
 	{
@@ -270,7 +241,7 @@ class install_mod extends module
 		$editor->add_string($find, $add, 'AFTER');
 		if (!$editor->close_file("includes/constants.$phpEx"))
 		{
-			trigger_error('error writing file');
+			echo('Error writing file');
 		}
 
 		$template->assign_vars(array(
@@ -282,40 +253,6 @@ class install_mod extends module
 		));
 	}
 
-	/*
-	* I see no reason to keep this role selection.
-	*
-	function advanced_settings($mode, $sub)
-	{
-		global $lang, $template, $phpbb_root_path, $phpEx, $language, $db;
-
-		$this->page_title = $lang['STAGE_ADVANCED'];
-
-		// Make Role select
-		$sql = 'SELECT role_id, role_name
-			FROM ' . ACL_ROLES_TABLE . "
-			WHERE role_type = 'a_'
-			ORDER BY role_order ASC";
-		$result = $db->sql_query($sql);
-
-		$s_role_options = '';
-		while ($row = $db->sql_fetchrow($result))
-		{
-			$role_name = (!empty($lang[$row['role_name']])) ? $lang[$row['role_name']] : $row['role_name'];
-			$s_role_options .= '<option value="' . $row['role_id'] . '">' . $role_name . '</option>';
-		}
-		$db->sql_freeresult($result);
-
-		$template->assign_vars(array(
-			'S_ADVANCE'			=> true,
-			'TITLE'				=> $lang['STAGE_ADVANCED'],
-			'BODY'				=> $lang['STAGE_ADVANCED_EXPLAIN'],
-			'S_ROLE_OPTIONS'	=> $s_role_options,
-			'L_SUBMIT'			=> $lang['NEXT_STEP'],
-			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=advanced&amp;language=$language",
-		));
-	}
-	*/
 
 	function perform_sql($mode, $sub)
 	{
@@ -398,7 +335,7 @@ class install_mod extends module
 				'parent_id'			=> 0,
 				'module_langname'	=> 'ACP_CAT_MODS',
 				'left_id'			=> ($row['last_r_id'] + 1),
-				'right_id'			=> ($row['last_r_id'] + 6),
+				'right_id'			=> ($row['last_r_id'] + 8),
 			);
 
 			$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
