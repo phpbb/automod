@@ -157,6 +157,11 @@ class editor
 		{
 			foreach ($files as $file)
 			{
+				if (!is_dir(dirname($file)))
+				{
+					$this->recursive_mkdir(dirname($file));
+				}
+
 				if (!@copy($file, $to))
 				{
 					return false;

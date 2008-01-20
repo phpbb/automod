@@ -221,11 +221,15 @@ class parser_xml
 				// straight edit, no inline
 				if (isset($action_info['ACTION']))
 				{
-					$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
-					$actions['EDITS'][$current_file][trim($action_info['FIND'][0]['data'])] = array($type => trim($action_info['ACTION'][0]['data']));
+					// it is possible to have more than one action per find.
+					for ($k = 0; $k < sizeof($action_info['ACTION']); $k++)
+					{
+						$type = str_replace('-', ' ', $action_info['ACTION'][$k]['attrs']['TYPE']);
+						$actions['EDITS'][$current_file][trim($action_info['FIND'][0]['data'])][$type] = trim($action_info['ACTION'][$k]['data']);
+					}
 				}
 				// inline
-				else
+				else if (isset($action_info['INLINE_EDIT']))
 				{
 					$inline_info = (!empty($action_info['INLINE-EDIT'])) ? $action_info['INLINE-EDIT'] : array();
 					for ($k = 0; $k < sizeof($inline_info); $k++)
@@ -247,7 +251,6 @@ class parser_xml
 				}
 			}
 		}
-
 
 		if (!empty($xml_actions['DIY-INSTRUCTIONS']))
 		{
