@@ -62,7 +62,7 @@ $lang = array_merge($lang, array(
 	'INSTALLED_MODS'	=> 'Installed MODs',
 	'INSTALLING'		=> 'MOD Manager Installing...',
 	'INSTALLATION_SUCCESSFUL'	=> 'MOD Manager Installed successfully! Please remove this <b>install/</b> directory.',
-	'INVALID_MOD_INSTRUCTION'	=> 'This MOD has an invalid instruction.',
+	'INVALID_MOD_INSTRUCTION'	=> 'This MOD has an invalid instruction, or an in-line find operation failed.',
 
 	'MOD_CONFIG'				=> 'MOD Manager Configuration',
 	'MOD_DETAILS'				=> 'MOD Details',
