@@ -806,6 +806,13 @@ class acp_mods
 							'FIND_STRING'	=> htmlspecialchars($find),
 						));
 
+						// special case for FINDs with no action associated
+						if (is_null($commands))
+						{
+							$editor->find($find);
+							continue;
+						}
+
 						foreach ($commands as $type => $contents)
 						{
 							$status = false;
@@ -841,7 +848,7 @@ class acp_mods
 										{
 											// find failed
 											$status = false;
-											continue;
+											continue;										
 										}
 
 										foreach ($inline_edit as $inline_action => $inline_contents)
