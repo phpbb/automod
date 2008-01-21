@@ -218,18 +218,54 @@ class parser_xml
 			{
 				$action_info = (!empty($edit_info[$j]['children'])) ? $edit_info[$j]['children'] : array();
 
-				// straight edit, no inline
+				// store some array information to help decide what kind of operation we're doing
 				if (isset($action_info['ACTION']))
 				{
-					// it is possible to have more than one action per find.
-					for ($k = 0; $k < sizeof($action_info['ACTION']); $k++)
+					$action_count = sizeof($action_info['ACTION']);
+					$find_count = sizeof($action_info['FIND']);
+				}
+
+				// first we try all the possibilities for a FIND/ACTION combo, then look at inline possibilities.
+
+				// straight edit, no inline
+				// simple 1:1 relation between find and action
+				if (isset($action_info['ACTION']) && $find_count == $action_count)
+				{
+					$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
+					$actions['EDITS'][$current_file][trim($action_info['FIND'][0]['data'])][$type] = trim($action_info['ACTION'][0]['data']);
+				}
+				// there is at least one find simply to advance the array pointer
+				else if (isset($action_info['ACTION']) && $find_count > $action_count)
+				{
+					for ($k = 0; $k < $find_count; $k++)
 					{
-						$type = str_replace('-', ' ', $action_info['ACTION'][$k]['attrs']['TYPE']);
-						$actions['EDITS'][$current_file][trim($action_info['FIND'][0]['data'])][$type] = trim($action_info['ACTION'][$k]['data']);
+						// is this anything but the last iteration of the loop?
+						if ($k < ($find_count - 1))
+						{
+							// NULL has special meaning for an action ... no action to be taken; advance pointer 
+							$actions['EDITS'][$current_file][trim($action_info['FIND'][$k]['data'])] = NULL;
+						}
+						else
+						{
+							// this is the last iteration, assign the find/action combo
+							// hopefully, it is safe to assume there is only one action 
+							$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
+							$actions['EDITS'][$current_file][trim($action_info['FIND'][$k]['data'])][$type] = trim($action_info['ACTION'][0]['data']);
+						}
+					}
+				}
+				// in this case, there are many actions on one find
+				// assumption: $find_count = 1
+				else if (isset($action_info['ACTION']) && $action_count < $find_count)
+				{
+					for ($k = 0; $k < $action_count; $i++)
+					{
+						$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
+						$actions['EDITS'][$current_file][trim($action_info['FIND'][0]['data'])][$type] = trim($action_info['ACTION'][0]['data']);
 					}
 				}
 				// inline
-				else if (isset($action_info['INLINE_EDIT']))
+				else if (isset($action_info['INLINE-EDIT']))
 				{
 					$inline_info = (!empty($action_info['INLINE-EDIT'])) ? $action_info['INLINE-EDIT'] : array();
 					for ($k = 0; $k < sizeof($inline_info); $k++)
