@@ -232,7 +232,7 @@ class parser_xml
 				if (isset($action_info['ACTION']) && $find_count == $action_count)
 				{
 					$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
-					$actions['EDITS'][$current_file][trim($action_info['FIND'][0]['data'])][$type] = trim($action_info['ACTION'][0]['data']);
+					$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])][$type] = trim($action_info['ACTION'][0]['data']);
 				}
 				// there is at least one find simply to advance the array pointer
 				else if (isset($action_info['ACTION']) && $find_count > $action_count)
@@ -243,14 +243,14 @@ class parser_xml
 						if ($k < ($find_count - 1))
 						{
 							// NULL has special meaning for an action ... no action to be taken; advance pointer 
-							$actions['EDITS'][$current_file][trim($action_info['FIND'][$k]['data'])] = NULL;
+							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])] = NULL;
 						}
 						else
 						{
 							// this is the last iteration, assign the find/action combo
 							// hopefully, it is safe to assume there is only one action 
 							$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
-							$actions['EDITS'][$current_file][trim($action_info['FIND'][$k]['data'])][$type] = trim($action_info['ACTION'][0]['data']);
+							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])][$type] = trim($action_info['ACTION'][0]['data']);
 						}
 					}
 				}
@@ -261,7 +261,7 @@ class parser_xml
 					for ($k = 0; $k < $action_count; $i++)
 					{
 						$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
-						$actions['EDITS'][$current_file][trim($action_info['FIND'][0]['data'])][$type] = trim($action_info['ACTION'][0]['data']);
+						$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])][$type] = trim($action_info['ACTION'][0]['data']);
 					}
 				}
 				// inline
@@ -281,7 +281,7 @@ class parser_xml
 
 							// trying to reduce the levels of arrays without impairing features
 							// need to keep the "full" edit intact.
-							$actions['EDITS'][$current_file][trim($action_info['FIND'][0]['data'])]['in-line-edit'][$inline_find]['in-line-' . $type][] = $inline_actions[$l]['data'];
+							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])]['in-line-edit'][$inline_find]['in-line-' . $type][] = $inline_actions[$l]['data'];
 						}
 					}
 				}
