@@ -25,7 +25,7 @@ class acp_mods
 		include($phpbb_root_path . "includes/editor.$phpEx");
 
 		// start the page
-		$user->add_lang(array('acp/mods', 'install'));
+		$user->add_lang(array('install', 'acp/mods'));
 
 		$this->tpl_name = 'acp_mods';
 		$this->page_title = 'ACP_CAT_MODS';
@@ -629,7 +629,7 @@ class acp_mods
 		{
 			$template->assign_var('S_EDITS', true);
 
-			foreach ($actions['EDITS'] as $file => $finds)
+			foreach ($actions['EDITS'] as $file => $edits)
 			{
 				if (!file_exists("$phpbb_root_path$file"))
 				{
@@ -647,67 +647,70 @@ class acp_mods
 
 					$editor->open_file($file);
 
-					foreach ($finds as $find => $action)
+					foreach ($edits as $finds)
 					{
-						$find_location = $editor->find($find);
-
-						if ($find_location)
+						foreach ($finds as $find => $action)
 						{
-							$template->assign_block_vars('edit_files.finds', array(
-								'FIND_STRING'	=> htmlspecialchars($find)
-							));
+							$find_location = $editor->find($find);
 
-							// check if we have an inline find
-							if (isset($action['in-line-edit']))
+							if ($find_location)
 							{
-								foreach ($action['in-line-edit'] as $inline_find => $inline_action_ary)
+								$template->assign_block_vars('edit_files.finds', array(
+									'FIND_STRING'	=> htmlspecialchars($find)
+								));
+
+								// check if we have an inline find
+								if (isset($action['in-line-edit']))
 								{
-									$template->assign_block_vars('edit_files.finds.actions', array(
-										'NAME'		=> 'In-Line Find', // LANG!
-										'COMMAND'	=> (is_array($inline_find)) ? htmlspecialchars(implode('<br />', $inline_find)) : htmlspecialchars($inline_find),
-									));
-
-									$inline_find_location = $editor->inline_find($find, $inline_find, $find_location['start'], $find_location['end']);
-
-									if ($inline_find_location)
+									foreach ($action['in-line-edit'] as $inline_find => $inline_action_ary)
 									{
-										foreach ($inline_action_ary as $inline_action => $inline_command)
+										$template->assign_block_vars('edit_files.finds.actions', array(
+											'NAME'		=> $user->lang['in-line-find'],
+											'COMMAND'	=> (is_array($inline_find)) ? htmlspecialchars(implode('<br />', $inline_find)) : htmlspecialchars($inline_find),
+										));
+
+										$inline_find_location = $editor->inline_find($find, $inline_find, $find_location['start'], $find_location['end']);
+
+										if ($inline_find_location)
 										{
-											$template->assign_block_vars('edit_files.finds.actions', array(
-												'NAME'		=> $inline_action, // LANG!
-												'COMMAND'	=> (is_array($inline_command)) ? htmlspecialchars(implode('<br />', $inline_command)) : htmlspecialchars($inline_command),
+											foreach ($inline_action_ary as $inline_action => $inline_command)
+											{
+												$template->assign_block_vars('edit_files.finds.actions', array(
+													'NAME'		=> $user->lang[$inline_action],
+													'COMMAND'	=> (is_array($inline_command)) ? htmlspecialchars(implode('<br />', $inline_command)) : htmlspecialchars($inline_command),
+												));
+											}
+
+										}
+										else
+										{
+											$template->assign_block_vars('edit_files.finds', array(
+												'S_MISSING_FIND'	=> true,
+
+												'FIND_STRING'		=> htmlspecialchars($inline_find),
 											));
 										}
-
 									}
-									else
+								}
+								else
+								{
+									foreach ($action as $name => $command)
 									{
-										$template->assign_block_vars('edit_files.finds', array(
-											'S_MISSING_FIND'	=> true,
-
-											'FIND_STRING'		=> htmlspecialchars($inline_find)
+										$template->assign_block_vars('edit_files.finds.actions', array(
+											'NAME'		=> $user->lang[$name], // LANG!
+											'COMMAND'	=> (is_array($command)) ? htmlspecialchars(implode('<br />', $command)) : htmlspecialchars($command),
 										));
 									}
 								}
 							}
 							else
 							{
-								foreach ($action as $name => $command)
-								{
-									$template->assign_block_vars('edit_files.finds.actions', array(
-										'NAME'		=> $name, // LANG!
-										'COMMAND'	=> (is_array($command)) ? htmlspecialchars(implode('<br />', $command)) : htmlspecialchars($command),
-									));
-								}
-							}
-						}
-						else
-						{
-							$template->assign_block_vars('edit_files.finds', array(
-								'S_MISSING_FIND'	=> true,
+								$template->assign_block_vars('edit_files.finds', array(
+									'S_MISSING_FIND'	=> true,
 
-								'FIND_STRING'		=> htmlspecialchars($find)
-							));
+									'FIND_STRING'		=> htmlspecialchars($find),
+								));
+							}
 						}
 					}
 
@@ -779,7 +782,7 @@ class acp_mods
 		{
 			$template->assign_var('S_EDITS', true);
 
-			foreach ($actions['EDITS'] as $filename => $finds)
+			foreach ($actions['EDITS'] as $filename => $edits)
 			{
 				if (!file_exists("$phpbb_root_path$filename"))
 				{
@@ -797,129 +800,132 @@ class acp_mods
 					));
 
 					$file_ext = substr(strrchr($filename, '.'), 1);
-
+	
 					$editor->open_file($filename);
 
-					foreach ($finds as $find => $commands)
+					foreach ($edits as $finds)
 					{
-						$template->assign_block_vars('edit_files.finds', array(
-							'FIND_STRING'	=> htmlspecialchars($find),
-						));
-
-						// special case for FINDs with no action associated
-						if (is_null($commands))
+						foreach ($finds as $find => $commands)
 						{
-							$editor->find($find);
-							continue;
-						}
-
-						foreach ($commands as $type => $contents)
-						{
-							$status = false;
-							$inline_template_ary = array();
-							$contents_orig = $contents;
-
-							switch (strtoupper($type)) // LANG!
-							{
-								case 'AFTER ADD':
-									$status = $editor->add_string($find, $contents, 'AFTER');
-								break;
-
-								case 'BEFORE ADD':
-									$status = $editor->add_string($find, $contents, 'BEFORE');
-								break;
-
-								case 'INCREMENT':
-									//$contents = "";
-									$status = $editor->inc_string($find, $contents);
-								break;
-
-								case 'REPLACE WITH':
-									$status = $editor->replace_string($find, $contents);
-								break;
-
-								case 'IN-LINE-EDIT':
-									// these aren't quite as straight forward.  Still have multi-level arrays to sort through
-									foreach ($contents as $inline_find => $inline_edit)
-									{
-										$line = $editor->inline_find($find, $inline_find);
-
-										if (!$line)
-										{
-											// find failed
-											$status = false;
-											continue;										
-										}
-
-										foreach ($inline_edit as $inline_action => $inline_contents)
-										{
-											$inline_contents = $inline_contents[0];
-											$contents = $contents_orig = $inline_contents;
-
-											switch (strtoupper($inline_action))
-											{
-												case 'IN-LINE-BEFORE-ADD':
-													$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
-												break;
-
-												case 'IN-LINE-AFTER-ADD':
-													$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
-												break;
-
-												case 'IN-LINE-REPLACE':
-													$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
-												break;
-
-												case 'IN-LINE-OPERATION':
-													$status = $editor->inc_string($find, $inline_find, $inline_contents);
-												break;
-
-												default:
-													trigger_error("Error, unrecognised command $type"); // ERROR!
-												break;
-											}
-
-											if ($status)
-											{
-												$inline_template_ary[] = array(
-													'NAME'		=> $inline_action, // LANG!
-													'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
-												);
-											}
-										}
-									}
-								break;
-
-								default:
-									trigger_error("Error, unrecognised command $type"); // ERROR!
-								break;
-							}
-
-							$template->assign_block_vars('edit_files.finds.actions', array(
-								'S_SUCCESS'	=> $status,
-
-								'NAME'		=> $type, // LANG!
-								'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
+							$template->assign_block_vars('edit_files.finds', array(
+								'FIND_STRING'	=> htmlspecialchars($find),
 							));
 
-							if (!$status)
+							// special case for FINDs with no action associated
+							if (is_null($commands))
 							{
-								$mod_installed = false;
+								$editor->find($find);
+								continue;
 							}
 
-							// these vars must be assigned after the parent block or else things break
-							if (sizeof($inline_template_ary))
+							foreach ($commands as $type => $contents)
 							{
-								foreach ($inline_template_ary as $inline_template)
-								{
-									$template->assign_block_vars('edit_files.finds.actions.inline', $inline_template);
-								}
+								$status = false;
 								$inline_template_ary = array();
+								$contents_orig = $contents;
+
+								switch (strtoupper($type))
+								{
+									case 'AFTER ADD':
+										$status = $editor->add_string($find, $contents, 'AFTER');
+									break;
+
+									case 'BEFORE ADD':
+										$status = $editor->add_string($find, $contents, 'BEFORE');
+									break;
+
+									case 'INCREMENT':
+										//$contents = "";
+										$status = $editor->inc_string($find, $contents);
+									break;
+
+									case 'REPLACE WITH':
+										$status = $editor->replace_string($find, $contents);
+									break;
+
+									case 'IN-LINE-EDIT':
+										// these aren't quite as straight forward.  Still have multi-level arrays to sort through
+										foreach ($contents as $inline_find => $inline_edit)
+										{
+											$line = $editor->inline_find($find, $inline_find);
+
+											if (!$line)
+											{
+												// find failed
+												$status = false;
+												continue;										
+											}
+
+											foreach ($inline_edit as $inline_action => $inline_contents)
+											{
+												$inline_contents = $inline_contents[0];
+												$contents = $contents_orig = $inline_contents;
+
+												switch (strtoupper($inline_action))
+												{
+													case 'IN-LINE-BEFORE-ADD':
+														$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
+													break;
+
+													case 'IN-LINE-AFTER-ADD':
+														$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
+													break;
+
+													case 'IN-LINE-REPLACE':
+														$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
+													break;
+
+													case 'IN-LINE-OPERATION':
+														$status = $editor->inc_string($find, $inline_find, $inline_contents);
+													break;
+
+													default:
+														trigger_error("Error, unrecognised command $type"); // ERROR!
+													break;
+												}
+
+												if ($status)
+												{
+													$inline_template_ary[] = array(
+														'NAME'		=> $user->lang[$inline_action],
+														'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
+													);
+												}
+											}
+										}
+									break;
+
+									default:
+										trigger_error("Error, unrecognised command $type"); // ERROR!
+									break;
+								}
+
+								$template->assign_block_vars('edit_files.finds.actions', array(
+									'S_SUCCESS'	=> $status,
+
+									'NAME'		=> $user->lang[$type], // LANG!
+									'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
+								));
+
+								if (!$status)
+								{
+									$mod_installed = false;
+								}
+
+								// these vars must be assigned after the parent block or else things break
+								if (sizeof($inline_template_ary))
+								{
+									foreach ($inline_template_ary as $inline_template)
+									{
+										$template->assign_block_vars('edit_files.finds.actions.inline', $inline_template);
+									}
+									$inline_template_ary = array();
+								}
 							}
 						}
-					}
 
-					$editor->close_file("$edited_root$filename");
+						$editor->close_file("$edited_root$filename");
+					}
 				}
 			}
 		}

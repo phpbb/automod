@@ -115,6 +115,18 @@ $lang = array_merge($lang, array(
 	'WRITE_METHOD_EXPLAIN'	=> 'You can set a preferred method to write files.  If the setting you choose cannot be used on your web server, you will be prompted.  The most compatible option is “Compressed File Download”.',
 	'WRITE_METHOD_FTP'		=> 'FTP',
 	'WRITE_METHOD_MANUAL'	=> 'Compressed File Download',
+
+	// These keys for action names are purposely lower-cased and purposely contain spaces
+	'after add'				=> 'Add After',
+	'before add'			=> 'Add Before',
+	'find'					=> 'Find',
+	'in-line-after-add'		=> 'In-Line After, Add',
+	'in-line-before-add'	=> 'In-Line Before, Add',
+	'in-line-edit'			=> 'In-Line Edit',
+	'in-line-operation'		=> 'In-Line Increment',
+	'in-line-replace'		=> 'In-Line Replace',
+	'replace'				=> 'Replace With',
+	'operation'				=> 'Increment',
 ));
 
 ?>
