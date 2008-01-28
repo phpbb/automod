@@ -214,20 +214,21 @@ class install_mod extends module
 		include("{$phpbb_root_path}includes/editor.$phpEx");
 
 		// we should have some config variables from the previous step
-		$config['ftp_method']		= request_var('method', '');
-		$config['ftp_host']			= request_var('host', '');
-		$config['ftp_username']		= request_var('username', '');
-		$config['ftp_root_path']	= request_var('root_path', '');
-		$config['ftp_port']			= request_var('port', 21);
-		$config['ftp_timeout']		= request_var('timeout', 10);
-		$config['write_method']		= (!empty($config['ftp_method'])) ? WRITE_FTP : WRITE_DIRECT;
-		set_config('ftp_method',	$config['ftp_method']);
-		set_config('ftp_host',		$config['ftp_host']);
-		set_config('ftp_username',	$config['ftp_username']);
-		set_config('ftp_root_path', $config['ftp_root_path']);
-		set_config('ftp_port',		$config['ftp_port']);
-		set_config('ftp_timeout',	$config['ftp_timeout']);
-		set_config('write_method',	$config['write_method']);
+		// Cant use
+		$config['ftp_method_n']		= request_var('method', '');
+		$config['ftp_host_n']			= request_var('host', '');
+		$config['ftp_username_n']		= request_var('username', '');
+		$config['ftp_root_path_n']	= request_var('root_path', '');
+		$config['ftp_port_n']			= request_var('port', 21);
+		$config['ftp_timeout_n']		= request_var('timeout', 10);
+		$config['write_method_n']		= (!empty($config['ftp_method_n'])) ? WRITE_FTP : WRITE_DIRECT;
+		set_config('ftp_method',	$config['ftp_method_n']);
+		set_config('ftp_host',		$config['ftp_host_n']);
+		set_config('ftp_username',	$config['ftp_username_n']);
+		set_config('ftp_root_path', $config['ftp_root_path_n']);
+		set_config('ftp_port',		$config['ftp_port_n']);
+		set_config('ftp_timeout',	$config['ftp_timeout_n']);
+		set_config('write_method',	$config['write_method_n']);
 
 		$this->page_title = $user->lang['FILE_EDITS'];
 
