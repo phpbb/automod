@@ -65,6 +65,7 @@ $lang = array_merge($lang, array(
 	'INVALID_MOD_INSTRUCTION'	=> 'This MOD has an invalid instruction, or an in-line find operation failed.',
 
 	'MOD_CONFIG'				=> 'MOD Manager Configuration',
+	'MOD_CONFIG_UPDATED'        => 'MOD Manager configuration has been updated.',
 	'MOD_DETAILS'				=> 'MOD Details',
 	'MOD_DETAILS_EXPLAIN'		=> 'Here you can view all known information about the MOD you selected.',
 	'MOD_MANAGER'				=> 'MOD Manager',

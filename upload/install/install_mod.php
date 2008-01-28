@@ -31,7 +31,7 @@ if (!empty($setmodules))
 		return;
 	}
 
-	global $language, $lang;
+	global $language, $lang, $user;
 	include($phpbb_root_path . 'language/' . $language . '/acp/mods.' . $phpEx);
 	$user->lang = array_merge($user->lang, $lang);
 
