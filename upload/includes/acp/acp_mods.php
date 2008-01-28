@@ -771,7 +771,7 @@ class acp_mods
 		$edited_root = "{$mod_root}_edited/";
 
 		// see if directory exists
-		if (!file_exists($phpbb_root_path . $edited_root))
+		if (!file_exists($phpbb_root_path . $edited_root) && $config['write_method'] == WRITE_DIRECT)
 		{
 			mkdir($phpbb_root_path . $edited_root, 0777);
 			chmod($phpbb_root_path . $edited_root, 0777);
