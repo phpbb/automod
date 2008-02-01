@@ -771,7 +771,7 @@ class acp_mods
 		$edited_root = "{$mod_root}_edited/";
 
 		// see if directory exists
-		if (!file_exists($phpbb_root_path . $edited_root) && $config['write_method'] == WRITE_DIRECT)
+		if (!file_exists($phpbb_root_path . $edited_root) && $editor->write_method == WRITE_DIRECT))
 		{
 			mkdir($phpbb_root_path . $edited_root, 0777);
 			chmod($phpbb_root_path . $edited_root, 0777);
@@ -847,17 +847,18 @@ class acp_mods
 										// these aren't quite as straight forward.  Still have multi-level arrays to sort through
 										foreach ($contents as $inline_find => $inline_edit)
 										{
-											$line = $editor->inline_find($find, $inline_find);
-
-											if (!$line)
-											{
-												// find failed
-												$status = false;
-												continue;										
-											}
-
 											foreach ($inline_edit as $inline_action => $inline_contents)
 											{
+												// inline finds are pretty contancerous, so so them in the loop
+												$line = $editor->inline_find($find, $inline_find);
+
+												if (!$line)
+												{
+													// find failed
+													$status = false;
+													continue 2;										
+												}
+
 												$inline_contents = $inline_contents[0];
 												$contents = $contents_orig = $inline_contents;
 
@@ -872,6 +873,7 @@ class acp_mods
 													break;
 
 													case 'IN-LINE-REPLACE':
+													case 'IN-LINE-REPLACE-WITH':
 														$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
 													break;
 
@@ -880,7 +882,7 @@ class acp_mods
 													break;
 
 													default:
-														trigger_error("Error, unrecognised command $type"); // ERROR!
+														trigger_error("Error, unrecognised command $inline_action"); // ERROR!
 													break;
 												}
 
