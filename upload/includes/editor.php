@@ -44,7 +44,7 @@ class editor
 		$this->install_time = time();
 
 		// to be truly correct, we should scan all files ...
-		if (is_writable($phpbb_root_path) || $config['write_method'] == WRITE_DIRECT || $pre_install == true)
+		if (is_writable($phpbb_root_path) || $config['write_method'] == WRITE_DIRECT || $pre_install)
 		{
 			$this->write_method = WRITE_DIRECT;
 		}
@@ -155,13 +155,13 @@ class editor
 		// is the directory writeable? if so, then we don't have to deal with FTP
 		if ($this->write_method == WRITE_DIRECT)
 		{
+			if (!is_dir(dirname($to)))
+			{
+				$this->recursive_mkdir(dirname($to));
+			}
+
 			foreach ($files as $file)
 			{
-				if (!is_dir(dirname($file)))
-				{
-					$this->recursive_mkdir(dirname($file));
-				}
-
 				if (!@copy($file, $to))
 				{
 					return false;

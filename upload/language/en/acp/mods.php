@@ -126,7 +126,9 @@ $lang = array_merge($lang, array(
 	'in-line-edit'			=> 'In-Line Edit',
 	'in-line-operation'		=> 'In-Line Increment',
 	'in-line-replace'		=> 'In-Line Replace',
+	'in-line-replace-with'	=> 'In-Line Replace',
 	'replace'				=> 'Replace With',
+	'replace with'			=> 'Replace With',
 	'operation'				=> 'Increment',
 ));
 
