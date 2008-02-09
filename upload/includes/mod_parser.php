@@ -232,7 +232,7 @@ class parser_xml
 				if (isset($action_info['ACTION']) && $find_count == $action_count)
 				{
 					$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
-					$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])][$type] = trim($action_info['ACTION'][0]['data']);
+					$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])][$type] = $action_info['ACTION'][0]['data'];
 				}
 				// there is at least one find simply to advance the array pointer
 				else if (isset($action_info['ACTION']) && $find_count > $action_count)
@@ -250,22 +250,23 @@ class parser_xml
 							// this is the last iteration, assign the find/action combo
 							// hopefully, it is safe to assume there is only one action 
 							$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
-							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])][$type] = trim($action_info['ACTION'][0]['data']);
+							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])][$type] = $action_info['ACTION'][0]['data'];
 						}
 					}
 				}
 				// in this case, there are many actions on one find
 				// assumption: $find_count = 1
-				else if (isset($action_info['ACTION']) && $action_count < $find_count)
+				else if (isset($action_info['ACTION']) && $action_count > $find_count)
 				{
-					for ($k = 0; $k < $action_count; $i++)
+					for ($k = 0; $k < $action_count; $k++)
 					{
-						$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
-						$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])][$type] = trim($action_info['ACTION'][0]['data']);
+						$type = str_replace('-', ' ', $action_info['ACTION'][$k]['attrs']['TYPE']);
+						$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])][$type] = $action_info['ACTION'][$k]['data'];
 					}
 				}
+
 				// inline
-				else if (isset($action_info['INLINE-EDIT']))
+				if (isset($action_info['INLINE-EDIT']))
 				{
 					$inline_info = (!empty($action_info['INLINE-EDIT'])) ? $action_info['INLINE-EDIT'] : array();
 					for ($k = 0; $k < sizeof($inline_info); $k++)

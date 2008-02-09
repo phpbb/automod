@@ -890,7 +890,7 @@ class acp_mods
 												{
 													$inline_template_ary[] = array(
 														'NAME'		=> $user->lang[$inline_action],
-														'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
+														'COMMAND'	=> (is_array($inline_find)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_find),
 													);
 												}
 											}
