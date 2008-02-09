@@ -476,7 +476,7 @@ class editor
 			$this->file_contents[$i] = '';
 		}
 
-		$this->file_contents[$start_offset] = $replace;
+		$this->file_contents[$start_offset] = rtrim($replace) . "\n";
 
 		return true;
 	}
