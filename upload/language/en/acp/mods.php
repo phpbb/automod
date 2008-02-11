@@ -99,6 +99,7 @@ $lang = array_merge($lang, array(
 	'SOURCE'		=> 'Source',
 	'SQL_QUERIES'	=> 'SQL Queries',
 	'STATUS'		=> 'Status',
+	'STYLE_NAME'	=> 'Style name',
 	'SUCCESS'		=> 'Success',
 
 	'TARGET'		=> 'Target',
