@@ -21,8 +21,8 @@ class acp_mods
 		global $phpbb_root_path, $phpbb_admin_path, $phpEx, $table_prefix;
 		global $method, $test_ftp_connection, $test_connection;
 
-		include($phpbb_root_path . "includes/functions_transfer.$phpEx");
-		include($phpbb_root_path . "includes/editor.$phpEx");
+		include("{$phpbb_root_path}includes/functions_transfer.$phpEx");
+		include("{$phpbb_root_path}includes/editor.$phpEx");
 
 		// start the page
 		$user->add_lang(array('install', 'acp/mods'));
@@ -386,7 +386,7 @@ class acp_mods
 		{
 			global $db;
 
-			$mod_id = intval($mod_ident);
+			$mod_id = (int) $mod_ident;
 
 			$sql = 'SELECT *
 				FROM ' . MODS_TABLE . "
@@ -400,10 +400,10 @@ class acp_mods
 					'MOD_INSTALL_TIME'	=> $user->format_date($row['mod_time']),
 					'MOD_DEPENDENCIES'	=> unserialize($row['mod_dependencies']), // ?
 					'MOD_NAME'			=> htmlspecialchars($row['mod_name']),
-					'MOD_DESCRIPTION'	=> htmlspecialchars($row['mod_description']),
+					'MOD_DESCRIPTION'	=> nl2br($row['mod_description']),
 					'MOD_VERSION'		=> $row['mod_version'],
 
-					'AUTHOR_NOTES'	=> $row['mod_author_notes'],
+					'AUTHOR_NOTES'	=> nl2br($row['mod_author_notes']),
 					'AUTHOR_NAME'	=> $row['mod_author_name'],
 					'AUTHOR_EMAIL'	=> $row['mod_author_email'],
 					'AUTHOR_URL'	=> $row['mod_author_url']
@@ -535,7 +535,7 @@ class acp_mods
 		if (!empty($details['AUTHOR_NOTES']))
 		{
 			$template->assign_vars(array(
-				'S_AUTHOR_NOTES'	=> $details['AUTHOR_NOTES'],
+				'S_AUTHOR_NOTES'	=> true,
 
 				'AUTHOR_NOTES'		=> nl2br($details['AUTHOR_NOTES']),
 			));
@@ -656,7 +656,7 @@ class acp_mods
 							if ($find_location)
 							{
 								$template->assign_block_vars('edit_files.finds', array(
-									'FIND_STRING'	=> htmlspecialchars($find)
+									'FIND_STRING'	=> htmlspecialchars($find),
 								));
 
 								// check if we have an inline find
@@ -1122,9 +1122,9 @@ class acp_mods
 		if (!empty($details['AUTHOR_NOTES']))
 		{
 			$template->assign_vars(array(
-				'S_AUTHOR_NOTES' => true,
+				'S_AUTHOR_NOTES'	=> true,
 
-				'AUTHOR_NOTES' => $details['AUTHOR_NOTES'],
+				'AUTHOR_NOTES'		=> nl2br($details['AUTHOR_NOTES']),
 			));
 		}
 
@@ -1213,13 +1213,13 @@ class acp_mods
 							$template->assign_block_vars('edit_files.finds', array(
 								'S_MISSING_FIND'	=> true,
 
-								'FIND_STRING'		=> htmlspecialchars($find)
+								'FIND_STRING'		=> htmlspecialchars($find),
 							));
 						}
 						else
 						{
 							$template->assign_block_vars('edit_files.finds', array(
-								'FIND_STRING'	=> htmlspecialchars($find)
+								'FIND_STRING'	=> htmlspecialchars($find),
 							));
 
 							// check if we have an inline find
@@ -1237,7 +1237,7 @@ class acp_mods
 										$template->assign_block_vars('edit_files.finds', array(
 											'S_MISSING_FIND'	=> true,
 
-											'FIND_STRING'		=> htmlspecialchars($inline_find)
+											'FIND_STRING'		=> htmlspecialchars($inline_find),
 										));
 									}
 									else
@@ -1304,8 +1304,8 @@ class acp_mods
 			$template->assign_vars(array(
 				'S_AUTHOR_NOTES' => true,
 
-				'AUTHOR_NOTES' => $details['AUTHOR_NOTES'])
-			);
+				'AUTHOR_NOTES' => nl2br($details['AUTHOR_NOTES']),
+			));
 		}
 
 		// Show new files
