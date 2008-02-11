@@ -56,6 +56,7 @@ $lang = array_merge($lang, array(
 	'FIND_MISSING'		=> 'Cannot locate find string',
 	'FTP_INFORMATION'	=> 'FTP Information',
 
+	'INSTALL_TIME'		=> 'Installation time',
 	'INSTALL_MOD'		=> 'Install this MOD',
 	'INSTALLED'			=> 'MOD installed',
 	'INSTALLED_EXPLAIN'	=> 'Your MOD has been installed! Here you can view some of the results from the installation. Please note any errors, and seek support at <a href="http://www.phpbb.com">phpBB.com</a>',
