@@ -23,6 +23,7 @@ class acp_mods
 
 		include("{$phpbb_root_path}includes/functions_transfer.$phpEx");
 		include("{$phpbb_root_path}includes/editor.$phpEx");
+		include("{$phpbb_root_path}includes/functions_mods.$phpEx");
 
 		// start the page
 		$user->add_lang(array('install', 'acp/mods'));
@@ -76,21 +77,10 @@ class acp_mods
 					else if ($write_method == WRITE_FTP)
 					{
 						// check the correctness of FTP infos
-						$transfer = new $ftp_method($ftp_host, $ftp_username, $ftp_password, $ftp_root_path, $ftp_port, $ftp_timeout);
-						$test_connection = $transfer->open_session();
-
-						// Make sure that the directory is correct by checking for the existence of common.php
-						if ($test_connection === true)
-						{
-							// Check for common.php file
-							if (!$transfer->file_exists($phpbb_root_path, 'common.' . $phpEx))
-							{
-								$test_connection = 'ERR_WRONG_PATH_TO_PHPBB';
-							}
-						}
-
-						$transfer->close_session();
-
+						$test_ftp_connection = true;
+						$test_connection = false;
+						test_ftp_connection($ftp_method, $test_ftp_connection, $test_connection);
+						
 						if ($test_connection !== true)
 						{
 							$error = $test_connection;
@@ -162,45 +152,32 @@ class acp_mods
 			break;
 
 			case 'frontend':
-				$test_ftp_connection = request_var('test_connection', '');
-				$submit = request_var('submit', '');
-				$method = basename(request_var('method', ''));
-
-				if (!$method || !class_exists($method))
+				if ($config['write_method'] == WRITE_FTP)
 				{
-					$method = 'ftp';
-					$methods = transfer::methods();
-
-					if (!in_array('ftp', $methods))
+					$method = basename(request_var('method', ''));
+					if (!$method || !class_exists($method))
 					{
-						$method = $methods[0];
-					}
-				}
-
-				$test_connection = false;
-				$action = (!empty($test_ftp_connection)) ? 'pre_install' : $action;
-				if (!empty($test_ftp_connection) || (!is_writeable($phpbb_root_path) && $action == 'install'))
-				{
-					$transfer = new $method(request_var('host', ''), request_var('username', ''), request_var('password', ''), request_var('root_path', ''), request_var('port', ''), request_var('timeout', ''));
-					$test_connection = $transfer->open_session();
-
-					// Make sure that the directory is correct by checking for the existence of common.php
-					if ($test_connection === true)
-					{
-						// Check for common.php file
-						if (!$transfer->file_exists($phpbb_root_path, 'common.' . $phpEx))
+						$method = 'ftp';
+						$methods = transfer::methods();
+			
+						if (!in_array('ftp', $methods))
 						{
-							$test_connection = 'ERR_WRONG_PATH_TO_PHPBB';
+							$method = $methods[0];
 						}
 					}
-
-					$transfer->close_session();
-
-					// Make sure the login details are correct before continuing
-					if ($test_connection !== true)
+			
+					$test_connection = false;
+					$test_ftp_connection = request_var('test_connection', '');
+					if (!empty($test_ftp_connection) || $action == 'install')
 					{
-						$action = 'pre_install';
-						$test_ftp_connection = true;
+						test_ftp_connection($method, $test_ftp_connection, $test_connection);
+						
+						// Make sure the login details are correct before continuing
+						if ($test_connection !== true || !empty($test_ftp_connection))
+						{
+							$action = 'pre_install';
+							$test_ftp_connection = true;
+						}
 					}
 				}
 
@@ -542,7 +519,7 @@ class acp_mods
 		}
 
 		// get FTP information if we need it
-		if ($config['write_method'] == WRITE_FTP && empty($_REQUEST['password']))
+		if ($config['write_method'] == WRITE_FTP)
 		{
 			$s_hidden_fields = build_hidden_fields(array('method' => $method));
 
@@ -578,7 +555,7 @@ class acp_mods
 		$editor = new editor($phpbb_root_path, true);
 
 		// Only display full actions if the user has requested them.
-		if (!defined('DEBUG') || !isset($_GET['full_details']))
+		if (!defined('DEBUG') || !isset($_GET['full_details']) || ($config['write_method'] == WRITE_FTP && empty($_REQUEST['password'])))
 		{
 			return;
 		}

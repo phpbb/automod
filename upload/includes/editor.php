@@ -173,14 +173,14 @@ class editor
 			// ftp
 			foreach ($files as $file)
 			{
-				$file = '/' . str_replace($phpbb_root_path, '', $file);
+				//$file = str_replace($phpbb_root_path, '', $file);
 				if (is_dir($to))
 				{
-					$to_file = str_replace($strip, '', $file);
+					$to_file = str_replace(array($phpbb_root_path, $strip), '', $file);
 				}
 				else
 				{
-					$to_file = $to;
+					$to_file = str_replace($phpbb_root_path, '', $to);
 				}
 
 				$this->transfer->overwrite_file($file, $to_file);
