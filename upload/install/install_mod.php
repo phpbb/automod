@@ -1,7 +1,7 @@
 <?php
 /**
 *
-* @mod mod_manager
+* @package mod_manager
 * @version $Id$
 * @copyright (c) 2007 phpBB Group
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
@@ -64,11 +64,12 @@ class install_mod extends module
 
 		//include($phpbb_root_path . 'language/' . $language . '/acp/permissions.' . $phpEx);
 
-		require($phpbb_root_path . 'config.' . $phpEx);
-		require($phpbb_root_path . 'includes/constants.' . $phpEx);
-		require($phpbb_root_path . 'includes/db/' . $dbms . '.' . $phpEx);
-		require($phpbb_root_path . 'includes/functions_convert.' . $phpEx);
-		include_once($phpbb_root_path . 'includes/functions_transfer.' . $phpEx);
+		require("{$phpbb_root_path}config.$phpEx");
+		require("{$phpbb_root_path}includes/constants.$phpEx");
+		require("{$phpbb_root_path}includes/db/$dbms.$phpEx");
+		require("{$phpbb_root_path}includes/functions_convert.$phpEx");
+		require("{$phpbb_root_path}includes/functions_mods.$phpEx");
+		include_once("{$phpbb_root_path}includes/functions_transfer.$phpEx");
 
 		$db = new $sql_db();
 		$db->sql_connect($dbhost, $dbuser, $dbpasswd, $dbname, $dbport, false, true);
@@ -98,10 +99,7 @@ class install_mod extends module
 		// Set custom template again. ;)
 		$template->set_custom_template('../adm/style', 'admin');
 
-		$test_ftp_connection = request_var('test_connection', '');
-		$submit = request_var('submit', '');
 		$method = basename(request_var('method', ''));
-
 		if (!$method || !class_exists($method))
 		{
 			$method = 'ftp';
@@ -114,25 +112,13 @@ class install_mod extends module
 		}
 
 		$test_connection = false;
+		$test_ftp_connection = request_var('test_connection', '');
 		if (!empty($test_ftp_connection) || (!is_writeable($phpbb_root_path) && $sub == 'file_edits'))
 		{
-			$transfer = new $method(request_var('host', ''), request_var('username', ''), request_var('password', ''), request_var('root_path', ''), request_var('port', ''), request_var('timeout', ''));
-			$test_connection = $transfer->open_session();
-
-			// Make sure that the directory is correct by checking for the existence of common.php
-			if ($test_connection === true)
-			{
-				// Check for common.php file
-				if (!$transfer->file_exists($phpbb_root_path, 'common.' . $phpEx))
-				{
-					$test_connection = 'ERR_WRONG_PATH_TO_PHPBB';
-				}
-			}
-
-			$transfer->close_session();
-
+			test_ftp_connection($method, $test_ftp_connection, $test_connection);
+			
 			// Make sure the login details are correct before continuing
-			if ($test_connection !== true)
+			if ($test_connection !== true || !empty($test_ftp_connection))
 			{
 				$sub = 'intro';
 				$test_ftp_connection = true;
@@ -235,6 +221,7 @@ class install_mod extends module
 		$editor->add_string($find, $add, 'AFTER');
 		if (!$editor->close_file("includes/constants.$phpEx"))
 		{
+			// need proper error handling here
 			echo('Error writing file');
 		}
 
