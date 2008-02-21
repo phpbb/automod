@@ -14,11 +14,13 @@
 class acp_mods
 {
 	var $u_action;
+	var $mod_root = '';
+	var $edited_root = '';
 
 	function main($id, $mode)
 	{
 		global $config, $db, $user, $auth, $template, $cache;
-		global $phpbb_root_path, $phpbb_admin_path, $phpEx, $table_prefix;
+		global $phpbb_root_path, $phpEx;
 		global $method, $test_ftp_connection, $test_connection;
 
 		include("{$phpbb_root_path}includes/functions_transfer.$phpEx");
@@ -54,7 +56,7 @@ class acp_mods
 						$ftp_method = $ftp_methods[0];
 					}
 				}
-			
+
 				if (isset($_POST['submit']))
 				{
 					$ftp_host		= request_var('host', '');
@@ -123,7 +125,7 @@ class acp_mods
 						'METHOD'	=> $compress_method,
 					));
 				}
-				
+
 				$requested_data = call_user_func(array($ftp_method, 'data'));
 				foreach ($requested_data as $data => $default)
 				{
@@ -172,7 +174,7 @@ class acp_mods
 					if (!empty($test_ftp_connection) || $action == 'install')
 					{
 						test_ftp_connection($method, $test_ftp_connection, $test_connection);
-						
+
 						// Make sure the login details are correct before continuing
 						if ($test_connection !== true || !empty($test_ftp_connection))
 						{
@@ -482,11 +484,7 @@ class acp_mods
 		// check for "child" MODX files and attempt to decide which ones we need
 		$elements = $this->find_children($mod_path, $actions, 'pre_install');
 
-		$mod_root = explode('/', str_replace($phpbb_root_path, '', $mod_path));
-		array_pop($mod_root);
-		$mod_root = implode('/', $mod_root) . '/';
-
-		$dependenices = $details['MOD_DEPENDENCIES'];
+		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
 
 		$template->assign_vars(array(
 			'S_PRE_INSTALL'	=> true,
@@ -584,17 +582,14 @@ class acp_mods
 		$editor = new editor($phpbb_root_path);
 
 		// get mod install root && make temporary edited folder root
-		// @todo...don't explode and implode this quite so much
-		$mod_root = explode('/', str_replace($phpbb_root_path, '', $mod_path));
-		array_pop($mod_root);
-		$mod_root = implode('/', $mod_root) . '/';
-		$edited_root = "{$mod_root}_edited/";
+		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
+		$this->edited_root = "{$this->mod_root}_edited/";
 
 		// see if directory exists
-		if (!file_exists($phpbb_root_path . $edited_root) && $config['write_method'] == WRITE_DIRECT)
+		if (!file_exists($phpbb_root_path . $this->edited_root) && $editor->write_method == WRITE_DIRECT)
 		{
-			mkdir($phpbb_root_path . $edited_root, 0777);
-			chmod($phpbb_root_path . $edited_root, 0777);
+			mkdir($phpbb_root_path . $this->edited_root, 0777);
+			chmod($phpbb_root_path . $this->edited_root, 0777);
 		}
 
 		// handle all edits here
@@ -613,10 +608,10 @@ class acp_mods
 			}
 		}
 
-		if ($config['write_method'] != WRITE_MANUAL)
+		if ($editor->write_method != WRITE_MANUAL)
 		{
 			// Move edited files back, and delete temp storage folder
-			$editor->copy_content($edited_root, '', $edited_root);
+			$editor->copy_content($this->edited_root, '', $this->edited_root);
 		}
 		else
 		{
@@ -691,7 +686,7 @@ class acp_mods
 			add_log('admin', 'LOG_MOD_CHANGE', $row['mod_name']);
 		}
 
-		if ($config['write_method'] == WRITE_MANUAL && $mod_installed)
+		if ($editor->write_method == WRITE_MANUAL && $mod_installed)
 		{
 			$editor->compress->download('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
 			exit;
@@ -730,7 +725,7 @@ class acp_mods
 		$details = $this->mod_details($mod_id, false);
 
 		// process the actions
-		$mod_uninstalled = $this->process_edits($editor, $actions, $details, true, $execute_edits, true);
+		$mod_uninstalled = $this->process_edits($editor, $actions, $details, $execute_edits, true, true);
 
 		if ($execute_edits && $mod_uninstalled)
 		{
@@ -794,14 +789,14 @@ class acp_mods
 
 	function process_edits($editor, $actions, $details, $change = false, $display = true, $reverse = false)
 	{
-		global $template, $user, $phpbb_root_path, $mod_root, $edited_root, $parser;
+		global $template, $user, $db, $phpbb_root_path;
 
 		$mod_installed = true;
 
 		if ($reverse)
 		{
 			// maybe should allow for potential extensions here
-			$actions = parser_xml::reverse_edits($actions);
+			$actions = parser::reverse_edits($actions);
 		}
 
 		if (!empty($details['AUTHOR_NOTES']))
@@ -811,6 +806,65 @@ class acp_mods
 
 				'AUTHOR_NOTES'		=> nl2br($details['AUTHOR_NOTES']),
 			));
+		}
+
+
+		// Move included files
+		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']) && $change)
+		{
+			$template->assign_var('S_NEW_FILES', true);
+
+			foreach ($actions['NEW_FILES'] as $source => $target)
+			{
+				$status = $editor->copy_content($this->mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target));
+
+				if (!$status)
+				{
+					$mod_installed = false;
+				}
+
+				$template->assign_block_vars('new_files', array(
+					'S_SUCCESS'		=> $status,
+					'SOURCE'		=> $source,
+					'TARGET'		=> $target,
+				));
+			}
+		}
+
+		// Perform SQL queries
+		if (isset($actions['SQL']) && !empty($actions['SQL']))
+		{
+			$template->assign_var('S_SQL', true);
+
+			parser::parse_sql($actions['SQL']);
+
+			$db->sql_return_on_error(true);
+
+			foreach ($actions['SQL'] as $query)
+			{
+				if ($change)
+				{
+					$query_success = $db->sql_query($query);
+
+					$template->assign_block_vars('sql_queries', array(
+						'S_SUCCESS'	=> ($query_success) ? true : false,
+						'QUERY'		=> $query,
+					));
+
+					if (!$query_success)
+					{
+						$mod_installed = false;
+					}
+				}
+				else if ($display)
+				{
+					$template->assign_block_vars('sql_queries', array(
+						'QUERY'	=> $query,
+					));
+				}
+			}
+
+			$db->sql_return_on_error(false);
 		}
 
 		foreach ($actions['EDITS'] as $filename => $edits)
@@ -957,71 +1011,13 @@ class acp_mods
 						}
 					}
 
-					if ($change && $mod_installed)
+					if ($change)
 					{
-						$editor->close_file("$edited_root$filename");
+						$editor->close_file("{$this->edited_root}$filename");
 					}
 				}
 			}
 		} // end foreach
-
-		// Move included files
-		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']) && $change)
-		{
-			$template->assign_var('S_NEW_FILES', true);
-
-			foreach ($actions['NEW_FILES'] as $source => $target)
-			{
-				$status = $editor->copy_content($mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target));
-
-				if (!$status)
-				{
-					$mod_installed = false;
-				}
-
-				$template->assign_block_vars('new_files', array(
-					'S_SUCCESS'		=> $status,
-					'SOURCE'		=> $source,
-					'TARGET'		=> $target,
-				));
-			}
-		}
-
-		// Perform SQL queries
-		if (isset($actions['SQL']) && !empty($actions['SQL']))
-		{
-			$template->assign_var('S_SQL', true);
-
-			$parser->parse_sql($actions['SQL']);
-
-			$db->sql_return_on_error(true);
-
-			foreach ($actions['SQL'] as $query)
-			{
-				if ($change)
-				{
-					$query_success = $db->sql_query($sql);
-
-					$template->assign_block_vars('sql_queries', array(
-						'S_SUCCESS'	=> ($query_success) ? true : false,
-						'QUERY'		=> $query,
-					));
-
-					if (!$query_success)
-					{
-						$mod_installed = false;
-					}
-				}
-				else if ($display)
-				{
-					$template->assign_block_vars('sql_queries', array(
-						'QUERY'	=> $query,
-					));
-				}
-			}
-
-			$db->sql_return_on_error(false);
-		}
 
 		return $mod_installed;
 	}
