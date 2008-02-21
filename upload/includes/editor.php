@@ -562,7 +562,7 @@ class editor
 	*/
 	function close_file($new_filename)
 	{
-		global $phpbb_root_path, $edited_root;
+		global $phpbb_root_path, $edited_root; // @TODO: LOOK AT $EDITED_ROOT
 
 		if (!file_exists($phpbb_root_path . dirname($new_filename)))
 		{
