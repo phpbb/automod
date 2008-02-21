@@ -11,6 +11,7 @@
 /**
 * MOD Parser class
 * Basic wrapper to run individual parser functions
+* Also contains some parsing functions that are global (i.e. needed for all parsers)
 * @package mods_manager
 *
 * Each parser requires the following functions:
@@ -53,6 +54,144 @@ class parser
 	function get_actions()
 	{
 		return $this->parser->get_actions();
+	}
+
+	/**
+	* Returns the needed sql query to reverse the actions taken by the given query
+	* @todo: Add more
+	*/
+	function reverse_query($orig_query)
+	{
+		if (preg_match('#ALTER TABLE\s([a-z_]+)\sADD(COLUMN|)\s([a-z_]+)#i', $orig_query, $matches))
+		{
+			return "ALTER TABLE {$matches[1]} DROP COLUMN {$matches[3]};";
+		}
+		else if (preg_match('#CREATE TABLE\s([a-z_])+#i', $orig_query, $matches))
+		{
+			return "DROP TABLE {$matches[1]};";
+		}
+
+		return false;
+	}
+
+	/**
+	* Parse sql
+	*
+	* @param array $sql_query
+	*/
+	function parse_sql(&$sql_query)
+	{
+		global $dbms, $table_prefix;
+
+		if (!function_exists('get_available_dbms'))
+		{
+			global $phpbb_root_path, $phpEx;
+
+			include($phpbb_root_path . 'includes/functions_install.' . $phpEx);
+		}
+
+		static $available_dbms;
+
+		if (!isset($available_dbms))
+		{
+			$available_dbms = get_available_dbms($dbms);
+		}
+
+		$remove_remarks = $available_dbms[$dbms]['COMMENTS'];
+		$delimiter = $available_dbms[$dbms]['DELIM'];
+
+		$sql_query = implode(' ', $sql_query);
+		$sql_query = preg_replace('#phpbb_#i', $table_prefix, $sql_query);
+		$remove_remarks($sql_query);
+		$sql_query = split_sql_file($sql_query, $delimiter);
+
+		//return $sql_query;
+	}
+
+	/**
+	* Returns the edits array, but now filled with edits to reverse the given array
+	* @todo: Add more
+	*/
+	function reverse_edits($actions)
+	{
+		$reverse_edits = array();
+
+		foreach ($actions['EDITS'] as $file => $edit_ary)
+		{
+			foreach ($edit_ary as $edit_id => $edit)
+			{
+				foreach ($edit as $find => $action_ary)
+				{
+					foreach ($action_ary as $type => $command)
+					{
+						switch (strtoupper($type))
+						{
+							// for before and after adds, we use the find as a tool for more precise finds
+							// this isn't perfect, but it seems better than having
+							// finds of only a couple characters, like "/*"
+							case 'AFTER ADD':
+								$total_find = $find . $command;
+
+								$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
+							break;
+
+							case 'BEFORE ADD':
+								$total_find = $command . $find;
+								
+								// replace with the find
+								$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
+							break;
+	
+							case 'REPLACE WITH':
+							case 'REPLACE, WITH':
+							case 'REPLACE':
+								// replace $command (new code) with $find (original code)
+								$reverse_edits['EDITS'][$file][$edit_id][$command]['replace with'] = $find;
+							break;
+
+							case 'IN-LINE-EDIT':
+								// build the reverse just like the normal action
+								foreach ($command as $inline_find => $inline_action_ary)
+								{
+									foreach ($inline_action_ary as $inline_action => $inline_command)
+									{
+										$inline_command = $inline_command[0];
+	
+										switch (strtoupper($inline_action))
+										{
+											case 'IN-LINE-AFTER-ADD':
+											case 'IN-LINE-BEFORE-ADD':
+												// Replace with a blank string
+												$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$inline_command]['in-line-replace'][] = '';
+											break;
+	
+											case 'IN-LINE-REPLACE':
+												// replace with the inline find
+												$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$inline_find][$inline_action][] = $inline_command;
+											break;
+	
+											default:
+												// For the moment, we do nothing.  What about increment?
+											break;
+										}
+									}
+								}
+							break;
+
+							case 'SQL':
+								$reverse_edits['SQL'][] = $this->reverse_query($command);
+							break;
+
+							default:
+								// again, increment
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		return $reverse_edits;
 	}
 }
 

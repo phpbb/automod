@@ -45,4 +45,15 @@ function test_ftp_connection($method, &$test_ftp_connection, &$test_connection)
 	return;
 }
 
+/**
+* Helper function
+* Runs basename() on $path, then trims the extension from it
+* @param string $path - path to be basenamed
+*/
+function core_basename($path)
+{
+	$path = basename($path);
+	return substr($path, 0, strrpos($path, '.'));
+}
+
 ?>
