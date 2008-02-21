@@ -24,6 +24,7 @@ class acp_mods
 		include("{$phpbb_root_path}includes/functions_transfer.$phpEx");
 		include("{$phpbb_root_path}includes/editor.$phpEx");
 		include("{$phpbb_root_path}includes/functions_mods.$phpEx");
+		include("{$phpbb_root_path}includes/mod_parser.$phpEx");
 
 		// start the page
 		$user->add_lang(array('install', 'acp/mods'));
@@ -165,7 +166,7 @@ class acp_mods
 							$method = $methods[0];
 						}
 					}
-			
+
 					$test_connection = false;
 					$test_ftp_connection = request_var('test_connection', '');
 					if (!empty($test_ftp_connection) || $action == 'install')
@@ -192,11 +193,8 @@ class acp_mods
 					break;
 
 					case 'pre_uninstall':
-						$this->pre_uninstall($mod_id);
-					break;
-
 					case 'uninstall':
-						$this->uninstall($mod_id);
+						$this->uninstall($action, $mod_id);
 					break;
 
 					case 'details':
@@ -394,9 +392,7 @@ class acp_mods
 			}
 			else
 			{
-				// ERROR, MISSING MOD ID
-				// temporary, to be sure we don't get random blank screens
-				die('no mod');
+				trigger_error('NO_MOD', E_USER_WARNING);
 			}
 			$db->sql_freeresult($result);
 		}
@@ -406,7 +402,6 @@ class acp_mods
 
 			$ext = substr(strrchr($mod_path, '.'), 1);
 
-			include_once($phpbb_root_path . 'includes/mod_parser.' . $phpEx);
 			$parser = new parser($ext);
 			$parser->set_file($mod_path);
 
@@ -448,8 +443,7 @@ class acp_mods
 			}
 			else
 			{
-				// @TODO: lang
-				//trigger_error('NO SUCH MOD IN DB', E_USER_WARNING);
+				trigger_error('NO_MOD', E_USER_WARNING);
 			}
 		}
 		else
@@ -457,11 +451,6 @@ class acp_mods
 			$mod_path = $mod_ident;
 			$actions = array();
 			$ext = substr(strrchr($mod_path, '.'), 1);
-
-			if (!class_exists('parser'))
-			{
-				include($phpbb_root_path . 'includes/mod_parser.' . $phpEx);
-			}
 
 			$parser = new parser($ext);
 			$parser->set_file($mod_path);
@@ -508,16 +497,6 @@ class acp_mods
 			'U_BACK'		=> $this->u_action,
 		));
 
-		// Show author notes
-		if (!empty($details['AUTHOR_NOTES']))
-		{
-			$template->assign_vars(array(
-				'S_AUTHOR_NOTES'	=> true,
-
-				'AUTHOR_NOTES'		=> nl2br($details['AUTHOR_NOTES']),
-			));
-		}
-
 		// get FTP information if we need it
 		if ($config['write_method'] == WRITE_FTP)
 		{
@@ -560,141 +539,8 @@ class acp_mods
 			return;
 		}
 
-		// Show new files
-		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']))
-		{
-			$template->assign_var('S_NEW_FILES', true);
 
-			foreach ($actions['NEW_FILES'] as $source => $target)
-			{
-				if (!file_exists("$phpbb_root_path$mod_root$source") && strpos($source, '*.*') !== false)
-				{
-					$template->assign_block_vars('new_files', array(
-						'S_MISSING_FILE' => true,
-
-						'SOURCE'		=> $source,
-						'TARGET'		=> $target,
-					));
-				}
-				else
-				{
-					$template->assign_block_vars('new_files', array(
-						'SOURCE'		=> $source,
-						'TARGET'		=> $target,
-					));
-				}
-			}
-		}
-
-		// Show SQL
-		if (isset($actions['SQL']) && !empty($actions['SQL']))
-		{
-			$template->assign_var('S_SQL', true);
-
-			$this->parse_sql($actions['SQL']);
-
-			foreach ($actions['SQL'] as $query)
-			{
-				$template->assign_block_vars('sql_queries', array(
-					'QUERY'		=> $query,
-				));
-			}
-		}
-
-		// Show edits
-		if (isset($actions['EDITS']) && !empty($actions['EDITS']))
-		{
-			$template->assign_var('S_EDITS', true);
-
-			foreach ($actions['EDITS'] as $file => $edits)
-			{
-				if (!file_exists("$phpbb_root_path$file"))
-				{
-					$template->assign_block_vars('edit_files', array(
-						'S_MISSING_FILE' => true,
-
-						'FILENAME'	=> $file,
-					));
-				}
-				else
-				{
-					$template->assign_block_vars('edit_files', array(
-						'FILENAME'	=> $file
-					));
-
-					$editor->open_file($file);
-
-					foreach ($edits as $finds)
-					{
-						foreach ($finds as $find => $action)
-						{
-							$find_location = $editor->find($find);
-
-							if ($find_location)
-							{
-								$template->assign_block_vars('edit_files.finds', array(
-									'FIND_STRING'	=> htmlspecialchars($find),
-								));
-
-								// check if we have an inline find
-								if (isset($action['in-line-edit']))
-								{
-									foreach ($action['in-line-edit'] as $inline_find => $inline_action_ary)
-									{
-										$template->assign_block_vars('edit_files.finds.actions', array(
-											'NAME'		=> $user->lang['in-line-find'],
-											'COMMAND'	=> (is_array($inline_find)) ? htmlspecialchars(implode('<br />', $inline_find)) : htmlspecialchars($inline_find),
-										));
-
-										$inline_find_location = $editor->inline_find($find, $inline_find, $find_location['start'], $find_location['end']);
-
-										if ($inline_find_location)
-										{
-											foreach ($inline_action_ary as $inline_action => $inline_command)
-											{
-												$template->assign_block_vars('edit_files.finds.actions', array(
-													'NAME'		=> $user->lang[$inline_action],
-													'COMMAND'	=> (is_array($inline_command)) ? htmlspecialchars(implode('<br />', $inline_command)) : htmlspecialchars($inline_command),
-												));
-											}
-
-										}
-										else
-										{
-											$template->assign_block_vars('edit_files.finds', array(
-												'S_MISSING_FIND'	=> true,
-
-												'FIND_STRING'		=> htmlspecialchars($inline_find),
-											));
-										}
-									}
-								}
-								else
-								{
-									foreach ($action as $name => $command)
-									{
-										$template->assign_block_vars('edit_files.finds.actions', array(
-											'NAME'		=> $user->lang[$name], // LANG!
-											'COMMAND'	=> (is_array($command)) ? htmlspecialchars(implode('<br />', $command)) : htmlspecialchars($command),
-										));
-									}
-								}
-							}
-							else
-							{
-								$template->assign_block_vars('edit_files.finds', array(
-									'S_MISSING_FIND'	=> true,
-
-									'FIND_STRING'		=> htmlspecialchars($find),
-								));
-							}
-						}
-					}
-
-					$editor->close_file($file);
-				}
-			}
-		}
+		$this->process_edits($editor, $actions, $details, false, true, false);
 
 		return;
 	}
@@ -726,9 +572,6 @@ class acp_mods
 		set_config('ftp_port',		$config['ftp_port']);
 		set_config('ftp_timeout',	$config['ftp_timeout']);
 
-		// assume the MOD was installed properly.
-		$mod_installed = true;
-
 		$actions = $this->mod_actions($mod_path);
 		// only supporting one level of hierarchy here
 		if (!$parent)
@@ -748,226 +591,14 @@ class acp_mods
 		$edited_root = "{$mod_root}_edited/";
 
 		// see if directory exists
-		if (!file_exists($phpbb_root_path . $edited_root) && $editor->write_method == WRITE_DIRECT)
+		if (!file_exists($phpbb_root_path . $edited_root) && $config['write_method'] == WRITE_DIRECT)
 		{
 			mkdir($phpbb_root_path . $edited_root, 0777);
 			chmod($phpbb_root_path . $edited_root, 0777);
 		}
 
-		// perform file edits
-		if (isset($actions['EDITS']) && !empty($actions['EDITS'])) // this is some beefy looping
-		{
-			$template->assign_var('S_EDITS', true);
-
-			foreach ($actions['EDITS'] as $filename => $edits)
-			{
-				if (!file_exists("$phpbb_root_path$filename"))
-				{
-					$template->assign_block_vars('edit_files', array(
-						'S_MISSING_FILE' => true,
-
-						'FILENAME'	=> $filename,
-					));
-					$mod_installed = false;
-				}
-				else
-				{
-					$template->assign_block_vars('edit_files', array(
-						'FILENAME'	=> $filename,
-					));
-
-					$file_ext = substr(strrchr($filename, '.'), 1);
-	
-					$editor->open_file($filename);
-
-					foreach ($edits as $finds)
-					{
-						foreach ($finds as $find => $commands)
-						{
-							$template->assign_block_vars('edit_files.finds', array(
-								'FIND_STRING'	=> htmlspecialchars($find),
-							));
-
-							// special case for FINDs with no action associated
-							if (is_null($commands))
-							{
-								$editor->find($find);
-								continue;
-							}
-
-							foreach ($commands as $type => $contents)
-							{
-								$status = false;
-								$inline_template_ary = array();
-								$contents_orig = $contents;
-
-								switch (strtoupper($type))
-								{
-									case 'AFTER ADD':
-										$status = $editor->add_string($find, $contents, 'AFTER');
-									break;
-
-									case 'BEFORE ADD':
-										$status = $editor->add_string($find, $contents, 'BEFORE');
-									break;
-
-									case 'INCREMENT':
-										//$contents = "";
-										$status = $editor->inc_string($find, $contents);
-									break;
-
-									case 'REPLACE WITH':
-										$status = $editor->replace_string($find, $contents);
-									break;
-
-									case 'IN-LINE-EDIT':
-										// these aren't quite as straight forward.  Still have multi-level arrays to sort through
-										foreach ($contents as $inline_find => $inline_edit)
-										{
-											foreach ($inline_edit as $inline_action => $inline_contents)
-											{
-												// inline finds are pretty contancerous, so so them in the loop
-												$line = $editor->inline_find($find, $inline_find);
-
-												if (!$line)
-												{
-													// find failed
-													$status = false;
-													continue 2;										
-												}
-
-												$inline_contents = $inline_contents[0];
-												$contents = $contents_orig = $inline_contents;
-
-												switch (strtoupper($inline_action))
-												{
-													case 'IN-LINE-BEFORE-ADD':
-														$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
-													break;
-
-													case 'IN-LINE-AFTER-ADD':
-														$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
-													break;
-
-													case 'IN-LINE-REPLACE':
-													case 'IN-LINE-REPLACE-WITH':
-														$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
-													break;
-
-													case 'IN-LINE-OPERATION':
-														$status = $editor->inc_string($find, $inline_find, $inline_contents);
-													break;
-
-													default:
-														trigger_error("Error, unrecognised command $inline_action"); // ERROR!
-													break;
-												}
-
-												if ($status)
-												{
-													$inline_template_ary[] = array(
-														'NAME'		=> $user->lang[$inline_action],
-														'COMMAND'	=> (is_array($inline_find)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_find),
-													);
-												}
-											}
-										}
-									break;
-
-									default:
-										trigger_error("Error, unrecognised command $type"); // ERROR!
-									break;
-								}
-
-								$template->assign_block_vars('edit_files.finds.actions', array(
-									'S_SUCCESS'	=> $status,
-
-									'NAME'		=> $user->lang[$type], // LANG!
-									'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
-								));
-
-								if (!$status)
-								{
-									$mod_installed = false;
-								}
-
-								// these vars must be assigned after the parent block or else things break
-								if (sizeof($inline_template_ary))
-								{
-									foreach ($inline_template_ary as $inline_template)
-									{
-										$template->assign_block_vars('edit_files.finds.actions.inline', $inline_template);
-									}
-									$inline_template_ary = array();
-								}
-							}
-						}
-
-						$editor->close_file("$edited_root$filename");
-					}
-				}
-			}
-		}
-
-		// Move included files
-		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']))
-		{
-			$template->assign_var('S_NEW_FILES', true);
-
-			foreach ($actions['NEW_FILES'] as $source => $target)
-			{
-				if (!$editor->copy_content($mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target)))
-				{
-					$template->assign_block_vars('new_files', array(
-						'SOURCE'		=> $source,
-						'TARGET'		=> $target,
-					));
-					$mod_installed = false;
-				}
-				else
-				{
-					$template->assign_block_vars('new_files', array(
-						'S_SUCCESS'		=> true,
-
-						'SOURCE'		=> $source,
-						'TARGET'		=> $target,
-					));
-				}
-			}
-		}
-
-		// Preform SQL queries
-		if (isset($actions['SQL']) && !empty($actions['SQL']))
-		{
-			$template->assign_var('S_SQL', true);
-
-			$this->parse_sql($actions['SQL']);
-
-			$db->sql_return_on_error(true);
-
-			foreach ($actions['SQL'] as $query)
-			{
-				if (!$db->sql_query($query)) // more than this please
-				{
-					$template->assign_block_vars('sql_queries', array(
-						'S_SUCCESS'	=> false,
-						'QUERY'		=> $query,
-					));
-
-					$mod_installed = false;
-				}
-				else
-				{
-					$template->assign_block_vars('sql_queries', array(
-						'S_SUCCESS'	=> true,
-
-						'QUERY'		=> $query,
-					));
-				}
-			}
-
-			$db->sql_return_on_error(false);
-		}
+		// handle all edits here
+		$mod_installed = $this->process_edits($editor, $actions, $details, true, true, false);
 
 		// Display Do-It-Yourself Actions...per the MODX spec, these should be displayed last
 		if (!empty($actions['DIY_INSTRUCTIONS']))
@@ -977,12 +608,12 @@ class acp_mods
 			foreach ($actions['DIY_INSTRUCTIONS'] as $instruction)
 			{
 				$template->assign_block_vars('diy_instructions', array(
-					'DIY_INSTRUCTION'	=> htmlspecialchars($instruction),
+					'DIY_INSTRUCTION'	=> nl2br(htmlspecialchars($instruction)),
 				));
 			}
 		}
 
-		if ($editor->write_method != WRITE_MANUAL)
+		if ($config['write_method'] != WRITE_MANUAL)
 		{
 			// Move edited files back, and delete temp storage folder
 			$editor->copy_content($edited_root, '', $edited_root);
@@ -1060,7 +691,7 @@ class acp_mods
 			add_log('admin', 'LOG_MOD_CHANGE', $row['mod_name']);
 		}
 
-		if ($editor->write_method == WRITE_MANUAL && $mod_installed)
+		if ($config['write_method'] == WRITE_MANUAL && $mod_installed)
 		{
 			$editor->compress->download('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
 			exit;
@@ -1068,191 +699,9 @@ class acp_mods
 	}
 
 	/**
-	* Pre-Uninstall a mod
+	* Uninstall/pre uninstall a mod
 	*/
-	function pre_uninstall($mod_id)
-	{
-		global $phpbb_root_path, $phpEx, $template;
-
-		// mod_id blank?
-		if (!$mod_id)
-		{
-			// ERROR
-			return false;
-		}
-
-		$template->assign_vars(array(
-			'S_PRE_UNINSTALL'		=> true,
-
-			'MOD_ID'		=> $mod_id,
-			'U_UNINSTALL'	=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
-			'U_BACK'		=> $this->u_action,
-		));
-
-		$actions = $this->mod_actions($mod_id);
-		$details = $this->mod_details($mod_id, false);
-
-		$editor = new editor($phpbb_root_path);
-
-		$dependenices = $details['MOD_DEPENDENCIES'];
-
-		if (!empty($details['AUTHOR_NOTES']))
-		{
-			$template->assign_vars(array(
-				'S_AUTHOR_NOTES'	=> true,
-
-				'AUTHOR_NOTES'		=> nl2br($details['AUTHOR_NOTES']),
-			));
-		}
-
-		// Show new files
-		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']))
-		{
-			$template->assign_var('S_REMOVING_FILES', true);
-
-			foreach ($actions['NEW_FILES'] as $source => $target)
-			{
-				if (!file_exists("$phpbb_root_path$target") && strpos($source, '*.*') === false)
-				{
-					$template->assign_block_vars('removing_files', array(
-						'S_MISSING_FILE' => true,
-
-						'FILENAME'		=> $target
-					));
-				}
-				else
-				{
-					$template->assign_block_vars('removing_files', array(
-						'FILENAME'		=> $target)
-					);
-				}
-			}
-		}
-
-		// Show SQL
-		if (isset($actions['SQL']) && !empty($actions['SQL']))
-		{
-			$template->assign_var('S_SQL', true);
-
-			$this->parse_sql($actions['SQL']);
-
-			foreach ($actions['SQL'] as $query)
-			{
-				$reverse_query = $this->reverse_query($query);
-
-				if ($reverse_query === false)
-				{
-					$template->assign_block_vars('sql_queries', array(
-						'S_UNKNOWN_REVERSE' => true,
-
-						'ORIGINAL_QUERY'	=> $query,
-					));
-				}
-				else
-				{
-					$template->assign_block_vars('sql_queries', array(
-						'ORIGINAL_QUERY'	=> $query,
-						'REVERSE_QUERY'		=> $reverse_query)
-					);
-				}
-			}
-		}
-
-		// Show edits
-		if (isset($actions['EDITS']) && !empty($actions['EDITS']))
-		{
-			$template->assign_var('S_EDITS', true);
-
-			$actions['EDITS'] = $this->reverse_edits($actions['EDITS']);
-
-			foreach ($actions['EDITS'] as $file => $finds)
-			{
-				if (!file_exists("$phpbb_root_path$file"))
-				{
-					$template->assign_block_vars('edit_files', array(
-						'S_MISSING_FILE' => true,
-
-						'FILENAME'	=> $file
-					));
-				}
-				else
-				{
-					$template->assign_block_vars('edit_files', array(
-						'FILENAME'	=> $file
-					));
-
-					$editor->open_file($file);
-
-					foreach ($finds as $find => $action)
-					{
-						if (!$editor->check_find($file, $find))
-						{
-							$template->assign_block_vars('edit_files.finds', array(
-								'S_MISSING_FIND'	=> true,
-
-								'FIND_STRING'		=> htmlspecialchars($find),
-							));
-						}
-						else
-						{
-							$template->assign_block_vars('edit_files.finds', array(
-								'FIND_STRING'	=> htmlspecialchars($find),
-							));
-
-							// check if we have an inline find
-							if (isset($action['in-line-find']))
-							{
-								foreach ($action['in-line-find'] as $inline_find => $inline_action_ary)
-								{
-									$template->assign_block_vars('edit_files.finds.actions', array(
-										'NAME'		=> 'In-Line Find', // LANG!
-										'COMMAND'	=> (is_array($inline_find)) ? htmlspecialchars(implode('<br />', $inline_find)) : htmlspecialchars($inline_find),
-									));
-
-									if (!$editor->check_find($file, $inline_find))
-									{
-										$template->assign_block_vars('edit_files.finds', array(
-											'S_MISSING_FIND'	=> true,
-
-											'FIND_STRING'		=> htmlspecialchars($inline_find),
-										));
-									}
-									else
-									{
-										foreach ($inline_action_ary as $inline_action => $inline_command)
-										{
-											$template->assign_block_vars('edit_files.finds.actions', array(
-												'NAME'		=> $inline_action, // LANG!
-												'COMMAND'	=> (is_array($inline_command)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_command),
-											));
-
-										}
-									}
-								}
-							}
-							else
-							{
-								foreach ($action as $name => $command)
-								{
-									$template->assign_block_vars('edit_files.finds.actions', array(
-										'NAME'		=> $name, // LANG!
-										'COMMAND'	=> (is_array($command)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($command),
-									));
-								}
-							}
-						}
-					}
-
-					$editor->close_file($edited_root . $file);
-				}
-			}
-		}
-	}
-
-	/**
-	* Uninstall a mod
-	*/
-	function uninstall($mod_id)
+	function uninstall($action, $mod_id)
 	{
 		global $phpbb_root_path, $phpEx, $db, $template;
 
@@ -1264,99 +713,35 @@ class acp_mods
 		}
 
 		$editor = new editor($phpbb_root_path);
+		$execute_edits = ($action == 'pre_uninstall') ? false : true;
 
 		$template->assign_vars(array(
-			'S_UNINSTALL'	=> true,
+			'S_UNINSTALL'		=> $execute_edits,
+			'S_PRE_UNINSTALL'	=> !$execute_edits,
 
 			'MOD_ID'		=> $mod_id,
 
+			'U_UNINSTALL'	=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
 			'U_RETURN'		=> $this->u_action,
 		));
 
+		// grab actions and details
 		$actions = $this->mod_actions($mod_id);
 		$details = $this->mod_details($mod_id, false);
 
-		if (!empty($details['AUTHOR_NOTES']))
+		// process the actions
+		$mod_uninstalled = $this->process_edits($editor, $actions, $details, true, $execute_edits, true);
+
+		if ($execute_edits && $mod_uninstalled)
 		{
-			$template->assign_vars(array(
-				'S_AUTHOR_NOTES' => true,
+			// Delete from DB
+			$sql = 'DELETE FROM ' . MODS_TABLE . '
+				WHERE mod_id = ' . $mod_id;
+			$db->sql_query($sql);
 
-				'AUTHOR_NOTES' => nl2br($details['AUTHOR_NOTES']),
-			));
+			// Add log
+			add_log('admin', 'LOG_MOD_REMOVE', $details['MOD_NAME']);
 		}
-
-		// Show new files
-		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']))
-		{
-			$template->assign_var('S_REMOVING_FILES', true);
-
-			foreach ($actions['NEW_FILES'] as $source => $target)
-			{
-				// @todo: this will not delete files that were placed by an * command...
-				// because the complete file list is not currently stored.
-				if (!file_exists("$phpbb_root_path$target") && strpos($source, '*.*') !== false)
-				{
-					$template->assign_block_vars('removing_files', array(
-						'S_MISSING_FILE' => true,
-
-						'FILENAME'		=> $target)
-					);
-				}
-				else
-				{
-					$editor->remove("$phpbb_root_path$target");
-
-					$template->assign_block_vars('removing_files', array(
-						'FILENAME'		=> $target)
-					);
-				}
-			}
-		}
-
-		// reverse SQL
-		if (isset($actions['SQL']) && !empty($actions['SQL']))
-		{
-			$template->assign_var('S_SQL', true);
-
-			$this->parse_sql($actions['SQL']);
-
-			foreach ($actions['SQL'] as $query)
-			{
-				$reverse_query = $this->reverse_query($query);
-
-				if ($reverse_query === false)
-				{
-					continue;
-				}
-
-				$db->sql_return_on_error(true);
-
-				if (!$db->sql_query($reverse_query)) // more than this please
-				{
-					$template->assign_block_vars('sql_queries', array(
-						'QUERY'		=> $reverse_query,
-					));
-				}
-				else
-				{
-					$template->assign_block_vars('sql_queries', array(
-						'S_SUCCESS'	=> true,
-
-						'QUERY'		=> $reverse_query,
-					));
-				}
-
-				$db->sql_return_on_error(false);
-			}
-		}
-
-		// Delete from DB
-		$sql = 'DELETE FROM ' . MODS_TABLE . '
-			WHERE mod_id = ' . $mod_id;
-		$db->sql_query($sql);
-
-		// Add log
-		add_log('admin', 'LOG_MOD_REMOVE', $details['MOD_NAME']);
 	}
 
 	/**
@@ -1407,124 +792,238 @@ class acp_mods
 		return $mods;
 	}
 
-	/**
-	* Returns the needed sql query to reverse the actions taken by the given query
-	* @todo: Add more
-	*/
-	function reverse_query($orig_query)
+	function process_edits($editor, $actions, $details, $change = false, $display = true, $reverse = false)
 	{
-		if (preg_match('#ALTER TABLE\s([a-z_]+)\sADD(COLUMN|)\s([a-z_]+)#i', $orig_query, $matches))
+		global $template, $user, $phpbb_root_path, $mod_root, $edited_root, $parser;
+
+		$mod_installed = true;
+
+		if ($reverse)
 		{
-			return "ALTER TABLE {$matches[1]} DROP COLUMN {$matches[3]};";
-		}
-		else if (preg_match('#CREATE TABLE\s([a-z_])+#i', $orig_query, $matches))
-		{
-			return "DROP TABLE {$matches[1]};";
+			// maybe should allow for potential extensions here
+			$actions = parser_xml::reverse_edits($actions);
 		}
 
-		return false;
-	}
-
-	/**
-	* Returns the edits array, but now filled with edits to reverse the given array
-	* @todo: Add more
-	*/
-	function reverse_edits($orig_edits)
-	{
-		$reverse_edits = array();
-
-		foreach ($orig_edits as $file => $finds)
+		if (!empty($details['AUTHOR_NOTES']))
 		{
-			foreach ($finds as $find => $actions)
+			$template->assign_vars(array(
+				'S_AUTHOR_NOTES'	=> true,
+
+				'AUTHOR_NOTES'		=> nl2br($details['AUTHOR_NOTES']),
+			));
+		}
+
+		foreach ($actions['EDITS'] as $filename => $edits)
+		{
+			// see if the file to be opened actually exists
+			if (!file_exists("$phpbb_root_path$filename"))
 			{
-				foreach ($actions as $name => $command) // LANG!
+				$template->assign_block_vars('edit_files', array(
+					'S_MISSING_FILE' => true,
+
+					'FILENAME'	=> $filename,
+				));
+				$mod_installed = false;
+			}
+			else
+			{
+				$template->assign_block_vars('edit_files', array(
+					'FILENAME'	=> $filename,
+				));
+
+				$template->assign_var('S_EDITS', true);
+
+				$editor->open_file($filename);
+
+				foreach ($edits as $finds)
 				{
-					switch (strtoupper($name))
+					foreach ($finds as $find => $commands)
 					{
-						case 'AFTER, ADD':
-						case 'BEFORE, ADD':
-							$find = $command;
-							// replace with an empty string
-							$reverse_edits[$file][$find]['REPLACE WITH'] = '';
-						break;
+						$template->assign_block_vars('edit_files.finds', array(
+							'FIND_STRING'	=> htmlspecialchars($find),
+						));
 
-						case 'REPLACE WITH':
-						case 'REPLACE, WITH':
-							// replace $command (new code) with $find (original code)
-							$reverse_edits[$file][$command]['REPLACE WITH'] = $find;
-						break;
+						// special case for FINDs with no action associated
+						if (is_null($commands))
+						{
+							$editor->find($find);
+							continue;
+						}
 
-						case 'IN-LINE-EDIT':
-							// build the reverse just like the normal action
-							foreach ($command as $inline_find => $inline_action_ary)
+						foreach ($commands as $type => $contents)
+						{
+							$status = false;
+							$inline_template_ary = array();
+							$contents_orig = $contents;
+
+							switch (strtoupper($type))
 							{
-								foreach ($inline_action_ary as $inline_action => $inline_command)
-								{
-									$inline_command = $inline_command[0];
+								case 'AFTER ADD':
+									$status = $editor->add_string($find, $contents, 'AFTER');
+								break;
 
-									switch (strtoupper($inline_action))
+								case 'BEFORE ADD':
+									$status = $editor->add_string($find, $contents, 'BEFORE');
+								break;
+
+								case 'INCREMENT':
+									//$contents = "";
+									$status = $editor->inc_string($find, $contents);
+								break;
+
+								case 'REPLACE WITH':
+									$status = $editor->replace_string($find, $contents);
+								break;
+
+								case 'IN-LINE-EDIT':
+									// these aren't quite as straight forward.  Still have multi-level arrays to sort through
+									foreach ($contents as $inline_find => $inline_edit)
 									{
-										case 'IN-LINE-AFTER-ADD':
-										case 'IN-LINE-BEFORE-ADD':
-											// Replace with a blank string
-											$reverse_edits[$file][$find]['in-line-edit'][$inline_command] = '';
-										break;
+										foreach ($inline_edit as $inline_action => $inline_contents)
+										{
+											// inline finds are pretty contancerous, so so them in the loop
+											$line = $editor->inline_find($find, $inline_find);
+											if (!$line)
+											{
+												// find failed
+												$status = false;
+												continue 2;										
+											}
 
-										case 'IN-LINE-REPLACE':
-											// replace with the inline find
-											$reverse_edits[$file][$find]['in-line-edit'][$inline_find][$inline_action] = $inline_command;
-										break;
+											$inline_contents = $inline_contents[0];
+											$contents = $contents_orig = $inline_contents;
 
-										default:
-											// For the moment, we do nothing.
-										break;
+											switch (strtoupper($inline_action))
+											{
+												case 'IN-LINE-BEFORE-ADD':
+													$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
+												break;
+
+												case 'IN-LINE-AFTER-ADD':
+													$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
+												break;
+
+												case 'IN-LINE-REPLACE':
+												case 'IN-LINE-REPLACE-WITH':
+													$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
+												break;
+
+												case 'IN-LINE-OPERATION':
+													$status = $editor->inc_string($find, $inline_find, $inline_contents);
+												break;
+
+												default:
+													trigger_error("Error, unrecognised command $inline_action"); // ERROR!
+												break;
+											}
+
+											if ($status)
+											{
+												$inline_template_ary[] = array(
+													'NAME'		=> $user->lang[$inline_action],
+													'COMMAND'	=> (is_array($inline_find)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_find),
+												);
+											}
+										}
 									}
-								}
-							}
-						break;
+								break;
 
-						default:
-						break;
+								default:
+									trigger_error("Error, unrecognised command $type"); // ERROR!
+								break;
+							}
+
+							$template->assign_block_vars('edit_files.finds.actions', array(
+								'S_SUCCESS'	=> $status,
+
+								'NAME'		=> $user->lang[$type],
+								'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
+							));
+
+							if (!$status)
+							{
+								$mod_installed = false;
+							}
+
+							// these vars must be assigned after the parent block or else things break
+							if (sizeof($inline_template_ary))
+							{
+								foreach ($inline_template_ary as $inline_template)
+								{
+									$template->assign_block_vars('edit_files.finds.actions.inline', $inline_template);
+								}
+								$inline_template_ary = array();
+							}
+						}
+					}
+
+					if ($change && $mod_installed)
+					{
+						$editor->close_file("$edited_root$filename");
 					}
 				}
 			}
-		}
+		} // end foreach
 
-		return $reverse_edits;
-	}
-
-	/**
-	 * Parse sql
-	 *
-	 * @param array $sql_query
-	 */
-	function parse_sql(&$sql_query)
-	{
-		global $dbms, $table_prefix;
-
-		if (!function_exists('get_available_dbms'))
+		// Move included files
+		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']) && $change)
 		{
-			global $phpbb_root_path, $phpEx;
+			$template->assign_var('S_NEW_FILES', true);
 
-			include($phpbb_root_path . 'includes/functions_install.' . $phpEx);
+			foreach ($actions['NEW_FILES'] as $source => $target)
+			{
+				$status = $editor->copy_content($mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target));
+
+				if (!$status)
+				{
+					$mod_installed = false;
+				}
+
+				$template->assign_block_vars('new_files', array(
+					'S_SUCCESS'		=> $status,
+					'SOURCE'		=> $source,
+					'TARGET'		=> $target,
+				));
+			}
 		}
 
-		static $available_dbms;
-
-		if (!isset($available_dbms))
+		// Perform SQL queries
+		if (isset($actions['SQL']) && !empty($actions['SQL']))
 		{
-			$available_dbms = get_available_dbms($dbms);
+			$template->assign_var('S_SQL', true);
+
+			$parser->parse_sql($actions['SQL']);
+
+			$db->sql_return_on_error(true);
+
+			foreach ($actions['SQL'] as $query)
+			{
+				if ($change)
+				{
+					$query_success = $db->sql_query($sql);
+
+					$template->assign_block_vars('sql_queries', array(
+						'S_SUCCESS'	=> ($query_success) ? true : false,
+						'QUERY'		=> $query,
+					));
+
+					if (!$query_success)
+					{
+						$mod_installed = false;
+					}
+				}
+				else if ($display)
+				{
+					$template->assign_block_vars('sql_queries', array(
+						'QUERY'	=> $query,
+					));
+				}
+			}
+
+			$db->sql_return_on_error(false);
 		}
 
-		$remove_remarks = $available_dbms[$dbms]['COMMENTS'];
-		$delimiter = $available_dbms[$dbms]['DELIM'];
-
-		$sql_query = implode(' ', $sql_query);
-		$sql_query = preg_replace('#phpbb_#i', $table_prefix, $sql_query);
-		$remove_remarks($sql_query);
-		$sql_query = split_sql_file($sql_query, $delimiter);
-
-		//return $sql_query;
+		return $mod_installed;
 	}
 
 	/**
@@ -1646,7 +1145,7 @@ class acp_mods
 				}
 			}
 
-			if (sizeof($process_templates) && (defined('DEBUG') || isset($_GET['full_details'])) && $action == 'install')
+			if (sizeof($process_templates) && ((defined('DEBUG') || isset($_GET['full_details'])) || $action == 'install'))
 			{
 				// add the template actions to our $actions array...
 				foreach ($process_templates as $key => $void)
@@ -1658,17 +1157,6 @@ class acp_mods
 
 		return $elements;
 	}
-}
-
-/**
-* Helper function
-* Runs basename() on $path, then trims the extension from it
-* @param string $path - path to be basenamed
-*/
-function core_basename($path)
-{
-	$path = basename($path);
-	return substr($path, 0, strrpos($path, '.'));
 }
 
 ?>

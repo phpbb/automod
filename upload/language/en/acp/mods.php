@@ -82,6 +82,7 @@ $lang = array_merge($lang, array(
 	'NAME'		=> 'Name',
 	'NEW_FILES'		=> 'New Files',
 	'NO_INSTALLED_MODS'		=> 'No installed MODs detected',
+	'NO_MOD'				=> 'The selected MOD could not be found.',
 	'NO_UNINSTALLED_MODS'	=> 'No uninstalled MODs detected',	
 
 	'ORIGINAL'	=> 'Original',
