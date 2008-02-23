@@ -735,7 +735,7 @@ class acp_mods
 
 	/**
 	* Returns array of available mod install files in dir (Recursive)
-	* @param $dir string -
+	* @param $dir string - dir to search
 	* @param $recurse int - number of levels to recurse
 	*/
 	function find_mods($dir, $recurse = false)
