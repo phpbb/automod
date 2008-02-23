@@ -802,7 +802,6 @@ class acp_mods
 			));
 		}
 
-
 		// Move included files
 		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']) && $change)
 		{
