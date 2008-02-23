@@ -753,7 +753,7 @@ class acp_mods
 		$dp = opendir($dir);
 		while (($file = readdir($dp)) !== false)
 		{
-			if ($file[0] != '.' && $file != 'CVS' && strpos("$dir/$file", '_edited') === false)
+			if ($file[0] != '.' && strpos("$dir/$file", '_edited') === false)
 			{
 				// recurse - we don't want anything within the MODX "root" though
 				if ($recurse && is_dir("$dir/$file") && strpos("$dir/$file", 'root') === false)
