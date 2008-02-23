@@ -217,7 +217,7 @@ class parser_xml
 		$this->file = $file;
 		$this->data = trim(@file_get_contents($file));
 		$this->data = str_replace(array("\r\n", "\r"), array("\n", "\n"), $this->data);
-			
+
 		$XML = new xml_array();
 		$this->data = $XML->parse($this->data);
 
