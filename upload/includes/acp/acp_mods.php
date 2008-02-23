@@ -867,6 +867,12 @@ class acp_mods
 			$db->sql_return_on_error(false);
 		}
 
+		// not all MODs will have edits (!)
+		if (!isset($actions['EDITS']))
+		{
+			return $mod_installed;
+		}
+
 		foreach ($actions['EDITS'] as $filename => $edits)
 		{
 			// see if the file to be opened actually exists

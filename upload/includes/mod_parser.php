@@ -408,6 +408,7 @@ class parser_xml
 				if (isset($action_info['INLINE-EDIT']))
 				{
 					$inline_info = (!empty($action_info['INLINE-EDIT'])) ? $action_info['INLINE-EDIT'] : array();
+
 					for ($k = 0; $k < sizeof($inline_info); $k++)
 					{
 						$inline_actions = (!empty($inline_info[$k]['children'])) ? $inline_info[$k]['children'] : array();
@@ -415,13 +416,17 @@ class parser_xml
 						$inline_find = $inline_actions['INLINE-FIND'][0]['data'];
 
 						$inline_actions = (!empty($inline_actions['INLINE-ACTION'])) ? $inline_actions['INLINE-ACTION'] : array();
+
 						for ($l = 0; $l < sizeof($inline_actions); $l++)
 						{
 							$type = str_replace(',', '-', str_replace(' ', '', $inline_actions[$l]['attrs']['TYPE']));
 
 							// trying to reduce the levels of arrays without impairing features
 							// need to keep the "full" edit intact.
-							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])]['in-line-edit'][$inline_find]['in-line-' . $type][] = $inline_actions[$l]['data'];
+							//
+							// inline actions must be trimmed in case the MOD author
+							// inserts a new line by mistake
+							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])]['in-line-edit'][trim($inline_find)]['in-line-' . $type][] = $inline_actions[$l]['data'];
 						}
 					}
 				}
