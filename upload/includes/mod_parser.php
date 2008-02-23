@@ -414,9 +414,7 @@ class parser_xml
 						$inline_actions = (!empty($inline_info[$k]['children'])) ? $inline_info[$k]['children'] : array();
 
 						$inline_find = $inline_actions['INLINE-FIND'][0]['data'];
-
 						$inline_actions = (!empty($inline_actions['INLINE-ACTION'])) ? $inline_actions['INLINE-ACTION'] : array();
-
 						for ($l = 0; $l < sizeof($inline_actions); $l++)
 						{
 							$type = str_replace(',', '-', str_replace(' ', '', $inline_actions[$l]['attrs']['TYPE']));
