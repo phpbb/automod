@@ -121,6 +121,7 @@ class editor
 	*
 	* @param $from string Can be a file or a directory. Will move either the file or all files within the directory
 	* @param $to string Where to move the file(s) to. If not specified then will get moved to the root folder
+	* @param $strip Used for FTP only
 	*/
 	function copy_content($from, $to = '', $strip = '')
 	{
