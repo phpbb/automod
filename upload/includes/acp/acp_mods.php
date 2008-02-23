@@ -528,7 +528,7 @@ class acp_mods
 				'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
 			));
 		}
-		
+
 		$editor = new editor($phpbb_root_path, true);
 
 		// Only display full actions if the user has requested them.
