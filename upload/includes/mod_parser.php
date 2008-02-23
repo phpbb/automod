@@ -167,7 +167,7 @@ class parser
 	
 											case 'IN-LINE-REPLACE':
 												// replace with the inline find
-												$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$inline_find][$inline_action][] = $inline_command;
+												$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$inline_command][$inline_action][] = $inline_find;
 											break;
 	
 											default:
