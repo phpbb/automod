@@ -557,18 +557,12 @@ class acp_mods
 			return false;
 		}
 
-		$config['ftp_method']		= request_var('method', '');
-		$config['ftp_host']			= request_var('host', '');
-		$config['ftp_username']		= request_var('username', '');
-		$config['ftp_root_path']	= request_var('root_path', '');
-		$config['ftp_port']			= request_var('port', 21);
-		$config['ftp_timeout']		= request_var('timeout', 10);
-		set_config('ftp_method',	$config['ftp_method']);
-		set_config('ftp_host',		$config['ftp_host']);
-		set_config('ftp_username',	$config['ftp_username']);
-		set_config('ftp_root_path', $config['ftp_root_path']);
-		set_config('ftp_port',		$config['ftp_port']);
-		set_config('ftp_timeout',	$config['ftp_timeout']);
+		set_config('ftp_method',	request_var('method', ''));
+		set_config('ftp_host',		request_var('host', ''));
+		set_config('ftp_username',	request_var('username', ''));
+		set_config('ftp_root_path', request_var('root_path', ''));
+		set_config('ftp_port',		request_var('port', 21));
+		set_config('ftp_timeout',	request_var('timeout', 10));
 
 		$actions = $this->mod_actions($mod_path);
 		// only supporting one level of hierarchy here
