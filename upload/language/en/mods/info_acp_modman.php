@@ -34,7 +34,7 @@ $lang = array_merge($lang, array(
 	'ACP_CAT_MODS'			=> 'MODs',
 	'ACP_MODS'				=> 'MODs',
 	'ACP_MOD_MANAGEMENT'	=> 'MOD Management',
-	'ACP_MOD_CONFIG'		=> 'Mod Manager Configuration',
+	'ACP_MOD_CONFIG'		=> 'MOD Manager Configuration',
 	
 	'LOG_MOD_ADD'		=> '<strong>Added new MOD</strong><br />&raquo; %s',
 	'LOG_MOD_CHANGE'	=> '<strong>Changed components for MOD</strong><br />&raquo; %x',

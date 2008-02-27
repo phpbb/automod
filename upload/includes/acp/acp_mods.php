@@ -388,7 +388,7 @@ class acp_mods
 
 				if ($find_children)
 				{
-					$actions = false;
+					$actions = array();
 					$this->find_children($row['mod_path'], $actions, 'details', $mod_id);
 				}
 			}
@@ -532,7 +532,7 @@ class acp_mods
 		$editor = new editor($phpbb_root_path, true);
 
 		// Only display full actions if the user has requested them.
-		if (!defined('DEBUG') || !isset($_GET['full_details']) || ($config['write_method'] == WRITE_FTP && empty($_REQUEST['password'])))
+		if (!defined('DEBUG') && !isset($_GET['full_details']) || ($config['write_method'] == WRITE_FTP && empty($_REQUEST['password'])))
 		{
 			return;
 		}
@@ -548,8 +548,8 @@ class acp_mods
 	*/
 	function install($mod_path, $parent = 0)
 	{
-		global $phpbb_root_path, $phpEx, $db, $template, $user;
-
+		global $phpbb_root_path, $phpEx, $db, $template, $user, $config;
+		
 		// mod_path empty?
 		if (empty($mod_path))
 		{
@@ -602,12 +602,14 @@ class acp_mods
 			}
 		}
 
-		if ($editor->write_method != WRITE_MANUAL)
+		$force_install = request_var('force', false);
+		
+		if ($editor->write_method != WRITE_MANUAL && ($mod_installed || $force_install))
 		{
 			// Move edited files back, and delete temp storage folder
 			$editor->copy_content($this->edited_root, '', $this->edited_root);
 		}
-		else
+		else if ($mod_installed || $force_install)
 		{
 			// download the compressed file
 			$editor->compress->close();
@@ -621,7 +623,7 @@ class acp_mods
 		));
 
 		// if MOD installed successfully, make a record.
-		if ($mod_installed && !$parent)
+		if (($mod_installed || $force_install) && !$parent)
 		{
 			// Insert database data
 			$sql = 'INSERT INTO ' . MODS_TABLE . ' ' . $db->sql_build_array('INSERT', array(
@@ -646,7 +648,7 @@ class acp_mods
 			add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);
 		}
 		// in this case, we are installing an additional template or language
-		else if ($parent)
+		else if (($mod_installed || $force_install) && $parent)
 		{
 			$sql = 'SELECT * FROM ' . MODS_TABLE . " WHERE mod_id = $parent";
 			$result = $db->sql_query($sql);
@@ -679,8 +681,43 @@ class acp_mods
 
 			add_log('admin', 'LOG_MOD_CHANGE', $row['mod_name']);
 		}
+		// there was an error we need to tell the user about
+		else
+		{
+			$hidden_ary = array();
+			if ($config['write_method'] == WRITE_FTP)
+			{
+				$hidden_ary['method'] = $config['ftp_method'];
+				
+				$requested_data = call_user_func(array($config['ftp_method'], 'data'));
+				
+				foreach ($requested_data as $data => $default)
+				{
+					if ($data == 'password')
+					{
+						$config['ftp_password'] = request_var('password', '');
+					}
+					$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+	
+					$hidden_ary[$data] = $default;
+				}
+			}
+			
+			$template->assign_vars(array(
+				'S_ERROR'			=> true,
+				'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
 
-		if ($editor->write_method == WRITE_MANUAL && $mod_installed)
+				'U_RETRY'	=> $this->u_action . '&amp;action=install&amp;mod_path=' . $mod_path,
+			));
+		}
+		
+		// if we forced the install of the MOD, we need to let the user know their board could be broken
+		if ($force_install)
+		{
+			$template->assign_var('S_FORCE', true);
+		}
+
+		if ($editor->write_method == WRITE_MANUAL && ($mod_installed || $force_install))
 		{
 			$editor->compress->download('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
 			exit;

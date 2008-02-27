@@ -54,10 +54,13 @@ $lang = array_merge($lang, array(
 	'FILE_TYPE_EXPLAIN'	=> 'This is only valid with the “Compressed File Download” write method',
 	'FIND'				=> 'Find',
 	'FIND_MISSING'		=> 'Cannot locate find string',
+	'FORCE_INSTALL'		=> 'Force Install',
 	'FTP_INFORMATION'	=> 'FTP Information',
 
 	'INSTALL_TIME'		=> 'Installation time',
 	'INSTALL_MOD'		=> 'Install this MOD',
+	'INSTALL_ERROR'		=> 'One or more install actions failed. Please review the actions below, make any adjustments and retry. You may continue with the installation even though some of the actions failed. <strong>This is not recommended and may cause your board to not function correctly.</strong>',
+	'INSTALL_FORCED'	=> 'You forced the installation of this MOD even though there were errors installing the MOD. Your board may be broken. Please note the actions that failed below and correct them.',
 	'INSTALLED'			=> 'MOD installed',
 	'INSTALLED_EXPLAIN'	=> 'Your MOD has been installed! Here you can view some of the results from the installation. Please note any errors, and seek support at <a href="http://www.phpbb.com">phpBB.com</a>',
 	'INSTALLED_MODS'	=> 'Installed MODs',
@@ -94,6 +97,7 @@ $lang = array_merge($lang, array(
 	'PRE_UNINSTALL_EXPLAIN'	=> 'Here you can preview all the modifications to be made to your board, in order to uninstall the MOD. <strong>WARNING!</strong>, once accepted, your phpBB base files will be edited and database alterations may occur. Also, this process uses reversing techniques that may not be 100% accurate. However, if the uninstall is unsuccessful, assuming you can access the MOD manager, you will be given the option to restore to this point.',
 
 	'REMOVING_FILES'	=> 'Files to be removed',
+	'RETRY'				=> 'Retry',
 	'RETURN_MODS'		=> 'Return to the MOD Manager',
 	'REVERSE'			=> 'Reverse',
 
