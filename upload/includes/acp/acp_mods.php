@@ -957,8 +957,9 @@ class acp_mods
 								break;
 
 								case 'INCREMENT':
+								case 'OPERATION':
 									//$contents = "";
-									$status = $editor->inc_string($find, $contents);
+									$status = $editor->inc_string($find, '', $contents);
 								break;
 
 								case 'REPLACE WITH':
