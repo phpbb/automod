@@ -242,9 +242,9 @@ class editor
 				// we might have an increment operator, which requires a regular expression match
 				else if (strpos($find_ary[$j], '{%:') !== false)
 				{
-					$find_ary[$j] = preg_replace('#{%:(\d+)}#', '(\d+)', $find_ary[$j]);
+					$regex = preg_replace('#{%:(\d+)}#', '(\d+)', $find_ary[$j]);
 
-					if (preg_match('#' . $find_ary[$j] . '#is', $this->file_contents[$i + $j]))
+					if (preg_match('#' . $regex . '#is', $this->file_contents[$i + $j]))
 					{
 						$find_success += 1;
 					}
@@ -408,10 +408,21 @@ class editor
 			unset($offsets);
 		}
 
+		// $inline_find is optional
+		if (!$inline_find)
+		{
+			$inline_find = $find;
+		}
+
 		// parse the MODX operator
+		// let's explain this regex a bit:
+		// - literal %: followed by a number.  optional space
+		// - plus or minus operator. optional space
+		// - number to increment by.  optional
 		preg_match('#{%:(\d+)} ?([+-]) ?(\d*)#', $operation, $action);
 		// make sure there is actually a number here
-		$action[3] = ($action[3]) ? $action[3] : 1;
+		$action[2] = (isset($action[2])) ? $action[2] : '+';
+		$action[3] = (isset($action[3])) ? $action[3] : 1;
 
 		$matches = 0;
 		// $start_offset _should_ equal $end_offset, but we allow other cases

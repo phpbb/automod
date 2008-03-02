@@ -275,8 +275,8 @@ class parser_xml
 		{
 			$changes	= array();
 			$entry		= $history_info[$i]['children'];
-			$changelog	= $entry['CHANGELOG'][0]['children']['CHANGE'];
-			$changelog_version_ary	= $entry['REV-VERSION'][0]['children'];
+			$changelog	= isset($entry['CHANGELOG'][0]['children']['CHANGE']) ? $entry['CHANGELOG'][0]['children']['CHANGE'] : array();
+			$changelog_version_ary	= (isset($entry['REV-VERSION'][0]['children'])) ? $entry['REV-VERSION'][0]['children'] : array();
 
 			for ($j = 0; $j < sizeof($changelog); $j++)
 			{
