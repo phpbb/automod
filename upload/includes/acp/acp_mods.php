@@ -45,12 +45,12 @@ class acp_mods
 		switch ($mode)
 		{
 			case 'config':
-				$ftp_method		= request_var('ftp_method', '');			
+				$ftp_method		= request_var('ftp_method', '');
 				if (!$ftp_method || !class_exists($ftp_method))
 				{
 					$ftp_method = 'ftp';
 					$ftp_methods = transfer::methods();
-					
+
 					if (!in_array('ftp', $ftp_methods))
 					{
 						$ftp_method = $ftp_methods[0];
@@ -83,7 +83,7 @@ class acp_mods
 						$test_ftp_connection = true;
 						$test_connection = false;
 						test_ftp_connection($ftp_method, $test_ftp_connection, $test_connection);
-						
+
 						if ($test_connection !== true)
 						{
 							$error = $test_connection;
@@ -107,8 +107,9 @@ class acp_mods
 						set_config('ftp_port',		$ftp_port);
 						set_config('ftp_timeout',	$ftp_timeout);
 						set_config('write_method',	$write_method);
+						set_config('compress_method',	$compress_method);
 
-						trigger_error('MOD_CONFIG_UPDATED');
+						trigger_error($user->lang['MOD_CONFIG_UPDATED'] . adm_back_link($this->u_action));
 					}
 					else
 					{
@@ -117,12 +118,10 @@ class acp_mods
 				}
 
 				include("{$phpbb_root_path}includes/functions_compress.$phpEx");
-				$compress_methods = compress::methods();
-
-				foreach ($compress_methods as $compress_method)
+				foreach (compress::methods() as $method)
 				{
 					$template->assign_block_vars('compress', array(
-						'METHOD'	=> $compress_method,
+						'METHOD'	=> $method,
 					));
 				}
 
@@ -151,6 +150,8 @@ class acp_mods
 					'WRITE_METHOD_DIRECT'	=> WRITE_DIRECT,
 					'WRITE_METHOD_FTP'		=> WRITE_FTP,
 					'WRITE_METHOD_MANUAL'	=> WRITE_MANUAL,
+
+					'COMPRESS_METHOD'	=> $config['compress_method'],
 				));
 			break;
 
@@ -162,7 +163,7 @@ class acp_mods
 					{
 						$method = 'ftp';
 						$methods = transfer::methods();
-			
+
 						if (!in_array('ftp', $methods))
 						{
 							$method = $methods[0];
@@ -361,7 +362,7 @@ class acp_mods
 
 		if (is_int($mod_ident))
 		{
-			global $db;
+			global $db, $user;
 
 			$mod_id = (int) $mod_ident;
 
@@ -394,7 +395,7 @@ class acp_mods
 			}
 			else
 			{
-				trigger_error('NO_MOD', E_USER_WARNING);
+				trigger_error($user->lang['NO_MOD'] . adm_back_link($this->u_action), E_USER_WARNING);
 			}
 			$db->sql_freeresult($result);
 		}
@@ -430,7 +431,7 @@ class acp_mods
 
 		if (is_int($mod_ident))
 		{
-			global $db;
+			global $db, $user;
 
 			$sql = 'SELECT mod_actions
 				FROM ' . MODS_TABLE . "
@@ -445,7 +446,7 @@ class acp_mods
 			}
 			else
 			{
-				trigger_error('NO_MOD', E_USER_WARNING);
+				trigger_error($user->lang['NO_MOD'] . adm_back_link($this->u_action), E_USER_WARNING);
 			}
 		}
 		else
@@ -549,7 +550,7 @@ class acp_mods
 	function install($mod_path, $parent = 0)
 	{
 		global $phpbb_root_path, $phpEx, $db, $template, $user, $config;
-		
+
 		// mod_path empty?
 		if (empty($mod_path))
 		{
@@ -603,7 +604,7 @@ class acp_mods
 		}
 
 		$force_install = request_var('force', false);
-		
+
 		if ($editor->write_method != WRITE_MANUAL && ($mod_installed || $force_install))
 		{
 			// Move edited files back, and delete temp storage folder
@@ -658,7 +659,7 @@ class acp_mods
 
 			if (!$row)
 			{
-				trigger_error('NO_MOD');
+				trigger_error($user->lang['NO_MOD'] . adm_back_link($this->u_action));
 			}
 
 			$sql_ary = array();
@@ -688,9 +689,9 @@ class acp_mods
 			if ($config['write_method'] == WRITE_FTP)
 			{
 				$hidden_ary['method'] = $config['ftp_method'];
-				
+
 				$requested_data = call_user_func(array($config['ftp_method'], 'data'));
-				
+
 				foreach ($requested_data as $data => $default)
 				{
 					if ($data == 'password')
@@ -698,11 +699,11 @@ class acp_mods
 						$config['ftp_password'] = request_var('password', '');
 					}
 					$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-	
+
 					$hidden_ary[$data] = $default;
 				}
 			}
-			
+
 			$template->assign_vars(array(
 				'S_ERROR'			=> true,
 				'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
@@ -710,7 +711,7 @@ class acp_mods
 				'U_RETRY'	=> $this->u_action . '&amp;action=install&amp;mod_path=' . $mod_path,
 			));
 		}
-		
+
 		// if we forced the install of the MOD, we need to let the user know their board could be broken
 		if ($force_install)
 		{
@@ -978,7 +979,7 @@ class acp_mods
 											{
 												// find failed
 												$status = false;
-												continue 2;										
+												continue 2;
 											}
 
 											$inline_contents = $inline_contents[0];
