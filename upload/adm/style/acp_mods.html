@@ -3,7 +3,7 @@
 <a name="maincontent"></a>
 
 <!-- IF S_FRONTEND -->
-	
+
 	<h1>{L_ACP_MODS}</h1>
 
 	{L_MODS_EXPLAIN}
@@ -50,7 +50,7 @@
 	<!-- END uninstalled -->
 	</tbody>
 	</table>
-	
+
 <!-- ELSEIF S_DETAILS -->
 
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
@@ -159,7 +159,7 @@
 		<!-- END changelog -->
 	</fieldset>
 	<!-- ENDIF -->
-	
+
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
 
 <!-- ELSEIF S_PRE_INSTALL -->
@@ -167,9 +167,9 @@
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
 
 	<h1>{L_PRE_INSTALL}</h1>
-	
+
 	<p>{L_PRE_INSTALL_EXPLAIN}</p>
-	
+
 	<!-- IF S_AUTHOR_NOTES -->
 	<fieldset>
 		<legend>{L_AUTHOR_NOTES}</legend>
@@ -188,7 +188,7 @@
 			<p>{L_CONNECTION_FAILED}<br />{ERROR_MSG}</p>
 		</div>
 	<!-- ENDIF -->
-	
+
 	<fieldset>
 		<legend>{L_FTP_SETTINGS}</legend>
 		<dl>
@@ -238,7 +238,7 @@
 		</table>
 	</fieldset>
 	<!-- ENDIF -->
-	
+
 	<!-- IF S_SQL -->
 	<fieldset>
 		<legend>{L_SQL_QUERIES}</legend>
@@ -294,23 +294,23 @@
 	</fieldset>
 	</form>
 	<!-- ENDIF -->
-	
+
 	<br />
-	
+
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
 
 <!-- ELSEIF S_INSTALL -->
-	
+
 	<h1>{L_INSTALLED}</h1>
-	
+
 	<p>{L_INSTALLED_EXPLAIN}</p>
-	
+
 	<!-- IF S_ERROR -->
 	<div class="errorbox">
 		<p>{L_INSTALL_ERROR}</p>
-		
+
 		<br />
-		
+
 		<form id="acp_mods" method="post" action="{U_RETRY}">
 		<fieldset class="submit-buttons">
 			<legend>{L_RETRY}</legend>
@@ -323,15 +323,15 @@
 	<!-- ELSE -->
 	<div class="successbox">
 		<p>{L_INSTALLED}</p>
-		
+
 		<!-- IF S_FORCE -->
 		<p><strong>{L_INSTALL_FORCED}</strong></p>
 		<!-- ENDIF -->
-		
+
 		<p><a href="{U_RETURN}">{L_RETURN_MODS}</a></p>
 	</div>
 	<!-- ENDIF -->
-	
+
 	<!-- IF S_DIY -->
 	<fieldset>
 		<legend>{L_DIY_INSTRUCTIONS}</legend>
@@ -423,9 +423,9 @@
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
 
 	<h1>{L_PRE_UNINSTALL}</h1>
-	
+
 	<p>{L_PRE_UNINSTALL_EXPLAIN}</p>
-	
+
 	<!-- IF S_AUTHOR_NOTES -->
 	<fieldset>
 		<legend>{L_AUTHOR_NOTES}</legend>
@@ -462,11 +462,11 @@
 		</table>
 	</fieldset>
 	<!-- ENDIF -->
-	
+
 	<!-- IF S_SQL -->
 	<fieldset>
 		<legend>{L_SQL_QUERIES}</legend>
-		
+
 		<table cellspacing="1">
 			<col class="row1" width="50%" /><col class="row2" />
 		<thead>
@@ -523,24 +523,24 @@
 		<input class="button1" type="submit" name="uninstall" value="{L_UNINSTALL}" />
 	</fieldset>
 	</form>
-	
+
 	<br/>
-	
+
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
 
 <!-- ELSEIF S_UNINSTALL -->
-	
+
 	<h1>{L_UNINSTALLED}</h1>
-	
+
 	<p>{L_UNINSTALLED_EXPLAIN}</p>
-	
+
 	<form id="acp_mods" method="post" action="{U_RETURN}">
 	<fieldset class="submit-buttons">
 		<legend>{L_RETURN_MODS}</legend>
 		<input class="button1" type="submit" name="return" value="{L_RETURN_MODS}" />
 	</fieldset>
 	</form>
-	
+
 <!-- ENDIF -->
 
 <!-- IF S_CONFIG -->
@@ -565,7 +565,7 @@
 		</dl>
 		<dl>
 			<dt><label for="compress_method">{L_FILE_TYPE}:</label><br /><span>{L_FILE_TYPE_EXPLAIN}</span></dt>
-			<dd><!-- BEGIN compress --><label><input type="radio" name="compress_method" <!-- IF compress.S_FIRST_ROW --> id="method" checked="checked"<!-- ENDIF -->value="{compress.METHOD}" /> {compress.METHOD}</label><!-- END compress --></dd>
+			<dd><!-- BEGIN compress --><label><input type="radio" name="compress_method"<!-- IF compress.METHOD eq COMPRESS_METHOD --> id="method" checked="checked"<!-- ENDIF --> value="{compress.METHOD}" /> {compress.METHOD}</label><!-- END compress --></dd>
 		</dl>
 	</fieldset>
 	<fieldset>
@@ -591,14 +591,14 @@
 <!-- IF S_PREPARE_INSTALL -->
 
 	<h1>{L_PREPARE_INSTALL}</h1>
-	
+
 	<p>{L_PREPARE_INSTALL_EXPLAIN}</p>
 
 	<fieldset>
 		<legend>{L_AUTHOR_NOTES}</legend>
 		<!-- IF AUTHOR_NOTES --><p>{AUTHOR_NOTES}</p><!-- ELSE --><p>{L_NO_AUTHOR_NOTES}</p><!-- ENDIF -->
 	</fieldset>
-	
+
 	<fieldset>
 		<legend>{L_NEW_FILES}</legend>
 		<!-- IF .new_files -->
@@ -627,7 +627,7 @@
 		<legend>{L_SQL_STATEMENTS}</legend>
 		<!-- IF SQL_STATEMENTS --><p>{SQL_STATEMENTS}</p><!-- ELSE --><p>{L_NO_SQL_STATEMENTS}</p><!-- ENDIF -->
 	</fieldset>
-	
+
 	<fieldset>
 		<legend>{L_MODIFICTIONS}</legend>
 		<!-- IF .edit_files -->
@@ -652,7 +652,7 @@
 			<p>{L_NO_MODIFICATIONS}</p>
 		<!-- ENDIF -->
 	</fieldset>
-	
+
 	<form id="install" method="post" action="{U_INSTALL}">
 	<fieldset class="quick" style="float: left;">
 		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
@@ -665,7 +665,7 @@
 <!-- IF S_RESULTS -->
 
 	<h1>{L_RESULTS}</h1>
-	
+
 	<p>{L_RESULTS_EXPLAIN}</p>
 
 	<fieldset>
@@ -677,12 +677,12 @@
 		<legend>{L_SQL_STATEMENTS}</legend>
 		<p>temp</p>
 	</fieldset>
-	
+
 	<fieldset>
 		<legend>{L_MODIFICTIONS}</legend>
 		<p>temp</p>
 	</fieldset>
-	
+
 	<form id="install" method="post" action="{U_INSTALL}">
 	<fieldset class="quick" style="float: left;">
 		<input class="button2" name="submit" type="submit" value="{L_FINISH}" />
