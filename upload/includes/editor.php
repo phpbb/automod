@@ -32,6 +32,7 @@ class editor
 	var $transfer;
 	var $compress;
 	var $install_time = 0;
+	var $template_id = 0;
 
 	/**
 	* Constructor method
@@ -44,7 +45,7 @@ class editor
 		$this->install_time = time();
 
 		// to be truly correct, we should scan all files ...
-		if (is_writable($phpbb_root_path) || $config['write_method'] == WRITE_DIRECT || $pre_install)
+		if ((is_writable($phpbb_root_path) && $config['write_method'] == WRITE_DIRECT) || $pre_install)
 		{
 			$this->write_method = WRITE_DIRECT;
 		}
@@ -103,9 +104,35 @@ class editor
 	*/
 	function open_file($filename)
 	{
-		global $phpbb_root_path;
+		global $phpbb_root_path, $db;
 
 		$this->file_contents = $this->normalize(@file($phpbb_root_path . $filename));
+
+		// Check for file contents in the database if this is a template file
+		// this will overwrite the @file call if it exists in the DB. 
+		if (strpos($filename, 'template/') !== false)
+		{
+			// grab template name and filename
+			preg_match('#styles/([a-z0-9_]+)/template/([a-z0-9_]+.html)#i', $filename, $match);
+
+			$sql = 'SELECT d.template_data, d.template_id 
+				FROM ' . STYLES_TEMPLATE_DATA_TABLE . ' d, ' . STYLES_TEMPLATE_TABLE . " t
+				WHERE d.template_filename = '" . $db->sql_escape($match[2]) . "'
+					AND t.template_id = d.template_id
+					AND t.template_name = '" . $db->sql_escape($match[1]) . "'";
+			$result = $db->sql_query($sql);
+
+			if ($row = $db->sql_fetchrow($result))
+			{
+				$this->file_contents = $this->normalize(explode("\n", $row['template_data']));
+				$this->template_id = $row['template_id'];
+			}
+			else
+			{
+				$this->template_id = 0;
+			}
+		}
+
 
 		if (!sizeof($this->file_contents))
 		{
@@ -141,7 +168,7 @@ class editor
 		if (is_dir($from))
 		{
 			// get all of the files within the directory
-			$files = find_files($from , '.*', 5);
+			$files = find_files($from, '.*', 5);
 		}
 		else if (is_file($from))
 		{
@@ -163,7 +190,16 @@ class editor
 
 			foreach ($files as $file)
 			{
-				if (!@copy($file, $to))
+				if (is_dir($to))
+				{
+					$dest = str_replace($from, $to, $file);
+				}
+				else
+				{
+					$dest = $to;
+				}
+
+				if (!@copy($file, $dest))
 				{
 					return false;
 				}
@@ -574,7 +610,7 @@ class editor
 	*/
 	function close_file($new_filename)
 	{
-		global $phpbb_root_path, $edited_root; // @TODO: LOOK AT $EDITED_ROOT
+		global $phpbb_root_path, $edited_root, $db;
 
 		if (!file_exists($phpbb_root_path . dirname($new_filename)))
 		{
@@ -596,7 +632,21 @@ class editor
 			}
 		}
 
-		if ($this->write_method == WRITE_DIRECT)
+		if ($this->template_id)
+		{
+			// grab filename
+			preg_match('#styles/[a-z0-9_]+/template/([a-z0-9_]+.html)#i', $new_filename, $match);
+
+			$sql = 'UPDATE ' . STYLES_TEMPLATE_DATA_TABLE . " 
+				SET template_data = '" . $db->sql_escape($file_contents) . "', template_mtime = " . (int) $this->install_time . ' 
+				WHERE template_id = ' . (int) $this->template_id . "
+					AND template_filename = '" . $db->sql_escape($match[1]) . "'";
+			$db->sql_query($sql);
+
+			// if something failed, sql_query will error out
+			return true;
+		}
+		else if ($this->write_method == WRITE_DIRECT)
 		{
 			// skip FTP, use local file functions
 			$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
@@ -610,7 +660,8 @@ class editor
 		else if ($this->write_method == WRITE_MANUAL)
 		{
 			// don't include extra dirs in zip file
-			$new_filename = str_replace($edited_root, '', $new_filename);
+			$strip_position = strpos('edited_', $new_filename) + 7; // want the end of the string
+			$new_filename = substr($new_filename, $strip_position);
 
 			return $this->compress->add_data($file_contents, $new_filename);
 		}

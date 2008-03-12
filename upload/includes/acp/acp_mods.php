@@ -61,7 +61,7 @@ class acp_mods
 				{
 					$ftp_host		= request_var('host', '');
 					$ftp_username	= request_var('username', '');
-					$ftp_password	= request_var('password', ''); // not store, used to test connection
+					$ftp_password	= request_var('password', ''); // not stored, used to test connection
 					$ftp_root_path	= request_var('root_path', '');
 					$ftp_port		= request_var('port', 21);
 					$ftp_timeout	= request_var('timeout', 10);
@@ -533,7 +533,7 @@ class acp_mods
 		$editor = new editor($phpbb_root_path, true);
 
 		// Only display full actions if the user has requested them.
-		if (!defined('DEBUG') && !isset($_GET['full_details']) || ($config['write_method'] == WRITE_FTP && empty($_REQUEST['password'])))
+		if (!defined('DEBUG') && !isset($_GET['full_details']) || ($editor->write_method == WRITE_FTP && empty($_REQUEST['password'])))
 		{
 			return;
 		}
@@ -686,7 +686,7 @@ class acp_mods
 		else
 		{
 			$hidden_ary = array();
-			if ($config['write_method'] == WRITE_FTP)
+			if ($editor->write_method == WRITE_FTP)
 			{
 				$hidden_ary['method'] = $config['ftp_method'];
 
@@ -727,6 +727,7 @@ class acp_mods
 
 	/**
 	* Uninstall/pre uninstall a mod
+	* @TODO: Allow uninstaller to use FTP & so forth
 	*/
 	function uninstall($action, $mod_id)
 	{
@@ -758,6 +759,8 @@ class acp_mods
 
 		// process the actions
 		$mod_uninstalled = $this->process_edits($editor, $actions, $details, $execute_edits, true, true);
+
+		$template->assign_var('S_ERROR', !$mod_uninstalled);
 
 		if ($execute_edits && $mod_uninstalled)
 		{
@@ -1119,7 +1122,7 @@ class acp_mods
 				$template->assign_var('S_UNKNOWN_LANGUAGES', true);
 
 				// get full names from the DB
-				$sql = 'SELECT lang_english, lang_local FROM ' . LANG_TABLE . '
+				$sql = 'SELECT lang_english_name, lang_local_name FROM ' . LANG_TABLE . '
 					WHERE ' . $db->sql_in_set('lang_iso', $unknown_languages);
 				$result = $db->sql_query($sql);
 
@@ -1127,8 +1130,8 @@ class acp_mods
 				while ($row = $db->sql_fetchrow($result))
 				{
 					$template->assign_block_vars('unknown_lang', array(
-						'ENGLISH_NAME'	=> $row['lang_english'],
-						'LOCAL_NAME'	=> $row['lang_local'],
+						'ENGLISH_NAME'	=> $row['lang_english_name'],
+						'LOCAL_NAME'	=> $row['lang_local_name'],
 					));
 				}
 			}
@@ -1138,7 +1141,27 @@ class acp_mods
 				// add the actions to our $actions array...give praise to array_merge_recursive
 				foreach ($process_languages as $key => $void)
 				{
-					$actions = array_merge_recursive($actions, $this->mod_actions($children['languages'][$key]));
+					$actions_ary = $this->mod_actions($children['templates'][$key]);
+
+					// perform some cleanup if the MOD author didn't specify the proper root directory
+					foreach ($actions_ary['NEW_FILES'] as $source => $destination)
+					{
+						// if the source file does not exist, and languages/ is not at the beginning
+						if (!file_exists($editor->mod_root . $src) && strpos('languages/', $src !== 0))
+						{
+							// and it does exist if we force a languages/ into the path
+							if (file_exists($editor->mod_root . 'languages/' . $src))
+							{
+								// change the array key to include templates/
+								unset($actions_ary['NEW_FILES'][$src]);
+								$actions_ary['NEW_FILES']['languages/' . $src] = $destination;
+							}
+
+							// else we let the error handling do its thing
+						}
+					}
+
+					$actions = array_merge_recursive($actions, $actions_ary);
 				}
 			}
 		}
@@ -1184,7 +1207,27 @@ class acp_mods
 				// add the template actions to our $actions array...
 				foreach ($process_templates as $key => $void)
 				{
-					$actions = array_merge_recursive($actions, $this->mod_actions($children['templates'][$key]));
+					$actions_ary = $this->mod_actions($children['templates'][$key]);
+
+					// perform some cleanup if the MOD author didn't specify the proper root directory
+					foreach ($actions_ary['NEW_FILES'] as $source => $destination)
+					{
+						// if the source file does not exist, and templates/ is not at the beginning
+						if (!file_exists($editor->mod_root . $src) && strpos('templates/', $src !== 0))
+						{
+							// and it does exist if we force a templates/ into the path
+							if (file_exists($editor->mod_root . 'templates/' . $src))
+							{
+								// change the array key to include templates/
+								unset($actions_ary['NEW_FILES'][$src]);
+								$actions_ary['NEW_FILES']['templates/' . $src] = $destination;
+							}
+
+							// else we let the error handling do its thing
+						}
+					}
+
+					$actions = array_merge_recursive($actions, $actions_ary);
 				}
 			}
 		}
