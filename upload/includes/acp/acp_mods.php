@@ -482,10 +482,10 @@ class acp_mods
 		$actions = $this->mod_actions($mod_path);
 		$details = $this->mod_details($mod_path, false);
 
+		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
+
 		// check for "child" MODX files and attempt to decide which ones we need
 		$elements = $this->find_children($mod_path, $actions, 'pre_install');
-
-		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
 
 		$template->assign_vars(array(
 			'S_PRE_INSTALL'	=> true,
@@ -565,6 +565,13 @@ class acp_mods
 		set_config('ftp_port',		request_var('port', 21));
 		set_config('ftp_timeout',	request_var('timeout', 10));
 
+		$details = $this->mod_details($mod_path, false);
+		$editor = new editor($phpbb_root_path);
+
+		// get mod install root && make temporary edited folder root
+		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
+		$this->edited_root = "{$this->mod_root}_edited/";
+
 		$actions = $this->mod_actions($mod_path);
 		// only supporting one level of hierarchy here
 		if (!$parent)
@@ -572,13 +579,6 @@ class acp_mods
 			// check for "child" MODX files and attempt to decide which ones we need
 			$elements = $this->find_children($mod_path, $actions, 'install');
 		}
-
-		$details = $this->mod_details($mod_path, false);
-		$editor = new editor($phpbb_root_path);
-
-		// get mod install root && make temporary edited folder root
-		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
-		$this->edited_root = "{$this->mod_root}_edited/";
 
 		// see if directory exists
 		if (!file_exists($phpbb_root_path . $this->edited_root) && $editor->write_method == WRITE_DIRECT)
@@ -1074,7 +1074,7 @@ class acp_mods
 	*/
 	function find_children($mod_path, &$actions, $action, $parent_id = 0)
 	{
-		global $db, $template;
+		global $db, $template, $phpbb_root_path;
 
 		$elements = array();
 		$children = $this->find_mods(dirname($mod_path), 2);
@@ -1147,14 +1147,14 @@ class acp_mods
 					foreach ($actions_ary['NEW_FILES'] as $source => $destination)
 					{
 						// if the source file does not exist, and languages/ is not at the beginning
-						if (!file_exists($editor->mod_root . $src) && strpos('languages/', $src !== 0))
+						if (!file_exists($phpbb_root_path . $this->mod_root . $source) && strpos('languages/', $source) === false)
 						{
 							// and it does exist if we force a languages/ into the path
-							if (file_exists($editor->mod_root . 'languages/' . $src))
+							if (file_exists($phpbb_root_path . $this->mod_root . 'languages/' . $source))
 							{
 								// change the array key to include templates/
-								unset($actions_ary['NEW_FILES'][$src]);
-								$actions_ary['NEW_FILES']['languages/' . $src] = $destination;
+								unset($actions_ary['NEW_FILES'][$source]);
+								$actions_ary['NEW_FILES']['languages/' . $source] = $destination;
 							}
 
 							// else we let the error handling do its thing
@@ -1212,15 +1212,15 @@ class acp_mods
 					// perform some cleanup if the MOD author didn't specify the proper root directory
 					foreach ($actions_ary['NEW_FILES'] as $source => $destination)
 					{
-						// if the source file does not exist, and templates/ is not at the beginning
-						if (!file_exists($editor->mod_root . $src) && strpos('templates/', $src !== 0))
+						// if the source file does not exist, and templates/ is not at the beginning ...
+						if (!file_exists($phpbb_root_path . $this->mod_root . $source) && strpos('templates/', $source) === false)
 						{
 							// and it does exist if we force a templates/ into the path
-							if (file_exists($editor->mod_root . 'templates/' . $src))
+							if (file_exists($phpbb_root_path . $this->mod_root . 'templates/' . $source))
 							{
 								// change the array key to include templates/
-								unset($actions_ary['NEW_FILES'][$src]);
-								$actions_ary['NEW_FILES']['templates/' . $src] = $destination;
+								unset($actions_ary['NEW_FILES'][$source]);
+								$actions_ary['NEW_FILES']['templates/' . $source] = $destination;
 							}
 
 							// else we let the error handling do its thing
