@@ -130,18 +130,18 @@ class parser
 							// this isn't perfect, but it seems better than having
 							// finds of only a couple characters, like "/*"
 							case 'AFTER ADD':
-								$total_find = $find . $command;
+								$total_find = $find . "\n" . $command;
 
 								$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
 							break;
 
 							case 'BEFORE ADD':
-								$total_find = $command . $find;
-								
+								$total_find = $command . "\n" . $find;
+
 								// replace with the find
 								$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
 							break;
-	
+
 							case 'REPLACE WITH':
 							case 'REPLACE, WITH':
 							case 'REPLACE':
@@ -156,7 +156,7 @@ class parser
 									foreach ($inline_action_ary as $inline_action => $inline_command)
 									{
 										$inline_command = $inline_command[0];
-	
+
 										switch (strtoupper($inline_action))
 										{
 											case 'IN-LINE-AFTER-ADD':

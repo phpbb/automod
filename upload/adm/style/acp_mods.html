@@ -34,7 +34,7 @@
 	</tr>
 	<!-- END installed -->
 	<tr>
-		<td class="row3" colspan="3"><b>{L_UNINSTALLED_MODS}</b></td>
+		<td class="row3" colspan="3"><strong>{L_UNINSTALLED_MODS}</strong></td>
 	</tr>
 	<!-- IF not .uninstalled -->
 	<tr>
@@ -63,7 +63,7 @@
 		<legend>{L_MOD_DETAILS}</legend>
 		<dl>
 			<dt><label for="name">{L_NAME}:</label></dt>
-			<dd><b id="name">{MOD_NAME}</b></dd>
+			<dd><strong id="name">{MOD_NAME}</b></dd>
 		</dl>
 		<dl>
 			<dt><label for="version">{L_VERSION}:</label></dt>
@@ -90,15 +90,15 @@
 		<!-- BEGIN author_list -->
 		<dl>
 			<dt><label for="author_name">{L_AUTHOR_NAME}:</label></dt>
-			<dd><b id="author_name">{author_list.AUTHOR_NAME}</b></dd>
+			<dd><strong id="author_name">{author_list.AUTHOR_NAME}</strong></dd>
 		</dl>
 		<dl>
 			<dt><label for="author_email">{L_AUTHOR_EMAIL}:</label></dt>
-			<dd><b id="author_email"><a href="mailto:{author_list.AUTHOR_EMAIL}">{author_list.AUTHOR_EMAIL}</a></b></dd>
+			<dd><strong id="author_email"><a href="mailto:{author_list.AUTHOR_EMAIL}">{author_list.AUTHOR_EMAIL}</a></strong></dd>
 		</dl>
 		<dl>
 			<dt><label for="author_url">{L_AUTHOR_URL}:</label></dt>
-			<dd><b id="author_url">{author_list.AUTHOR_WEBSITE}</b></dd>
+			<dd><strong id="author_url">{author_list.AUTHOR_WEBSITE}</strong></dd>
 		</dl>
 		<!-- END author_list -->
 	</fieldset>
@@ -116,7 +116,7 @@
 		<!-- BEGIN contrib -->
 		<dl>
 			<dt><label>{L_MOD_NAME}:</label></dt>
-			<dd><b>{contrib.MOD_NAME}</b> (<a href="{contrib.U_INSTALL}">{L_INSTALL_MOD}</a>)</dd>
+			<dd><strong>{contrib.MOD_NAME}</strong> (<a href="{contrib.U_INSTALL}">{L_INSTALL_MOD}</a>)</dd>
 		</dl>
 		<!-- END contrib -->
 		<!-- BEGIN unknown_templates -->
@@ -140,11 +140,11 @@
 		<!-- BEGIN changelog -->
 		<dl>
 			<dt><label for="change_date">{L_CHANGE_DATE}</label></dt>
-			<dt><b id="change_date">{changelog.DATE}</b></dt>
+			<dt><strong id="change_date">{changelog.DATE}</strong></dt>
 		</dl>
 		<dl>
 			<dt><label for="change_version">{L_CHANGE_VERSION}</label></dt>
-			<dt><b id="change_version">{changelog.VERSION}</b></dt>
+			<dt><strong id="change_version">{changelog.VERSION}</strong></dt>
 		</dl>
 		<dl>
 			<dt><label for="changes">{L_CHANGES}</label></dt>
@@ -232,7 +232,7 @@
 				<tr>
 					<td><strong>{new_files.SOURCE}</strong><!-- IF new_files.S_MISSING_FILE -->&nbsp;&nbsp;&nbsp;<strong><font color="red">({L_FILE_MISSING})</font></strong>&nbsp;<!-- ENDIF --></td>
 					<td>{new_files.TARGET}</td>
-				<tr>
+				</tr>
 			<!-- END new_files -->
 		</tbody>
 		</table>
@@ -299,11 +299,18 @@
 
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
 
-<!-- ELSEIF S_INSTALL -->
+<!-- ELSEIF S_INSTALL or S_UNINSTALL -->
 
+	<!-- IF S_UNINSTALL -->
+
+	<h1>{L_UNINSTALLED}</h1>
+
+	<p>{L_UNINSTALLED_EXPLAIN}</p>
+	<!-- ELSE -->
 	<h1>{L_INSTALLED}</h1>
 
 	<p>{L_INSTALLED_EXPLAIN}</p>
+	<!-- ENDIF -->
 
 	<!-- IF S_ERROR -->
 	<div class="errorbox">
@@ -456,7 +463,7 @@
 			<!-- BEGIN removing_files -->
 				<tr>
 					<td><strong>{removing_files.FILENAME}</strong><!-- IF removing_files.S_MISSING_FILE -->&nbsp;&nbsp;&nbsp;<strong><font color="red">({L_FILE_MISSING})</font></strong>&nbsp;<!-- ENDIF --></td>
-				<tr>
+				</tr>
 			<!-- END removing_files -->
 		</tbody>
 		</table>
@@ -480,7 +487,7 @@
 				<tr>
 					<td><strong>{sql_queries.ORIGINAL_QUERY}</strong></td>
 					<td><strong><!-- IF sql_queries.S_UNKNOWN_REVERSE -->&nbsp;&nbsp;&nbsp;<strong><font color="red">{L_UNKNOWN_QUERY_REVERSE}!</font></strong>&nbsp;<!-- ELSE -->{sql_queries.REVERSE_QUERY}<!-- ENDIF --></strong></td>
-				<tr>
+				</tr>
 			<!-- END sql_queries -->
 		</tbody>
 		</table>
@@ -629,7 +636,7 @@
 	</fieldset>
 
 	<fieldset>
-		<legend>{L_MODIFICTIONS}</legend>
+		<legend>{L_MODIFICATIONS}</legend>
 		<!-- IF .edit_files -->
 			<!-- BEGIN edit_files -->
 				<fieldset>
@@ -657,35 +664,6 @@
 	<fieldset class="quick" style="float: left;">
 		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
 		<input class="button2" name="submit" type="submit" value="{L_INSTALL}" />
-	</fieldset>
-	</form>
-
-<!-- ENDIF -->
-
-<!-- IF S_RESULTS -->
-
-	<h1>{L_RESULTS}</h1>
-
-	<p>{L_RESULTS_EXPLAIN}</p>
-
-	<fieldset>
-		<legend>{L_NEW_FILES}</legend>
-		<p>temp</p>
-	</fieldset>
-
-	<fieldset>
-		<legend>{L_SQL_STATEMENTS}</legend>
-		<p>temp</p>
-	</fieldset>
-
-	<fieldset>
-		<legend>{L_MODIFICTIONS}</legend>
-		<p>temp</p>
-	</fieldset>
-
-	<form id="install" method="post" action="{U_INSTALL}">
-	<fieldset class="quick" style="float: left;">
-		<input class="button2" name="submit" type="submit" value="{L_FINISH}" />
 	</fieldset>
 	</form>
 

@@ -209,6 +209,7 @@ class install_mod extends module
 		set_config('ftp_port',		request_var('port', 21));
 		set_config('ftp_timeout',	request_var('timeout', 10));
 		set_config('write_method',	(!empty($config['ftp_method'])) ? WRITE_FTP : WRITE_DIRECT);
+		set_config('compress_method', '.tar');
 
 		$this->page_title = $user->lang['FILE_EDITS'];
 
