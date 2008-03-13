@@ -117,7 +117,7 @@ class install_mod extends module
 		if (!empty($test_ftp_connection) || (!is_writeable($phpbb_root_path) && $sub == 'file_edits'))
 		{
 			test_ftp_connection($method, $test_ftp_connection, $test_connection);
-			
+
 			// Make sure the login details are correct before continuing
 			if ($test_connection !== true || !empty($test_ftp_connection))
 			{
@@ -172,11 +172,16 @@ class install_mod extends module
 			break;
 
 			case 'file_edits':
+				$this->add_config($mode, $sub);
 				$this->perform_edits($mode, $sub);
 			break;
 
 			case 'create_table':
 				$this->perform_sql($mode, $sub);
+				$this->add_modules($mode, $sub);
+
+				// Reset cache so we can actualy see the lovely new tab in the ACP
+				$cache->purge();
 			break;
 
 			case 'final':
@@ -193,37 +198,29 @@ class install_mod extends module
 		$this->tpl_name = 'install_mod';
 	}
 
-
 	function perform_edits($mode, $sub)
 	{
 		global $template, $phpbb_root_path, $phpEx, $language, $db, $config, $user;
 
-		// using some mods manager code in the installation :D
-		include("{$phpbb_root_path}includes/editor.$phpEx");
-
-		// we should have some config variables from the previous step
-		set_config('ftp_method',	request_var('method', ''));
-		set_config('ftp_host',		request_var('host', ''));
-		set_config('ftp_username',	request_var('username', ''));
-		set_config('ftp_root_path', request_var('root_path', ''));
-		set_config('ftp_port',		request_var('port', 21));
-		set_config('ftp_timeout',	request_var('timeout', 10));
-		set_config('write_method',	(!empty($config['ftp_method'])) ? WRITE_FTP : WRITE_DIRECT);
-		set_config('compress_method', '.tar');
+		if (!class_exists('editor'))
+		{
+			include("{$phpbb_root_path}includes/editor.$phpEx");
+		}
 
 		$this->page_title = $user->lang['FILE_EDITS'];
-
-		$editor = new editor($phpbb_root_path);
 
 		$filename = "includes/constants.$phpEx";
 		$find = '// Additional tables';
 		$add = 'define(\'MODS_TABLE\',				$table_prefix . \'mods\');';
 
+		$editor = new editor($phpbb_root_path);
 		$editor->open_file("includes/constants.$phpEx");
 		$editor->add_string($find, $add, 'AFTER');
-		if (!$editor->close_file("includes/constants.$phpEx"))
+		$result = $editor->close_file("includes/constants.$phpEx");
+
+		// need proper error handling here
+		if (!$result)
 		{
-			// need proper error handling here
 			echo('Error writing file');
 		}
 
@@ -236,10 +233,32 @@ class install_mod extends module
 		));
 	}
 
+	function add_config($mode, $sub)
+	{
+		global $config;
+
+		if (!class_exists('editor'))
+		{
+			global $phpbb_root_path, $phpEx;
+			include("{$phpbb_root_path}includes/editor.$phpEx");
+		}
+
+		$data = $this->get_submitted_data();
+
+		// we should have some config variables from the previous step
+		set_config('ftp_method',	$data['method']);
+		set_config('ftp_host',		$data['host']);
+		set_config('ftp_username',	$data['username']);
+		set_config('ftp_root_path', $data['root_path']);
+		set_config('ftp_port',		$data['port']);
+		set_config('ftp_timeout',	$data['timeout']);
+		set_config('write_method',	(!empty($config['ftp_method'])) ? WRITE_FTP : WRITE_DIRECT);
+		set_config('compress_method', 'tar');
+	}
 
 	function perform_sql($mode, $sub)
 	{
-		global $template, $phpbb_root_path, $phpEx, $language, $db, $cache, $user;
+		global $template, $phpbb_root_path, $phpEx, $language, $db, $user;
 
 		$this->page_title = $user->lang['STAGE_CREATE_TABLE'];
 
@@ -294,7 +313,11 @@ class install_mod extends module
 			}
 		}
 		// end borrow from phpBB core
+	}
 
+	function add_modules($mode, $sub)
+	{
+		global $db;
 
 		$sql = 'SELECT module_id FROM ' . MODULES_TABLE . "
 			WHERE module_langname = 'ACP_CAT_MODS'";
@@ -407,12 +430,24 @@ class install_mod extends module
 			$db->sql_query($sql);
 		}
 
-		// Reset cache so we can actualy see the lovely new tab in the ACP
-		$cache->purge();
-
 		// and we need to clear the acl prefetch.  $auth does not exist here, so just do the query
 		$sql = 'UPDATE ' . USERS_TABLE . " SET user_permissions = ''";
 		$db->sql_query($sql);
+	}
+
+	/**
+	* Get submitted data
+	*/
+	function get_submitted_data()
+	{
+		return array(
+			'method'	=> request_var('method', ''),
+			'host'		=> request_var('host', ''),
+			'username'	=> request_var('username', ''),
+			'root_path'	=> request_var('root_path', ''),
+			'port'		=> request_var('port', 21),
+			'timeout'	=> request_var('timeout', 10),
+		);
 	}
 }
 
