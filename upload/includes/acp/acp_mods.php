@@ -1208,6 +1208,11 @@ class acp_mods
 				foreach ($process_templates as $key => $void)
 				{
 					$actions_ary = $this->mod_actions($children['templates'][$key]);
+					
+					if (!isset($actions_ary['NEW_FILES']))
+					{
+						continue;
+					}
 
 					// perform some cleanup if the MOD author didn't specify the proper root directory
 					foreach ($actions_ary['NEW_FILES'] as $source => $destination)
