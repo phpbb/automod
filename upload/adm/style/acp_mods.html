@@ -19,7 +19,7 @@
 	</thead>
 	<tbody>
 	<tr>
-		<td class="row3" colspan="3"><b>{L_INSTALLED_MODS}</b></td>
+		<td class="row3" colspan="3"><strong>{L_INSTALLED_MODS}</strong></td>
 	</tr>
 	<!-- IF not .installed -->
 		<tr>
@@ -63,7 +63,7 @@
 		<legend>{L_MOD_DETAILS}</legend>
 		<dl>
 			<dt><label for="name">{L_NAME}:</label></dt>
-			<dd><strong id="name">{MOD_NAME}</b></dd>
+			<dd><strong id="name">{MOD_NAME}</strong></dd>
 		</dl>
 		<dl>
 			<dt><label for="version">{L_VERSION}:</label></dt>
@@ -122,13 +122,13 @@
 		<!-- BEGIN unknown_templates -->
 		<dl>
 			<dt><label>{L_STYLE_NAME}:</label></dt>
-			<dd><b>{unknown_templates.TEMPLATE_NAME}</b> (<a href="{contrib.U_INSTALL}">{L_INSTALL_MOD}</a>)</dd>
+			<dd><strong>{unknown_templates.TEMPLATE_NAME}</strong> (<a href="{contrib.U_INSTALL}">{L_INSTALL_MOD}</a>)</dd>
 		</dl>
 		<!-- END unknown_templates -->
 		<!-- BEGIN unknown_lang -->
 		<dl>
 			<dt><label>{L_LANGUAGE_NAME}:</label></dt>
-			<dd><b>{unknown_lang.LANGUAGE_NAME}</b> (<a href="{contrib.U_INSTALL}">{L_INSTALL_MOD}</a>)</dd>
+			<dd><strong>{unknown_lang.LANGUAGE_NAME}</strong> (<a href="{contrib.U_INSTALL}">{L_INSTALL_MOD}</a>)</dd>
 		</dl>
 		<!-- END unknown_lang -->
 	</fieldset>
@@ -312,10 +312,13 @@
 	<p>{L_INSTALLED_EXPLAIN}</p>
 	<!-- ENDIF -->
 
-	<!-- IF S_ERROR -->
+	<!-- IF S_ERROR or .error -->
 	<div class="errorbox">
 		<p>{L_INSTALL_ERROR}</p>
 
+		<!-- BEGIN error -->
+		<span>{error.ERROR}</span><br />
+		<!-- END error -->
 		<br />
 
 		<form id="acp_mods" method="post" action="{U_RETRY}">
@@ -534,19 +537,6 @@
 	<br/>
 
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
-
-<!-- ELSEIF S_UNINSTALL -->
-
-	<h1>{L_UNINSTALLED}</h1>
-
-	<p>{L_UNINSTALLED_EXPLAIN}</p>
-
-	<form id="acp_mods" method="post" action="{U_RETURN}">
-	<fieldset class="submit-buttons">
-		<legend>{L_RETURN_MODS}</legend>
-		<input class="button1" type="submit" name="return" value="{L_RETURN_MODS}" />
-	</fieldset>
-	</form>
 
 <!-- ENDIF -->
 

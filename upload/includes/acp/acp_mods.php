@@ -608,7 +608,16 @@ class acp_mods
 		if ($editor->write_method != WRITE_MANUAL && ($mod_installed || $force_install))
 		{
 			// Move edited files back, and delete temp storage folder
-			$editor->copy_content($this->edited_root, '', $this->edited_root);
+			$status = $editor->copy_content($this->edited_root, '', $this->edited_root);
+
+			if (is_string($copy_status))
+			{
+				$mod_installed = false;
+
+				$template->assign_block_vars('error', array(
+					'ERROR'	=> $status,
+				));
+			}
 		}
 		else if ($mod_installed || $force_install)
 		{
@@ -927,7 +936,13 @@ class acp_mods
 
 				$template->assign_var('S_EDITS', true);
 
-				$editor->open_file($filename);
+				$status = $editor->open_file($filename);
+				if (is_string($status))
+				{
+					$template->assign_block_vars('error', array(
+						'ERROR'	=> $status,
+					));
+				}
 
 				foreach ($edits as $finds)
 				{
@@ -1054,7 +1069,15 @@ class acp_mods
 
 					if ($change)
 					{
-						$editor->close_file("{$this->edited_root}$filename");
+						$status = $editor->close_file("{$this->edited_root}$filename");
+						if (is_string($status))
+						{
+							$template->assign_block_vars('error', array(
+								'ERROR'	=> $status,
+							));
+
+							$mod_installed = false;
+						}
 					}
 				}
 			}
@@ -1136,12 +1159,18 @@ class acp_mods
 				}
 			}
 
-			if (sizeof($process_languages) && (defined('DEBUG') || isset($_GET['full_details'])) && $action == 'install')
+			if (sizeof($process_languages) && ((defined('DEBUG') || isset($_GET['full_details'])) || $action == 'install'))
 			{
 				// add the actions to our $actions array...give praise to array_merge_recursive
 				foreach ($process_languages as $key => $void)
 				{
-					$actions_ary = $this->mod_actions($children['templates'][$key]);
+					$actions_ary = $this->mod_actions($children['languages'][$key]);
+
+					if (!isset($actions_ary['NEW_FILES']))
+					{
+						$actions = array_merge_recursive($actions, $actions_ary);
+						continue;
+					}
 
 					// perform some cleanup if the MOD author didn't specify the proper root directory
 					foreach ($actions_ary['NEW_FILES'] as $source => $destination)
@@ -1183,7 +1212,7 @@ class acp_mods
 			$available_templates = array_map('core_basename', $children['templates']);
 
 			// $process_templates are those that are installed on the board and provided for by the MOD
-			$process_templates = $elements['languages'] = array_intersect($available_templates, $installed_templates);
+			$process_templates = $elements['templates'] = array_intersect($available_templates, $installed_templates);
 
 			// $unknown_templates are installed on the board, but not provied for by the MOD
 			$unknown_templates = array_diff($available_templates, $installed_templates);
@@ -1208,9 +1237,10 @@ class acp_mods
 				foreach ($process_templates as $key => $void)
 				{
 					$actions_ary = $this->mod_actions($children['templates'][$key]);
-					
+
 					if (!isset($actions_ary['NEW_FILES']))
 					{
+						$actions = array_merge_recursive($actions, $actions_ary);
 						continue;
 					}
 

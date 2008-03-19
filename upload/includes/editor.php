@@ -65,7 +65,7 @@ class editor
 			if (is_string($error))
 			{
 				// FTP login failed
-				trigger_error(sprintf($user->lang['MODS_FTP_FAIL'], $user->lang[$error]), E_USER_ERROR);
+				trigger_error(sprintf($user->lang['MODS_FTP_CONNECT_FAILURE'], $user->lang[$error]), E_USER_ERROR);
 			}
 		}
 		// or zip or tarballs
@@ -149,10 +149,11 @@ class editor
 	* @param $from string Can be a file or a directory. Will move either the file or all files within the directory
 	* @param $to string Where to move the file(s) to. If not specified then will get moved to the root folder
 	* @param $strip Used for FTP only
+	* @return mixed: Bool true on success, error string on failure, NULL if no action was taken
 	*/
 	function copy_content($from, $to = '', $strip = '')
 	{
-		global $phpbb_root_path;
+		global $phpbb_root_path, $user;
 
 		if (strpos($from, $phpbb_root_path) !== 0)
 		{
@@ -185,7 +186,10 @@ class editor
 		{
 			if (!is_dir(dirname($to)))
 			{
-				$this->recursive_mkdir(dirname($to));
+				if (!$this->recursive_mkdir(dirname($to)))
+				{
+					return sprintf($user->lang['MODS_MKDIR_FAILURE'], dirname($to));
+				}
 			}
 
 			foreach ($files as $file)
@@ -201,7 +205,7 @@ class editor
 
 				if (!@copy($file, $dest))
 				{
-					return false;
+					return sprintf($user->lang['MODS_COPY_FAILURE'], $dest);
 				}
 			}
 		}
@@ -220,7 +224,12 @@ class editor
 					$to_file = str_replace($phpbb_root_path, '', $to);
 				}
 
-				$this->transfer->overwrite_file($file, $to_file);
+				if (!$this->transfer->overwrite_file($file, $to_file))
+				{
+					// may as well return ... the MOD is likely dependent upon
+					// the file that is being copied
+					return sprintf($user->lang['MODS_FTP_FAILURE'], $to_file);
+				}
 			}
 		}
 		else
@@ -610,11 +619,15 @@ class editor
 	*/
 	function close_file($new_filename)
 	{
-		global $phpbb_root_path, $edited_root, $db;
+		global $phpbb_root_path, $edited_root;
+		global $db, $user;
 
 		if (!file_exists($phpbb_root_path . dirname($new_filename)))
 		{
-			$this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777);
+			if (!$this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777))
+			{
+				return sprintf($user->lang['MODS_MKDIR_FAILED'], dirname($new_filename));
+			}
 		}
 
 		$file_contents = implode('', $this->file_contents);
@@ -628,7 +641,7 @@ class editor
 			}
 			else
 			{
-				trigger_error('WRITE_DIRECT_FAIL');
+				return sprintf($user->lang['WRITE_DIRECT_FAIL'], $new_filename);
 			}
 		}
 
@@ -651,11 +664,18 @@ class editor
 			// skip FTP, use local file functions
 			$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
 			@fwrite($fr, $file_contents);
-			return @fclose($fr);
+
+			if (!@fclose($fr))
+			{
+				return sprintf($user->lang['WRITE_DIRECT_FAIL'], $new_filename);			
+			}
 		}
 		else if ($this->write_method == WRITE_FTP)
 		{
-			return $this->transfer->write_file($new_filename, $file_contents);
+			if (!$this->transfer->write_file($new_filename, $file_contents))
+			{
+				return sprintf($user->lang['MODS_FTP_FAILURE'], $new_filename);
+			}
 		}
 		else if ($this->write_method == WRITE_MANUAL)
 		{
@@ -663,17 +683,25 @@ class editor
 			$strip_position = strpos('edited_', $new_filename) + 7; // want the end of the string
 			$new_filename = substr($new_filename, $strip_position);
 
-			return $this->compress->add_data($file_contents, $new_filename);
+			if (!$this->compress->add_data($file_contents, $new_filename))
+			{
+				return sprintf($user->lang['WRITE_MANUAL_FAIL'], $new_filename);
+			}
 		}
 		else
 		{
 			trigger_error('MODS_SETUP_INCOMPLETE', E_USER_ERROR);
 		}
+
+		return true;
 	}
 
 	/**
 	* @author Michal Nazarewicz (from the php manual)
 	* Creates all non-existant directories in a path
+	* @param $path - path to create
+	* @param $mode - CHMOD the new dir to these permissions
+	* @return bool - success or NULL - no action taken
 	*/
 	function recursive_mkdir($path, $mode = 0777)
 	{
@@ -681,12 +709,11 @@ class editor
 		if ($this->write_method == WRITE_FTP)
 		{
 			// ... luckily, the FTP class provides an alternative
-			$this->transfer->make_dir($path);
-			return;
+			return ($this->transfer->make_dir($path)) ? true : false;
 		}
 		else if ($this->write_method == WRITE_MANUAL)
 		{
-			return;
+			return NULL;
 		}
 
 		$dirs = explode('/', $path);
