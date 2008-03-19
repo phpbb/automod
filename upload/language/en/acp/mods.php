@@ -78,8 +78,11 @@ $lang = array_merge($lang, array(
 	'MODMANAGER_INSTALLATION'	=> 'MOD Manager Installation',
 	'MODMANAGER_INSTALLATION_EXPLAIN'	=> 'Welcome to the MOD Manager Installation. The installer will perform the following steps, and you will need the following information... bleh. Please select a role to apply MOD manager access to, then click install to proceed.',
 
+	'MODS_COPY_FAILURE'			=> 'The file %s could not be copied into place.  Please check your permissions or use an alternate write method.',
 	'MODS_EXPLAIN'				=> '<p>Here you can manage the available MODs on your board. MODs allow you to customize your board by automatically installing modifications produced by the phpBB community. For further information on MODs and the MOD Manager please visit the <a href="http://www.phpbb.com/mods">phpBB website</a>.</p>',
-	'MODS_FTP_FAIL'				=> 'MODs Manager was unable to connect to your FTP server.  The error was %s',
+	'MODS_FTP_FAILURE'			=> 'MODs Manager could not FTP the file %s into place',
+	'MODS_FTP_CONNECT_FAIL'		=> 'MODs Manager was unable to connect to your FTP server.  The error was %s',
+	'MODS_MKDIR_FAILURE'		=> 'The directory %s could not be created',
 	'MODS_SETUP_INCOMPLETE'		=> 'A problem was found with your configuration, and the MODs Manager cannot operate.  This should only occur when settings (e.g.FTP username) have changed, and can be corrected in the MODs Manager configuration page.',
 
 	'NAME'		=> 'Name',
@@ -118,6 +121,8 @@ $lang = array_merge($lang, array(
 
 	'VERSION'		=> 'Version',
 
+	'WRITE_DIRECT_FAIL'		=> 'MODs Manager could not copy the file %s into place using the direct method.  Please use another write method and try again.',
+	'WRITE_MANUAL_FAIL'		=> 'MODs Manager could not add the file %s to a compressed archive.  Please try another write method.',
 	'WRITE_METHOD'			=> 'Write Method',
 	'WRITE_METHOD_DIRECT'	=> 'Direct',
 	'WRITE_METHOD_EXPLAIN'	=> 'You can set a preferred method to write files.  If the setting you choose cannot be used on your web server, you will be prompted.  The most compatible option is “Compressed File Download”.',
