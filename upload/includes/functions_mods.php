@@ -16,6 +16,9 @@ if (!defined('IN_PHPBB'))
 	exit;
 }
 
+global $table_prefix;
+define('MODS_TABLE', $table_prefix . 'mods');
+
 function test_ftp_connection($method, &$test_ftp_connection, &$test_connection)
 {
 	global $phpbb_root_path, $phpEx;

@@ -43,7 +43,7 @@ if (!empty($setmodules))
 		'module_filename'	=> substr(basename(__FILE__), 0, -strlen($phpEx)-1),
 		'module_order'		=> 30,
 		'module_subs'		=> '',
-		'module_stages'		=> array('INTRO', 'FILE_EDITS', 'CREATE_TABLE', 'FINAL'),
+		'module_stages'		=> array('INTRO', 'CREATE_TABLE', 'FINAL'),
 		'module_reqs'		=> ''
 	);
 }
@@ -134,7 +134,7 @@ class install_mod extends module
 					'TITLE'				=> $user->lang['MODMANAGER_INSTALLATION'],
 					'BODY'				=> $user->lang['MODMANAGER_INSTALLATION_EXPLAIN'],
 					'L_SUBMIT'			=> $user->lang['NEXT_STEP'],
-					'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=file_edits&amp;language=$language",
+					'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=create_table&amp;language=$language",
 				));
 
 				if (!is_writeable($phpbb_root_path))
@@ -171,12 +171,8 @@ class install_mod extends module
 				}
 			break;
 
-			case 'file_edits':
-				$this->add_config($mode, $sub);
-				$this->perform_edits($mode, $sub);
-			break;
-
 			case 'create_table':
+				$this->add_config($mode, $sub);
 				$this->perform_sql($mode, $sub);
 				$this->add_modules($mode, $sub);
 
@@ -196,41 +192,6 @@ class install_mod extends module
 		}
 
 		$this->tpl_name = 'install_mod';
-	}
-
-	function perform_edits($mode, $sub)
-	{
-		global $template, $phpbb_root_path, $phpEx, $language, $db, $config, $user;
-
-		if (!class_exists('editor'))
-		{
-			include("{$phpbb_root_path}includes/editor.$phpEx");
-		}
-
-		$this->page_title = $user->lang['FILE_EDITS'];
-
-		$filename = "includes/constants.$phpEx";
-		$find = '// Additional tables';
-		$add = 'define(\'MODS_TABLE\',				$table_prefix . \'mods\');';
-
-		$editor = new editor($phpbb_root_path);
-		$editor->open_file("includes/constants.$phpEx");
-		$editor->add_string($find, $add, 'AFTER');
-		$result = $editor->close_file("includes/constants.$phpEx");
-
-		// need proper error handling here
-		if (!$result)
-		{
-			echo('Error writing file');
-		}
-
-		$template->assign_vars(array(
-			'S_FILE_EDITS'		=> true,
-			//'TITLE'				=> $lang['MODMANAGER_INSTALLATION'],
-			//'BODY'				=> $lang['MODMANAGER_INSTALLATION_EXPLAIN'],
-			'L_SUBMIT'			=> $user->lang['NEXT_STEP'],
-			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=create_table&amp;language=$language",
-		));
 	}
 
 	function add_config($mode, $sub)
