@@ -549,7 +549,7 @@ class acp_mods
 	*/
 	function install($mod_path, $parent = 0)
 	{
-		global $phpbb_root_path, $phpEx, $db, $template, $user, $config;
+		global $phpbb_root_path, $phpEx, $db, $template, $user, $config, $cache;
 
 		// mod_path empty?
 		if (empty($mod_path))
@@ -610,7 +610,7 @@ class acp_mods
 			// Move edited files back, and delete temp storage folder
 			$status = $editor->copy_content($this->edited_root, '', $this->edited_root);
 
-			if (is_string($copy_status))
+			if (is_string($status))
 			{
 				$mod_installed = false;
 
@@ -653,6 +653,8 @@ class acp_mods
 				'mod_template'		=> (string) (isset($elements['templates']) && sizeof($elements['templates'])) ? implode(',', $elements['templates']) : '',
 			));
 			$db->sql_query($sql);
+
+			$cache->purge();
 
 			// Add log
 			add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);

@@ -371,7 +371,7 @@ class parser_xml
 				if (isset($action_info['ACTION']) && $find_count == $action_count)
 				{
 					$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
-					$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])][$type] = $action_info['ACTION'][0]['data'];
+					$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])][$type] = isset($action_info['ACTION'][0]['data']) ? $action_info['ACTION'][0]['data'] : '';
 				}
 				// there is at least one find simply to advance the array pointer
 				else if (isset($action_info['ACTION']) && $find_count > $action_count)

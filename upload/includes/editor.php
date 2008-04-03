@@ -184,11 +184,21 @@ class editor
 		// is the directory writeable? if so, then we don't have to deal with FTP
 		if ($this->write_method == WRITE_DIRECT)
 		{
-			if (!is_dir(dirname($to)))
+			// Look at the last character of $to and compares it to /
+			if ($to[strlen($to) - 1] == '/')
 			{
-				if (!$this->recursive_mkdir(dirname($to)))
+				$dirname_check = $to;
+			}
+			else
+			{
+				$dirname_check = dirname($to);
+			}
+
+			if (!is_dir($dirname_check))
+			{
+				if (!$this->recursive_mkdir($dirname_check))
 				{
-					return sprintf($user->lang['MODS_MKDIR_FAILURE'], dirname($to));
+					return sprintf($user->lang['MODS_MKDIR_FAILURE'], $dirname_check);
 				}
 			}
 
@@ -355,6 +365,8 @@ class editor
 
 			unset($offsets);
 		}
+
+		$inline_find = (string) $inline_find;
 
 		// similar method to find().  Just much more limited scope
 		for ($i = $start_offset; $i <= $end_offset; $i++)
