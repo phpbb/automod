@@ -81,7 +81,7 @@ class editor
 			preg_match('#\.(\w{3})\.?.*#', $config['compress_method'], $match);
 			$class = 'compress_' . $match[1];
 
-			$this->compress = new $class('w', $phpbb_root_path . 'store/mod_' . $this->install_time . '.' . $config['compress_method']);
+			$this->compress = new $class('w', $phpbb_root_path . 'store/mod_' . $this->install_time . $config['compress_method']);
 		}
 		else
 		{
@@ -197,7 +197,7 @@ class editor
 
 			if (!is_dir($dirname_check))
 			{
-				if (!$this->recursive_mkdir($dirname_check))
+				if ($this->recursive_mkdir($dirname_check) === false)
 				{
 					return sprintf($user->lang['MODS_MKDIR_FAILURE'], $dirname_check);
 				}
@@ -635,9 +635,9 @@ class editor
 		global $phpbb_root_path, $edited_root;
 		global $db, $user;
 
-		if (!file_exists($phpbb_root_path . dirname($new_filename)))
+		if (!is_dir($phpbb_root_path . $new_filename) && !file_exists($phpbb_root_path . dirname($new_filename)))
 		{
-			if (!$this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777))
+			if ($this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777) === false)
 			{
 				return sprintf($user->lang['MODS_MKDIR_FAILED'], dirname($new_filename));
 			}
@@ -693,7 +693,7 @@ class editor
 		else if ($this->write_method == WRITE_MANUAL)
 		{
 			// don't include extra dirs in zip file
-			$strip_position = strpos('edited_', $new_filename) + 7; // want the end of the string
+			$strip_position = strpos($new_filename, '_edited') + 8; // want the end of the string
 			$new_filename = substr($new_filename, $strip_position);
 
 			if (!$this->compress->add_data($file_contents, $new_filename))
