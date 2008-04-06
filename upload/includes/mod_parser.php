@@ -358,11 +358,18 @@ class parser_xml
 				$action_info = (!empty($edit_info[$j]['children'])) ? $edit_info[$j]['children'] : array();
 
 				// store some array information to help decide what kind of operation we're doing
+				$action_count = 0;
 				if (isset($action_info['ACTION']))
 				{
-					$action_count = sizeof($action_info['ACTION']);
-					$find_count = sizeof($action_info['FIND']);
+					$action_count += sizeof($action_info['ACTION']);
 				}
+
+				if (isset($action_info['INLINE-EDIT']))
+				{
+					$action_count += sizeof($action_info['INLINE-EDIT']);
+				}
+
+				$find_count = sizeof($action_info['FIND']);
 
 				// first we try all the possibilities for a FIND/ACTION combo, then look at inline possibilities.
 
@@ -409,6 +416,24 @@ class parser_xml
 				{
 					$inline_info = (!empty($action_info['INLINE-EDIT'])) ? $action_info['INLINE-EDIT'] : array();
 
+					if ($find_count > $action_count)
+					{
+						// Yeah, $k is used more than once for different information
+						for ($k = 0; $k < $find_count; $k++)
+						{
+							// is this anything but the last iteration of the loop?
+							if ($k < ($find_count - 1))
+							{
+								// NULL has special meaning for an action ... no action to be taken; advance pointer 
+								$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])] = NULL;
+							}
+						}
+					}
+
+					/* This loop attaches the in-line information to the _last
+					* find_ in the <edit> tag.  This is the intended behavior
+					* Any additional finds ought to be in a different edit tag
+					*/
 					for ($k = 0; $k < sizeof($inline_info); $k++)
 					{
 						$inline_actions = (!empty($inline_info[$k]['children'])) ? $inline_info[$k]['children'] : array();
@@ -424,7 +449,7 @@ class parser_xml
 							//
 							// inline actions must be trimmed in case the MOD author
 							// inserts a new line by mistake
-							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])]['in-line-edit'][trim($inline_find)]['in-line-' . $type][] = $inline_actions[$l]['data'];
+							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'])]['in-line-edit'][trim($inline_find)]['in-line-' . $type][] = $inline_actions[$l]['data'];
 						}
 					}
 				}

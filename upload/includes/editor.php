@@ -78,7 +78,8 @@ class editor
 				include($phpbb_root_path . 'includes/functions_compress.' . $phpEx);
 			}
 
-			$class = 'compress_' . $config['compress_method'];
+			preg_match('#\.(\w{3})\.?.*#', $config['compress_method'], $match);
+			$class = 'compress_' . $match[1];
 
 			$this->compress = new $class('w', $phpbb_root_path . 'store/mod_' . $this->install_time . '.' . $config['compress_method']);
 		}
