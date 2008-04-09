@@ -864,15 +864,16 @@ class acp_mods
 			{
 				$status = $editor->copy_content($this->mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target));
 
-				if (!$status)
+				if ($status === false)
 				{
 					$mod_installed = false;
 				}
 
 				$template->assign_block_vars('new_files', array(
-					'S_SUCCESS'		=> $status,
-					'SOURCE'		=> $source,
-					'TARGET'		=> $target,
+					'S_SUCCESS'			=> $status,
+					'S_NO_COPY_ATTEMPT'	=> (is_null($status) ? true : false),
+					'SOURCE'			=> $source,
+					'TARGET'			=> $target,
 				));
 			}
 		}
@@ -1069,18 +1070,18 @@ class acp_mods
 							}
 						}
 					}
+				}
 
-					if ($change)
+				if ($change)
+				{
+					$status = $editor->close_file("{$this->edited_root}$filename");
+					if (is_string($status))
 					{
-						$status = $editor->close_file("{$this->edited_root}$filename");
-						if (is_string($status))
-						{
-							$template->assign_block_vars('error', array(
-								'ERROR'	=> $status,
-							));
+						$template->assign_block_vars('error', array(
+							'ERROR'	=> $status,
+						));
 
-							$mod_installed = false;
-						}
+						$mod_installed = false;
 					}
 				}
 			}
