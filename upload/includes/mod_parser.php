@@ -358,7 +358,7 @@ class parser_xml
 				$action_info = (!empty($edit_info[$j]['children'])) ? $edit_info[$j]['children'] : array();
 
 				// store some array information to help decide what kind of operation we're doing
-				$action_count = 0;
+				$action_count = $total_action_count = 0;
 				if (isset($action_info['ACTION']))
 				{
 					$action_count += sizeof($action_info['ACTION']);
@@ -366,7 +366,7 @@ class parser_xml
 
 				if (isset($action_info['INLINE-EDIT']))
 				{
-					$action_count += sizeof($action_info['INLINE-EDIT']);
+					$total_action_count += sizeof($action_info['INLINE-EDIT']);
 				}
 
 				$find_count = sizeof($action_info['FIND']);
@@ -416,7 +416,7 @@ class parser_xml
 				{
 					$inline_info = (!empty($action_info['INLINE-EDIT'])) ? $action_info['INLINE-EDIT'] : array();
 
-					if ($find_count > $action_count)
+					if ($find_count > $total_action_count)
 					{
 						// Yeah, $k is used more than once for different information
 						for ($k = 0; $k < $find_count; $k++)

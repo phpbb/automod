@@ -373,6 +373,13 @@ class acp_mods
 			$result = $db->sql_query($sql);
 			if ($row = $db->sql_fetchrow($result))
 			{
+				$author_details = array();
+				$author_details[0] = array(
+						'AUTHOR_NAME'		=> $row['mod_author_name'],
+						'AUTHOR_EMAIL'		=> $row['mod_author_email'],
+						'AUTHOR_WEBSITE'	=> $row['mod_author_url'],
+				);
+
 				$details = array(
 					'MOD_ID'			=> $row['mod_id'],
 					'MOD_PATH'			=> $row['mod_path'],
@@ -382,10 +389,8 @@ class acp_mods
 					'MOD_DESCRIPTION'	=> nl2br($row['mod_description']),
 					'MOD_VERSION'		=> $row['mod_version'],
 
-					'AUTHOR_NOTES'	=> nl2br($row['mod_author_notes']),
-					'AUTHOR_NAME'	=> $row['mod_author_name'],
-					'AUTHOR_EMAIL'	=> $row['mod_author_email'],
-					'AUTHOR_URL'	=> $row['mod_author_url']
+					'AUTHOR_NOTES'		=> nl2br($row['mod_author_notes']),
+					'AUTHOR_DETAILS'	=> $author_details,
 				);
 
 				if ($find_children)
@@ -463,7 +468,9 @@ class acp_mods
 
 			unset($parser);
 		}
+
 		return $actions;
+
 	}
 
 	/**
@@ -878,195 +885,157 @@ class acp_mods
 			}
 		}
 
-		// Perform SQL queries
-		if (isset($actions['SQL']) && !empty($actions['SQL']))
-		{
-			$template->assign_var('S_SQL', true);
-
-			parser::parse_sql($actions['SQL']);
-
-			$db->sql_return_on_error(true);
-
-			foreach ($actions['SQL'] as $query)
-			{
-				if ($change)
-				{
-					$query_success = $db->sql_query($query);
-
-					$template->assign_block_vars('sql_queries', array(
-						'S_SUCCESS'	=> ($query_success) ? true : false,
-						'QUERY'		=> $query,
-					));
-
-					if (!$query_success)
-					{
-						$mod_installed = false;
-					}
-				}
-				else if ($display)
-				{
-					$template->assign_block_vars('sql_queries', array(
-						'QUERY'	=> $query,
-					));
-				}
-			}
-
-			$db->sql_return_on_error(false);
-		}
-
 		// not all MODs will have edits (!)
-		if (!isset($actions['EDITS']))
-		{
-			return $mod_installed;
-		}
-
-		foreach ($actions['EDITS'] as $filename => $edits)
-		{
-			// see if the file to be opened actually exists
-			if (!file_exists("$phpbb_root_path$filename"))
+		if (isset($actions['EDITS']))
+		{	
+			foreach ($actions['EDITS'] as $filename => $edits)
 			{
-				$template->assign_block_vars('edit_files', array(
-					'S_MISSING_FILE' => true,
-
-					'FILENAME'	=> $filename,
-				));
-				$mod_installed = false;
-			}
-			else
-			{
-				$template->assign_block_vars('edit_files', array(
-					'FILENAME'	=> $filename,
-				));
-
-				$template->assign_var('S_EDITS', true);
-
-				$status = $editor->open_file($filename);
-				if (is_string($status))
+				// see if the file to be opened actually exists
+				if (!file_exists("$phpbb_root_path$filename"))
 				{
-					$template->assign_block_vars('error', array(
-						'ERROR'	=> $status,
+					$template->assign_block_vars('edit_files', array(
+						'S_MISSING_FILE' => true,
+	
+						'FILENAME'	=> $filename,
 					));
+					$mod_installed = false;
 				}
-
-				foreach ($edits as $finds)
+				else
 				{
-					foreach ($finds as $find => $commands)
+					$template->assign_block_vars('edit_files', array(
+						'FILENAME'	=> $filename,
+					));
+	
+					$template->assign_var('S_EDITS', true);
+	
+					$status = $editor->open_file($filename);
+					if (is_string($status))
 					{
-						$template->assign_block_vars('edit_files.finds', array(
-							'FIND_STRING'	=> htmlspecialchars($find),
+						$template->assign_block_vars('error', array(
+							'ERROR'	=> $status,
 						));
+					}
 
-						// special case for FINDs with no action associated
-						if (is_null($commands))
+					foreach ($edits as $finds)
+					{
+						foreach ($finds as $find => $commands)
 						{
-							$editor->find($find);
-							continue;
-						}
-
-						foreach ($commands as $type => $contents)
-						{
-							$status = false;
-							$inline_template_ary = array();
-							$contents_orig = $contents;
-
-							switch (strtoupper($type))
+							$template->assign_block_vars('edit_files.finds', array(
+								'FIND_STRING'	=> htmlspecialchars($find),
+							));
+	
+							// special case for FINDs with no action associated
+							if (is_null($commands))
 							{
-								case 'AFTER ADD':
-									$status = $editor->add_string($find, $contents, 'AFTER');
-								break;
+								$editor->find($find);
+								continue;
+							}
 
-								case 'BEFORE ADD':
-									$status = $editor->add_string($find, $contents, 'BEFORE');
-								break;
+							foreach ($commands as $type => $contents)
+							{
+								$status = false;
+								$inline_template_ary = array();
+								$contents_orig = $contents;
 
-								case 'INCREMENT':
-								case 'OPERATION':
-									//$contents = "";
-									$status = $editor->inc_string($find, '', $contents);
-								break;
+								switch (strtoupper($type))
+								{
+									case 'AFTER ADD':
+										$status = $editor->add_string($find, $contents, 'AFTER');
+									break;
 
-								case 'REPLACE WITH':
-									$status = $editor->replace_string($find, $contents);
-								break;
+									case 'BEFORE ADD':
+										$status = $editor->add_string($find, $contents, 'BEFORE');
+									break;
 
-								case 'IN-LINE-EDIT':
-									// these aren't quite as straight forward.  Still have multi-level arrays to sort through
-									foreach ($contents as $inline_find => $inline_edit)
-									{
-										foreach ($inline_edit as $inline_action => $inline_contents)
+									case 'INCREMENT':
+									case 'OPERATION':
+										//$contents = "";
+										$status = $editor->inc_string($find, '', $contents);
+									break;
+
+									case 'REPLACE WITH':
+										$status = $editor->replace_string($find, $contents);
+									break;
+
+									case 'IN-LINE-EDIT':
+										// these aren't quite as straight forward.  Still have multi-level arrays to sort through
+										foreach ($contents as $inline_find => $inline_edit)
 										{
-											// inline finds are pretty contancerous, so so them in the loop
-											$line = $editor->inline_find($find, $inline_find);
-											if (!$line)
+											foreach ($inline_edit as $inline_action => $inline_contents)
 											{
-												// find failed
-												$status = false;
-												continue 2;
-											}
+												// inline finds are pretty contancerous, so so them in the loop
+												$line = $editor->inline_find($find, $inline_find);
+												if (!$line)
+												{
+													// find failed
+													$status = false;
+													continue 2;
+												}
 
-											$inline_contents = $inline_contents[0];
-											$contents = $contents_orig = $inline_contents;
+												$inline_contents = $inline_contents[0];
+												$contents_orig = $inline_find;
+	
+												switch (strtoupper($inline_action))
+												{
+													case 'IN-LINE-BEFORE-ADD':
+														$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
+													break;
+	
+													case 'IN-LINE-AFTER-ADD':
+														$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
+													break;
+	
+													case 'IN-LINE-REPLACE':
+													case 'IN-LINE-REPLACE-WITH':
+														$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
+													break;
+	
+													case 'IN-LINE-OPERATION':
+														$status = $editor->inc_string($find, $inline_find, $inline_contents);
+													break;
+	
+													default:
+														trigger_error("Error, unrecognised command $inline_action"); // ERROR!
+													break;
+												}
 
-											switch (strtoupper($inline_action))
-											{
-												case 'IN-LINE-BEFORE-ADD':
-													$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
-												break;
-
-												case 'IN-LINE-AFTER-ADD':
-													$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
-												break;
-
-												case 'IN-LINE-REPLACE':
-												case 'IN-LINE-REPLACE-WITH':
-													$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
-												break;
-
-												case 'IN-LINE-OPERATION':
-													$status = $editor->inc_string($find, $inline_find, $inline_contents);
-												break;
-
-												default:
-													trigger_error("Error, unrecognised command $inline_action"); // ERROR!
-												break;
-											}
-
-											if ($status)
-											{
-												$inline_template_ary[] = array(
-													'NAME'		=> $user->lang[$inline_action],
-													'COMMAND'	=> (is_array($inline_find)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_find),
-												);
+												if ($status)
+												{
+													$inline_template_ary[] = array(
+														'NAME'		=> $user->lang[$inline_action],
+														'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
+													);
+												}
 											}
 										}
-									}
-								break;
-
-								default:
-									trigger_error("Error, unrecognised command $type"); // ERROR!
-								break;
-							}
-
-							$template->assign_block_vars('edit_files.finds.actions', array(
-								'S_SUCCESS'	=> $status,
-
-								'NAME'		=> $user->lang[$type],
-								'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
-							));
-
-							if (!$status)
-							{
-								$mod_installed = false;
-							}
-
-							// these vars must be assigned after the parent block or else things break
-							if (sizeof($inline_template_ary))
-							{
-								foreach ($inline_template_ary as $inline_template)
-								{
-									$template->assign_block_vars('edit_files.finds.actions.inline', $inline_template);
+									break;
+	
+									default:
+										trigger_error("Error, unrecognised command $type"); // ERROR!
+									break;
 								}
-								$inline_template_ary = array();
+	
+								$template->assign_block_vars('edit_files.finds.actions', array(
+									'S_SUCCESS'	=> $status,
+	
+									'NAME'		=> $user->lang[$type],
+									'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
+								));
+	
+								if (!$status)
+								{
+									$mod_installed = false;
+								}
+	
+								// these vars must be assigned after the parent block or else things break
+								if (sizeof($inline_template_ary))
+								{
+									foreach ($inline_template_ary as $inline_template)
+									{
+										$template->assign_block_vars('edit_files.finds.actions.inline', $inline_template);
+									}
+									$inline_template_ary = array();
+								}
 							}
 						}
 					}
@@ -1086,6 +1055,49 @@ class acp_mods
 				}
 			}
 		} // end foreach
+
+		// Perform SQL queries last -- Queries usually cannot be done a second
+		// time, so do them only if the edits were successful.  Still complies
+		// with the MODX spec in this location
+		if (isset($actions['SQL']) && !empty($actions['SQL']))
+		{
+			$template->assign_var('S_SQL', true);
+
+			parser::parse_sql($actions['SQL']);
+
+			$db->sql_return_on_error(true);
+
+			foreach ($actions['SQL'] as $query)
+			{
+				if ($change && $mod_installed)
+				{
+					$query_success = $db->sql_query($query);
+
+					$template->assign_block_vars('sql_queries', array(
+						'S_SUCCESS'	=> ($query_success) ? true : false,
+						'QUERY'		=> $query,
+					));
+
+					if (!$query_success)
+					{
+						$mod_installed = false;
+					}
+				}
+				else if (!$mod_installed)
+				{
+					$template->assign_var('S_SQL', false);
+				}
+				else if ($display)
+				{
+					$template->assign_block_vars('sql_queries', array(
+						'QUERY'	=> $query,
+					));
+				}
+
+			}
+
+			$db->sql_return_on_error(false);
+		}
 
 		return $mod_installed;
 	}

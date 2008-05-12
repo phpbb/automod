@@ -114,7 +114,7 @@ class editor
 		if (strpos($filename, 'template/') !== false)
 		{
 			// grab template name and filename
-			preg_match('#styles/([a-z0-9_]+)/template/([a-z0-9_]+.html)#i', $filename, $match);
+			preg_match('#styles/([a-z0-9_]+)/template/([a-z0-9_]+.[a-z]+)#i', $filename, $match);
 
 			$sql = 'SELECT d.template_data, d.template_id 
 				FROM ' . STYLES_TEMPLATE_DATA_TABLE . ' d, ' . STYLES_TEMPLATE_TABLE . " t
