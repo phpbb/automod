@@ -203,6 +203,7 @@ class parser_xml
 {
 	var $data;
 	var $file;
+	var $modx_version;
 
 	/**
 	* set data to read from
@@ -244,14 +245,45 @@ class parser_xml
 		$header = $this->data[0]['children']['HEADER'][0]['children'];
 
 		// get MOD version information
-		$version_info = $header['MOD-VERSION'][0]['children'];
-		$version = (isset($version_info['MAJOR'][0]['data'])) ? trim($version_info['MAJOR'][0]['data']) : 0;
-		$version .= '.' . ((isset($version_info['MINOR'][0]['data'])) ? trim($version_info['MINOR'][0]['data']) : 0);
-		$version .= '.' . ((isset($version_info['REVISION'][0]['data'])) ? trim($version_info['REVISION'][0]['data']) : 0);
-		$version .= (isset($version_info['RELEASE'][0]['data'])) ? trim($version_info['RELEASE'][0]['data']) : '';
+		// This is also our first opportunity to differentiate MODX 1.0.x from
+		// MODX 1.2.0.
+		if (isset($header['MOD-VERSION'][0]['children']))
+		{
+			$this->modx_version = 1.0;
+
+			$version_info = $header['MOD-VERSION'][0]['children'];
+			$version = (isset($version_info['MAJOR'][0]['data'])) ? trim($version_info['MAJOR'][0]['data']) : 0;
+			$version .= '.' . ((isset($version_info['MINOR'][0]['data'])) ? trim($version_info['MINOR'][0]['data']) : 0);
+			$version .= '.' . ((isset($version_info['REVISION'][0]['data'])) ? trim($version_info['REVISION'][0]['data']) : 0);
+			$version .= (isset($version_info['RELEASE'][0]['data'])) ? trim($version_info['RELEASE'][0]['data']) : '';
+		}
+		else
+		{
+			$this->modx_version = 1.2;
+
+			$version = $header['MOD-VERSION'][0]['data']; 
+		}
 
 		// get phpBB version recommendation
-		$phpbb_version = isset($header['INSTALLATION'][0]['children']['TARGET-VERSION'][0]['children']) ? $header['INSTALLATION'][0]['children']['TARGET-VERSION'][0]['children'] : array();
+		switch ($this->modx_version)
+		{
+			case 1.0:
+				if (isset($header['INSTALLATION'][0]['children']['TARGET-VERSION'][0]['children']))
+				{
+					$version_info = $header['INSTALLATION'][0]['children']['TARGET-VERSION'][0]['children'];
+
+					$phpbb_version = (isset($version_info['MAJOR'][0]['data'])) ? trim($version_info['MAJOR'][0]['data']) : 0;
+					$phpbb_version .= '.' . ((isset($version_info['MINOR'][0]['data'])) ? trim($version_info['MINOR'][0]['data']) : 0);
+					$phpbb_version .= '.' . ((isset($version_info['REVISION'][0]['data'])) ? trim($version_info['REVISION'][0]['data']) : 0);
+					$phpbb_version .= (isset($version_info['RELEASE'][0]['data'])) ? trim($version_info['RELEASE'][0]['data']) : '';
+				}
+			break;
+
+			case 1.2:
+			default:
+				$phpbb_version = (isset($header['INSTALLATION'][0]['children']['TARGET-VERSION'][0]['data'])) ? $header['INSTALLATION'][0]['children']['TARGET-VERSION'][0]['data'] : 0;
+			break;
+		}
 
 		$author_info = $header['AUTHOR-GROUP'][0]['children']['AUTHOR'];
 
@@ -276,17 +308,28 @@ class parser_xml
 			$changes	= array();
 			$entry		= $history_info[$i]['children'];
 			$changelog	= isset($entry['CHANGELOG'][0]['children']['CHANGE']) ? $entry['CHANGELOG'][0]['children']['CHANGE'] : array();
-			$changelog_version_ary	= (isset($entry['REV-VERSION'][0]['children'])) ? $entry['REV-VERSION'][0]['children'] : array();
 
 			for ($j = 0; $j < sizeof($changelog); $j++)
 			{
 				$changes[] = $changelog[$j]['data'];
 			}
 
-			$changelog_version = (isset($changelog_version_ary['MAJOR'][0]['data'])) ? trim($changelog_version_ary['MAJOR'][0]['data']) : 0;
-			$changelog_version .= '.' . ((isset($changelog_version_ary['MINOR'][0]['data'])) ? trim($changelog_version_ary['MINOR'][0]['data']) : 0);
-			$changelog_version .= '.' . ((isset($changelog_version_ary['REVISION'][0]['data'])) ? trim($changelog_version_ary['REVISION'][0]['data']) : 0);
-			$changelog_version .= (isset($changelog_version_ary['RELEASE'][0]['data'])) ? trim($changelog_version_ary['RELEASE'][0]['data']) : '';
+			switch ($this->modx_version)
+			{
+				case 1.0:
+					$changelog_version_ary	= (isset($entry['REV-VERSION'][0]['children'])) ? $entry['REV-VERSION'][0]['children'] : array();
+
+					$changelog_version = (isset($changelog_version_ary['MAJOR'][0]['data'])) ? trim($changelog_version_ary['MAJOR'][0]['data']) : 0;
+					$changelog_version .= '.' . ((isset($changelog_version_ary['MINOR'][0]['data'])) ? trim($changelog_version_ary['MINOR'][0]['data']) : 0);
+					$changelog_version .= '.' . ((isset($changelog_version_ary['REVISION'][0]['data'])) ? trim($changelog_version_ary['REVISION'][0]['data']) : 0);
+					$changelog_version .= (isset($changelog_version_ary['RELEASE'][0]['data'])) ? trim($changelog_version_ary['RELEASE'][0]['data']) : '';
+				break;
+
+				case 1.2:
+				default:
+					$changelog_version = (isset($entry['REV-VERSION'][0]['data'])) ? $entry['REV-VERSION'][0]['data'] : '0.0.0';
+				break;
+			}
 
 			$mod_history[] = array(
 				'DATE'		=> $entry['DATE'][0]['data'],
@@ -295,6 +338,19 @@ class parser_xml
 			);
 		}
 
+		// Parse links
+		if ($this->modx_version == 1.2)
+		{
+			$link_group = (isset($header['LINK-GROUP'][0]['children'])) ? $header['LINK-GROUP'][0]['children']['LINK'] : array();
+
+			for ($i = 0; $i < sizeof($link_group); $i++)
+			{
+				// do some stuff with attrs
+				$attrs = &$link_group[$i]['attrs'];
+
+				$children[$attrs['TYPE']] = $link_group[$i]['data'];
+			}
+		}
 
 		// try not to hardcode schema?
 		$details = array(
@@ -308,6 +364,8 @@ class parser_xml
 			'AUTHOR_NOTES'		=> (isset($header['AUTHOR-NOTES'][0]['data'])) ? htmlspecialchars(trim($header['AUTHOR-NOTES'][0]['data'])) : '',
 			'MOD_HISTORY'		=> $mod_history,
 			'PHPBB_VERSION'		=> $phpbb_version,
+			'CHILDREN'			=> $children,
+			'MODX_VERSION'		=> $this->modx_version,
 		);
 
 		return $details;
