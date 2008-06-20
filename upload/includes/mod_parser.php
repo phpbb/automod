@@ -338,6 +338,8 @@ class parser_xml
 			);
 		}
 
+		$children = array();
+
 		// Parse links
 		if ($this->modx_version == 1.2)
 		{
