@@ -410,6 +410,8 @@ class acp_mods
 		else
 		{
 			$mod_path = $mod_ident;
+			$this->mod_root = dirname($mod_ident) . '/';
+			$this->mod_root = str_replace($phpbb_root_path, '', $this->mod_root);
 
 			$ext = substr(strrchr($mod_path, '.'), 1);
 
@@ -681,7 +683,7 @@ class acp_mods
 			}
 			else if (strpos('template/', $mod_path) !== false)
 			{
-				$sql_ary['mod_templat'] = $row['mod_templat'] . ',' . core_basename($mod_path);
+				$sql_ary['mod_template'] = $row['mod_template'] . ',' . core_basename($mod_path);
 			}
 
 			$prior_mod_actions = unserialize($row['mod_actions']);
@@ -1137,7 +1139,7 @@ class acp_mods
 				));
 			}
 
-			// TODO: die grzcefully ... decide how to do this.  Probably 
+			// TODO: die gracefully ... decide how to do this.  Probably 
 			// using a confirm_box()
 			trigger_error('MODs Manager currently doesn\'t handle dependencies.');
 		}
@@ -1149,6 +1151,9 @@ class acp_mods
 			// there are things like upgrades...we don't care unless the MOD has previously been installed.
 			foreach ($children['contrib'] as $xml_file)
 			{
+				// Another hack for supporting both versions of MODX
+				$xml_file = (is_array($xml_file)) ? $xml_file['href'] : $xml_file;
+
 				$child_details = $this->mod_details($xml_file, false);
 				$child_details['U_INSTALL'] = $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file";
 
@@ -1170,6 +1175,12 @@ class acp_mods
 				$installed_languages[$row['lang_id']] = $row['lang_iso'];
 			}
 
+			foreach ($children['language'] as $key => $tag)
+			{
+				// remove useless title from MODX 1.2.0 tags
+				$children['language'][$key] = is_array($tag) ? $tag['href'] : $tag;
+			}
+
 			// We _must_ have language xml files that are named "nl.xml" or "en-US.xml" for this to work
 			// it appears that the MODX packaging standards call for this anyway
 			$available_languages = array_map('core_basename', $children['language']);
@@ -1178,7 +1189,8 @@ class acp_mods
 			// $unknown_languages are installed on the board, but not provied for by the MOD
 			$unknown_languages = array_diff($installed_languages, $available_languages);
 
-			// these are langauges which are installed, but not provided for by the MOD
+			// there are langauges which are installed, but not provided for by the MOD
+			// Inform the user.
 			if (sizeof($unknown_languages) && ($action == 'pre_install' || $action == 'details'))
 			{
 				// may wish to rename away from "unknown" for our details mode
@@ -1251,6 +1263,12 @@ class acp_mods
 			while ($row = $db->sql_fetchrow($result))
 			{
 				$installed_templates[$row['template_id']] = $row['template_name'];
+			}
+
+			foreach ($children['template'] as $key => $tag)
+			{
+				// remove useless title from MODX 1.2.0 tags
+				$children['template'][$key] = is_array($tag) ? $tag['href'] : $tag;
 			}
 
 			// We _must_ have language xml files that are named like "subsilver2.xml" for this to work

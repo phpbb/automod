@@ -59,4 +59,56 @@ function core_basename($path)
 	return substr($path, 0, strrpos($path, '.'));
 }
 
+/**
+* Helper function for matching languages
+* This is a fairly dumb function because it ignores dialects.  But I have 
+* not seen any MODs that specify more than one dialect of the same language
+* @param string $user_language - ISO language code of the current user
+* @param string $xml_language - ISO language code of the MODX tag
+* @return bool Whether or not this is a match
+*/
+function match_language($user_language, $xml_language)
+{
+	return strtolower(substr($user_language, 0, 2)) == strtolower(substr($xml_language, 0, 2));
+}
+
+/**
+* Easy method to grab localisable tags from the XML array
+* @param $header - variable holding all relevant tag information
+* @param $tagname - tag name to fetch
+* @return $output - Localised contents of the tag in question
+*/
+function localise_tags($header, $tagname)
+{
+	global $user;
+
+	$output = '';
+
+	if (isset($header[$tagname]) && is_array($header[$tagname]))
+	{
+		foreach ($header[$tagname] as $i => $void)
+		{
+			if (match_language($user->data['user_lang'], $header[$tagname][$i]['attrs']['LANG']))
+			{
+				$output = isset($header[$tagname][$i]['data']) ? htmlspecialchars(trim($header[$tagname][$i]['data'])) : '';
+			}
+		}
+
+		// If there was no language match, put something out there
+		// This is probably fairly common for non-English users of the MODs Manager
+		if (!$output)
+		{
+			$output = isset($header[$tagname][0]['data']) ? htmlspecialchars(trim($header[$tagname][0]['data'])) : '';
+		}
+	}
+
+	if (!$output)
+	{
+		// Should never happen.  If it does, MOD is not valid MODX
+		$output = isset($user->lang['UNKNOWN_MOD_' . $tagname]) ? $user->lang['UNKNOWN_MOD_' . $tagname] : 'UNKNOWN_MOD_' .$tagname;
+	}
+
+	return $output;
+}
+
 ?>

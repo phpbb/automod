@@ -215,14 +215,16 @@ class parser_xml
 	*/
 	function set_file($file)
 	{
+		// Shouldn't ever happen since the master class reads file names from
+		// the file system and lists them
 		if (!file_exists($file))
 		{
-			die('Cannot locate File: ' . $file);
+			trigger_error('Cannot locate File: ' . $file);
 		}
 
 		$this->file = $file;
 		$this->data = trim(@file_get_contents($file));
-		$this->data = str_replace(array("\r\n", "\r"), array("\n", "\n"), $this->data);
+		$this->data = str_replace(array("\r\n", "\r"), "\n", $this->data);
 
 		$XML = new xml_array();
 		$this->data = $XML->parse($this->data);
@@ -295,7 +297,6 @@ class parser_xml
 		$author_info = $header['AUTHOR-GROUP'][0]['children']['AUTHOR'];
 
 		$author_details = array();
-		// this is purposely bugged...for the moment
 		for ($i = 0; $i < sizeof($author_info); $i++)
 		{
 			$author_details[] = array(
@@ -308,25 +309,26 @@ class parser_xml
 
 		// history
 		$history_info = !empty($header['HISTORY'][0]['children']['ENTRY']) ? $header['HISTORY'][0]['children']['ENTRY'] : array();
+		$history_size = sizeof($history_info);
 
 		$mod_history = array();
-		for ($i = 0; $i < sizeof($history_info); $i++)
+		for ($i = 0; $i < $history_size; $i++)
 		{
 			$changes	= array();
 			$entry		= $history_info[$i]['children'];
+			$changelog	= isset($entry['CHANGELOG']) ? $entry['CHANGELOG'] : array();
+			$changelog_size = sizeof($changelog);
 
-/*			TODO: This works well enough with intl english to intl english, but not 
-			so well with en-gb to intl English.  Needs more work.
-			if ($history_info[$i]['attrs']['lang'] != $user->data['user_lang'])
+			for ($j = 0; $j < $changelog_size; $j++)
 			{
-				continue;
-			}
-*/
-			$changelog	= isset($entry['CHANGELOG'][0]['children']['CHANGE']) ? $entry['CHANGELOG'][0]['children']['CHANGE'] : array();
-
-			for ($j = 0; $j < sizeof($changelog); $j++)
-			{
-				$changes[] = $changelog[$j]['data'];
+				// Ignore changelogs in foreign languages except in the case that there is no 
+				// match for the current user's language
+				// TODO: Look at modifying localise_tags() for use here.
+				if (!match_language($user->data['user_lang'], $changelog[$j]['attrs']['LANG']) && $j != ($changelog_size - 1))
+				{
+					continue;
+				}
+				$changes[] = $changelog[0]['children']['CHANGE'][$j]['data'];
 			}
 
 			switch ($this->modx_version)
@@ -365,20 +367,23 @@ class parser_xml
 				// do some stuff with attrs
 				$attrs = &$link_group[$i]['attrs'];
 
-				$children[$attrs['TYPE']][] = $attrs['HREF'];
+				$children[$attrs['TYPE']][] = array(
+					'href'	=> $attrs['HREF'],
+					'title'	=> localise_tags($link_group, 'LINK'),
+				);
 			}
 		}
 
 		// try not to hardcode schema?
 		$details = array(
 			'MOD_PATH' 		=> $this->file,
-			'MOD_NAME'		=> (isset($header['TITLE'][0]['data'])) ? htmlspecialchars(trim($header['TITLE'][0]['data'])) : '',
-			'MOD_DESCRIPTION'	=> (isset($header['DESCRIPTION'][0]['data'])) ? htmlspecialchars(trim($header['DESCRIPTION'][0]['data'])) : '',
+			'MOD_NAME'		=> localise_tags($header, 'TITLE'),
+			'MOD_DESCRIPTION'	=> localise_tags($header, 'DESCRIPTION'),
 			'MOD_VERSION'		=> htmlspecialchars(trim($version)),
-			'MOD_DEPENDENCIES'	=> (isset($header['TITLE'][0]['data'])) ? htmlspecialchars(trim($header['TITLE'][0]['data'])) : '',
+//			'MOD_DEPENDENCIES'	=> (isset($header['TITLE'][0]['data'])) ? htmlspecialchars(trim($header['TITLE'][0]['data'])) : '',
 
 			'AUTHOR_DETAILS'	=> $author_details,
-			'AUTHOR_NOTES'		=> (isset($header['AUTHOR-NOTES'][0]['data'])) ? htmlspecialchars(trim($header['AUTHOR-NOTES'][0]['data'])) : '',
+			'AUTHOR_NOTES'		=> nl2br(localise_tags($header, 'AUTHOR-NOTES')),
 			'MOD_HISTORY'		=> $mod_history,
 			'PHPBB_VERSION'		=> $phpbb_version,
 			'CHILDREN'			=> $children,
