@@ -56,6 +56,11 @@ class parser
 		return $this->parser->get_actions();
 	}
 
+	function get_modx_version()
+	{
+		return $this->parser->modx_version;
+	}
+
 	/**
 	* Returns the needed sql query to reverse the actions taken by the given query
 	* @todo: Add more
@@ -230,6 +235,8 @@ class parser_xml
 	*/
 	function get_details()
 	{
+		global $user;
+
 		if (empty($this->data))
 		{
 			$this->set_file($this->mod_file);
@@ -261,7 +268,7 @@ class parser_xml
 		{
 			$this->modx_version = 1.2;
 
-			$version = $header['MOD-VERSION'][0]['data']; 
+			$version = trim($header['MOD-VERSION'][0]['data']); 
 		}
 
 		// get phpBB version recommendation
@@ -307,6 +314,14 @@ class parser_xml
 		{
 			$changes	= array();
 			$entry		= $history_info[$i]['children'];
+
+/*			TODO: This works well enough with intl english to intl english, but not 
+			so well with en-gb to intl English.  Needs more work.
+			if ($history_info[$i]['attrs']['lang'] != $user->data['user_lang'])
+			{
+				continue;
+			}
+*/
 			$changelog	= isset($entry['CHANGELOG'][0]['children']['CHANGE']) ? $entry['CHANGELOG'][0]['children']['CHANGE'] : array();
 
 			for ($j = 0; $j < sizeof($changelog); $j++)
@@ -350,7 +365,7 @@ class parser_xml
 				// do some stuff with attrs
 				$attrs = &$link_group[$i]['attrs'];
 
-				$children[$attrs['TYPE']] = $link_group[$i]['data'];
+				$children[$attrs['TYPE']][] = $attrs['HREF'];
 			}
 		}
 
@@ -367,7 +382,6 @@ class parser_xml
 			'MOD_HISTORY'		=> $mod_history,
 			'PHPBB_VERSION'		=> $phpbb_version,
 			'CHILDREN'			=> $children,
-			'MODX_VERSION'		=> $this->modx_version,
 		);
 
 		return $details;
@@ -378,17 +392,34 @@ class parser_xml
 	*/
 	function get_actions()
 	{
-		global $table_prefix;
-	
+		global $table_prefix, $db;
+
 		$actions = array();
 
 		$xml_actions = $this->data[0]['children']['ACTION-GROUP'][0]['children'];
 
 		// sql
+		$actions['SQL'] = array();
 		$sql_info = (!empty($xml_actions['SQL'])) ? $xml_actions['SQL'] : array();
 		for ($i = 0; $i < sizeof($sql_info); $i++)
 		{
-			$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim(str_replace('phpbb_', $table_prefix, $sql_info[$i]['data'])) : '';
+			if ($this->modx_version == 1.0)
+			{
+				$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim(str_replace('phpbb_', $table_prefix, $sql_info[$i]['data'])) : '';
+			}
+			else if ($this->modx_version == 1.2)
+			{
+				// This is not perfect.  Probably needs to do a match for any MySQL 
+				// type if the correct one does not exist.
+				if (!isset($sql_info[$i]['attrs']['DBMS']) || $sql_info[$i]['attrs']['DBMS'] == $db->sql_layer)
+				{
+					$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim(str_replace('phpbb_', $table_prefix, $sql_info[$i]['data'])) : '';
+				}
+				else
+				{
+					$sql_skipped = true;
+				}
+			}
 		}
 
 		// new files
@@ -490,7 +521,8 @@ class parser_xml
 						}
 					}
 
-					/* This loop attaches the in-line information to the _last
+					/*
+					* This loop attaches the in-line information to the _last
 					* find_ in the <edit> tag.  This is the intended behavior
 					* Any additional finds ought to be in a different edit tag
 					*/
@@ -504,7 +536,7 @@ class parser_xml
 						{
 							$type = str_replace(',', '-', str_replace(' ', '', $inline_actions[$l]['attrs']['TYPE']));
 
-							// trying to reduce the levels of arrays without impairing features
+							// trying to reduce the levels of arrays without impairing features.
 							// need to keep the "full" edit intact.
 							//
 							// inline actions must be trimmed in case the MOD author

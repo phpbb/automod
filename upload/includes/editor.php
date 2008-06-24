@@ -273,6 +273,7 @@ class editor
 		{
 			for ($j = 0; $j < $find_lines; $j++)
 			{
+				$find_ary[$j] = trim($find_ary[$j]);
 				if (!$find_ary[$j])
 				{
 					// line is blank.  Assume we can find a blank line, and continue on
