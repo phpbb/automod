@@ -26,17 +26,54 @@ define('WRITE_MANUAL', 3);
 */
 class editor
 {
+	/**
+	* Holds contents of file
+	*/
 	var $file_contents = '';
+
+	/**
+	* Holds the filename of the currently open file
+	*/
+	var $open_filename = '';
+
+	/**
+	* Full action array with complete finds
+	*/
+	var $mod_actions = array();
+
+	/**
+	* One of the three constants defined above
+	*/
 	var $write_method = 0;
-	var $start_index = 0;
+
+	/**
+	* Transfer object for $this->write_method == WRITE_FTP
+	*/
 	var $transfer;
+
+	/**
+	* Compress object for $this->write_method == WRITE_MANUAL
+	*/
 	var $compress;
+
+	/**
+	* Keeps finds sequential, plus loop optimization
+	*/
+	var $start_index = 0;
+
+	/**
+	* Time when MOD was installed
+	*/
 	var $install_time = 0;
+
+	/**
+	* Only used when board has templates stored in the database
+	*/ 
 	var $template_id = 0;
 
 	/**
 	* Constructor method
-	* Creates transfer and/or compress instances
+	* Creates transfer and/or compress instances as needed
 	*/
 	function editor($phpbb_root_path, $pre_install = false)
 	{
@@ -78,6 +115,8 @@ class editor
 				include($phpbb_root_path . 'includes/functions_compress.' . $phpEx);
 			}
 
+			// Ugly regular expression to extract "tar" from "tar.gz" or "tar.bz2"
+			// Made ugly because it does nothing with "zip"
 			preg_match('#\.(\w{3})\.?.*#', $config['compress_method'], $match);
 			$class = 'compress_' . $match[1];
 
@@ -85,6 +124,7 @@ class editor
 		}
 		else
 		{
+			// We cannot go on without a write method set up.
 			trigger_error('MODS_SETUP_INCOMPLETE', E_USER_ERROR);
 		}
 	}
@@ -102,6 +142,7 @@ class editor
 	* Open a file with IO, for processing
 	*
 	* @param string $filename - relative path from phpBB Root to the file to open
+	* 		e.g. viewtopic.php, styles/prosilver/templates/index_body.html
 	*/
 	function open_file($filename)
 	{
@@ -135,6 +176,11 @@ class editor
 		}
 
 
+		/* 
+		* If the file does not exist, or is empty, die.
+		* Non existant files cannot be edited, and empty files will have no
+		* finds
+		*/
 		if (!sizeof($this->file_contents))
 		{
 			global $user;
@@ -142,6 +188,7 @@ class editor
 		}
 
 		$this->start_index = 0;
+		$this->open_filename = $filename;
 	}
 
 	/**
@@ -151,6 +198,9 @@ class editor
 	* @param $to string Where to move the file(s) to. If not specified then will get moved to the root folder
 	* @param $strip Used for FTP only
 	* @return mixed: Bool true on success, error string on failure, NULL if no action was taken
+	* 
+	* NOTE: function should preferably not return in case of failure on only one file.  
+	* 	The current method makes error handling difficult 
 	*/
 	function copy_content($from, $to = '', $strip = '')
 	{
@@ -159,6 +209,13 @@ class editor
 		if (strpos($from, $phpbb_root_path) !== 0)
 		{
 			$from = $phpbb_root_path . $from;
+		}
+
+		// When installing a MODX 1.2.0 MOD, this happens once in a long while.
+		// Not sure why yet.
+		if (is_array($to))
+		{
+			return NULL;
 		}
 
 		if (strpos($to, $phpbb_root_path) !== 0)
@@ -185,7 +242,7 @@ class editor
 		// is the directory writeable? if so, then we don't have to deal with FTP
 		if ($this->write_method == WRITE_DIRECT)
 		{
-			// Look at the last character of $to and compares it to /
+			// Look at the last character of $to and compare it to '/'
 			if ($to[strlen($to) - 1] == '/')
 			{
 				$dirname_check = $to;
@@ -322,6 +379,13 @@ class editor
 				if ($find_success == $find_lines)
 				{
 					// we found the proper number of lines
+					/* note: this causes a small problem when finding the same thing
+					* twice in a row in a file.  In those situations, start_index 
+					* should be set to $i+1.  However, this is preferable behavior
+					* since it is more likely that we will want to perform
+					* a second action on the same find than to find the same
+					* thing twice in a row
+					*/
 					$this->start_index = $i;
 
 					// return our array offsets
@@ -368,6 +432,8 @@ class editor
 			unset($offsets);
 		}
 
+		// cast is required in case someone tries to find a number
+		// Often done in colspan="7" type inline operations
 		$inline_find = (string) $inline_find;
 
 		// similar method to find().  Just much more limited scope
@@ -420,6 +486,13 @@ class editor
 			unset($offsets);
 		}
 
+		$full_find = array();
+		for ($i = $start_offset; $i <= $end_offset; $i++)
+		{
+			$full_find[] = $this->file_contents[$i];
+			$this->file_contents[$i] = '';
+		}
+
 		// make sure our new lines are correct
 		$add = "\n" . $add . "\n";
 
@@ -433,11 +506,13 @@ class editor
 			$this->file_contents[$start_offset] = $add . $this->file_contents[$start_offset];
 		}
 
+		$this->build_uninstall(implode("\n", $full_find), NULL, strtolower($pos) . ' add', $add);
+
 		return true;
 	}
 
 	/**
-	* Increment (or perform custom operation) on  the given wildcard
+	* Increment (or perform other mathematical operation) on the given wildcard
 	* Support multiple wildcards {%:1}, {%:2} etc...
 	* This method is a variation on the inline find and replace methods
 	*
@@ -487,6 +562,8 @@ class editor
 		// $start_offset _should_ equal $end_offset, but we allow other cases
 		for ($i = $start_offset; $i <= $end_offset; $i++)
 		{
+			// This is intended.  We turn the MODX token into something PCRE can
+			// understand.
 			$inline_find = preg_replace('#{%:(\d+)}#', '(\d+)', $inline_find);
 
 			if (preg_match('#' . $inline_find . '#is', $this->file_contents[$i], $find_contents))
@@ -541,13 +618,17 @@ class editor
 			unset($offsets);
 		}
 
-		// remove each line
+		// remove each line from the file, but add it to $full_find
+		$full_find = array();
 		for ($i = $start_offset; $i <= $end_offset; $i++)
 		{
+			$full_find[] = $this->file_contents[$i];
 			$this->file_contents[$i] = '';
 		}
 
 		$this->file_contents[$start_offset] = rtrim($replace) . "\n";
+
+		$this->build_uninstall(implode("\n", $full_find), NULL, 'replace-with', $replace);
 
 		return true;
 	}
@@ -575,6 +656,9 @@ class editor
 		}
 
 		$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_replace, $string_offset, $length);
+
+		// This isn't a full find, but it is the closest we can get
+		$this->build_uninstall($find, $inline_find, 'in-line-replace', $inline_replace);
 
 		return true;
 	}
@@ -624,6 +708,8 @@ class editor
 		{
 			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset, 0);
 		}
+
+		$this->build_uninstall($find, $inline_find, 'in-line-' . strtolower($pos) . '-add', $inline_add);
 
 		return true;
 	}
@@ -751,6 +837,52 @@ class editor
 		return true;
 	}
 
+	/**
+	* Function to build full edits such that uninstall will work more often
+	* 
+	* @param $find - The largest find we can put together -- sometimes this
+	* 		comes from the file itself, other times from the MODX file
+	* @param $inline_find - Subset of $find or NULL
+	* @param $action_type - Name of the MODX action being taken
+	* @param $action - The code which is being inserted into the file
+	* @return void
+	*/
+	function build_uninstall($find, $inline_find, $action_type, $action)
+	{
+		$find = trim($find);
+		$inline_find = trim($inline_find);
+		$action = trim($action);
+
+		// Build another complex array of MOD Actions
+		// This approach is rather memory-intensive ... it might behoove us
+		// to think of something else
+		if (!$inline_find)
+		{
+			$this->mod_actions[$this->open_filename][] = array(
+				$find => array(
+					$action_type => $action,
+				)
+			);
+		}
+		else
+		{
+			$this->mod_actions[$this->open_filename][] = array(
+				$find => array(
+					'in-line-edit'	=> array(
+						$inline_find	=> array(
+							$action_type	=> array($action),
+						),
+					),
+				),
+			);
+		}
+	}
+
+	function clear_actions()
+	{
+		// free some memory
+		$this->mod_actions = array();
+	}
 }
 
 /**

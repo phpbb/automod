@@ -251,38 +251,37 @@
 	<!-- ENDIF -->
 
 	<!-- IF S_EDITS -->
+	<h2>{L_FILE_EDITS}</h2>
+	<!-- BEGIN edit_files -->
 	<fieldset>
-		<legend>{L_FILE_EDITS}</legend>
-		<!-- BEGIN edit_files -->
-			<fieldset>
-				<legend>{edit_files.FILENAME}</legend>
-				<!-- IF edit_files.S_MISSING_FILE -->
-				<strong><font color="red">{L_FILE_MISSING}</font></strong>
-				<!-- ENDIF -->
-				<!-- BEGIN finds -->
-					<fieldset>
-						<legend>{L_FIND}</legend>
-						<pre>{edit_files.finds.FIND_STRING}</pre>
-						<!-- IF edit_files.finds.S_MISSING_FIND -->
-						<strong><font color="red">{L_FIND_MISSING}</font></strong>
-						<!-- ENDIF -->
-						<!-- BEGIN actions -->
-							<fieldset>
-								<legend>{edit_files.finds.actions.NAME}</legend>
-								<pre>{edit_files.finds.actions.COMMAND}</pre>
-								<!-- BEGIN inline -->
-									<fieldset>
-										<legend>{edit_files.finds.actions.inline.NAME}</legend>
-										<pre>{edit_files.finds.actions.inline.COMMAND}</pre>
-									</fieldset>
-								<!-- END inline -->
-							</fieldset>
-						<!-- END actions -->
-					</fieldset>
-				<!-- END finds -->
+		<legend>{edit_files.FILENAME}</legend>
+		<!-- IF edit_files.S_MISSING_FILE -->
+		<strong><font color="red">{L_FILE_MISSING}</font></strong>
+		<!-- ENDIF -->
+		<!-- BEGIN finds -->
+		<fieldset>
+			<h4>{L_FIND}</h4>
+			<pre style="overflow-x: scroll;">{edit_files.finds.FIND_STRING}</pre>
+			<!-- IF edit_files.finds.S_MISSING_FIND -->
+			<strong><font color="red">{L_FIND_MISSING}</font></strong>
+			<!-- ENDIF -->
+			<!-- BEGIN actions -->
+				<div>
+					<hr />
+					<h4>{edit_files.finds.actions.NAME}</h4>
+					<pre style="overflow-x: scroll;">{edit_files.finds.actions.COMMAND}</pre>
+					<!-- BEGIN inline -->
+						<fieldset>
+							<legend>{edit_files.finds.actions.inline.NAME}</legend>
+							<pre style="overflow-x: scroll;">{edit_files.finds.actions.inline.COMMAND}</pre>
+						</fieldset>
+					<!-- END inline -->
+				</div>
+			<!-- END actions -->
 			</fieldset>
+		<!-- END finds -->
+		</fieldset>
 		<!-- END edit_files -->
-	</fieldset>
 	<!-- ENDIF -->
 
 	<!-- IF S_NEW_FILES or S_EDITS or S_SQL -->
@@ -382,7 +381,7 @@
 		<legend>{L_SQL_QUERIES}</legend>
 		<!-- BEGIN sql_queries -->
 			<fieldset>
-				<strong><!-- IF sql_queries.S_SUCCESS --><font color="green">{L_SUCCESS}:</font><!-- ELSE --><font color="red">{L_ERROR}:</font><!-- ENDIF -->&nbsp;{sql_queries.QUERY}</strong>
+				<strong><!-- IF sql_queries.S_SUCCESS --><font color="green">{L_SUCCESS}:</font><!-- ELSE --><font color="red">{L_ERROR}:</font><!-- ENDIF --> {sql_queries.ERROR_MSG} <br />{sql_queries.QUERY}</strong>
 			</fieldset>
 		<!-- END sql_queries -->
 	</fieldset>
@@ -583,81 +582,5 @@
 	</fieldset>
 	</form>
 <!-- ENDIF -->
-
-
-<!-- IF S_PREPARE_INSTALL -->
-
-	<h1>{L_PREPARE_INSTALL}</h1>
-
-	<p>{L_PREPARE_INSTALL_EXPLAIN}</p>
-
-	<fieldset>
-		<legend>{L_AUTHOR_NOTES}</legend>
-		<!-- IF AUTHOR_NOTES --><p>{AUTHOR_NOTES}</p><!-- ELSE --><p>{L_NO_AUTHOR_NOTES}</p><!-- ENDIF -->
-	</fieldset>
-
-	<fieldset>
-		<legend>{L_NEW_FILES}</legend>
-		<!-- IF .new_files -->
-			<table cellspacing="1">
-			<thead>
-			<tr>
-				<th>{L_SOURCE}</th>
-				<th>{L_TARGET}</th>
-			</tr>
-			</thead>
-			<tbody>
-				<!-- BEGIN new_files -->
-					<!-- IF new_files.S_ROW_COUNT is even --><tr class="row1"><!-- ELSE --><tr class="row2"><!-- ENDIF -->
-						<td>{new_files.SOURCE}</td>
-						<td>{new_files.TARGET}</td>
-					<tr>
-				<!-- END new_files -->
-			</tbody>
-			</table>
-		<!-- ELSE -->
-			<p>{L_NO_NEW_FILES}</p>
-		<!-- ENDIF -->
-	</fieldset>
-
-	<fieldset>
-		<legend>{L_SQL_STATEMENTS}</legend>
-		<!-- IF SQL_STATEMENTS --><p>{SQL_STATEMENTS}</p><!-- ELSE --><p>{L_NO_SQL_STATEMENTS}</p><!-- ENDIF -->
-	</fieldset>
-
-	<fieldset>
-		<legend>{L_MODIFICATIONS}</legend>
-		<!-- IF .edit_files -->
-			<!-- BEGIN edit_files -->
-				<fieldset>
-					<legend>{edit_files.FILENAME}</legend>
-					<!-- BEGIN finds -->
-						<fieldset>
-							<legend>{L_FIND}</legend>
-							<pre>{edit_files.finds.FIND_STRING}</pre>
-							<!-- BEGIN actions -->
-								<fieldset>
-									<legend>{edit_files.finds.actions.NAME}</legend>
-									<pre>{edit_files.finds.actions.COMMAND}</pre>
-								</fieldset>
-							<!-- END actions -->
-						</fieldset>
-					<!-- END finds -->
-				</fieldset>
-			<!-- END edit_files -->
-		<!-- ELSE -->
-			<p>{L_NO_MODIFICATIONS}</p>
-		<!-- ENDIF -->
-	</fieldset>
-
-	<form id="install" method="post" action="{U_INSTALL}">
-	<fieldset class="quick" style="float: left;">
-		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
-		<input class="button2" name="submit" type="submit" value="{L_INSTALL}" />
-	</fieldset>
-	</form>
-
-<!-- ENDIF -->
-
 
 <!-- INCLUDE overall_footer.html -->

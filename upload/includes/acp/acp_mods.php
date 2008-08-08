@@ -386,7 +386,7 @@ class acp_mods
 					'MOD_ID'			=> $row['mod_id'],
 					'MOD_PATH'			=> $row['mod_path'],
 					'MOD_INSTALL_TIME'	=> $user->format_date($row['mod_time']),
-					'MOD_DEPENDENCIES'	=> unserialize($row['mod_dependencies']), // ?
+//					'MOD_DEPENDENCIES'	=> unserialize($row['mod_dependencies']), // ?
 					'MOD_NAME'			=> htmlspecialchars($row['mod_name']),
 					'MOD_DESCRIPTION'	=> nl2br($row['mod_description']),
 					'MOD_VERSION'		=> $row['mod_version'],
@@ -459,6 +459,11 @@ class acp_mods
 		}
 		else
 		{
+			if (strpos($mod_ident, $this->mod_root) === false)
+			{
+				$mod_ident = $phpbb_root_path . $this->mod_root . $mod_ident;
+			}
+
 			$this->parser->set_file($mod_ident);
 			$actions = $this->parser->get_actions();
 		}
@@ -634,6 +639,9 @@ class acp_mods
 			'U_RETURN'		=> $this->u_action,
 		));
 
+		$actions['EDITS'] = $editor->mod_actions;
+		$editor->clear_actions();
+
 		// if MOD installed successfully, make a record.
 		if (($mod_installed || $force_install) && !$parent)
 		{
@@ -641,7 +649,7 @@ class acp_mods
 			$sql = 'INSERT INTO ' . MODS_TABLE . ' ' . $db->sql_build_array('INSERT', array(
 				'mod_time'			=> (int) $editor->install_time,
 				// @todo: Are dependencies part of the MODX Spec?
-				'mod_dependencies'	=> (string) serialize($details['MOD_DEPENDENCIES']),
+				'mod_dependencies'	=> '', //(string) serialize($details['MOD_DEPENDENCIES']),
 				'mod_name'			=> (string) $details['MOD_NAME'],
 				'mod_description'	=> (string) $details['MOD_DESCRIPTION'],
 				'mod_version'		=> (string) $details['MOD_VERSION'],
@@ -815,7 +823,7 @@ class acp_mods
 					$mods = array_merge($mods, $this->find_mods("$dir/$file", $recurse - 1));
 				}
 				// this might be better as an str function, especially being in a loop
-				else if (preg_match('#xml$#i', $file))
+				else if (preg_match('#.*install.*xml$#i', $file))
 				{
 					// if this is an "extra" MODX file, make a record of it as such
 					// we are assuming the MOD follows MODX packaging standards here
@@ -1071,13 +1079,24 @@ class acp_mods
 				{
 					$query_success = $db->sql_query($query);
 
-					$template->assign_block_vars('sql_queries', array(
-						'S_SUCCESS'	=> ($query_success) ? true : false,
-						'QUERY'		=> $query,
-					));
-
-					if (!$query_success)
+					if ($query_success)
 					{
+						$template->assign_block_vars('sql_queries', array(
+							'S_SUCCESS'	=> ($query_success) ? true : false,
+							'QUERY'		=> $query,
+						));
+					}
+					else
+					{
+						$error = $db->sql_error();
+
+						$template->assign_block_vars('sql_queries', array(
+							'S_SUCCESS'	=> ($query_success) ? true : false,
+							'QUERY'		=> $query,
+							'ERROR_MSG'	=> $error['message'],
+							'ERROR_CODE'=> $error['code'], 
+						));
+
 						$mod_installed = false;
 					}
 				}
@@ -1087,7 +1106,6 @@ class acp_mods
 						'QUERY'	=> $query,
 					));
 				}
-
 			}
 
 			$db->sql_return_on_error(false);
@@ -1114,7 +1132,12 @@ class acp_mods
 		global $db, $template, $phpbb_root_path;
 
 		$elements = $children = array();
-		if ($this->parser->get_modx_version() == 1.2)
+
+		if ($action == 'details')
+		{
+			// do nothing
+		}
+		else if ($this->parser->get_modx_version() == 1.2 && $action != 'details')
 		{
 			// TODO: eww, yuck ... processing the XML again?
 			$details = $this->mod_details($mod_path, false);
@@ -1216,8 +1239,10 @@ class acp_mods
 				// add the actions to our $actions array...give praise to array_merge_recursive
 				foreach ($process_languages as $key => $void)
 				{
+					$children['template'][$key] = (is_array($children['template'][$key])) ? $children['template'][$key]['href'] : $children['template'][$key];
+
 					// Prepend the proper directory structure if it is not already there
-					if (strpos($children['template'][$key], $phpbb_root_path . $this->mod_root) !== 0)
+					if (isset($children['template'][$key]) && strpos($children['template'][$key], $phpbb_root_path . $this->mod_root) !== 0)
 					{
 						$children['template'][$key] = $phpbb_root_path . $this->mod_root . $children['template'][$key];
 					}

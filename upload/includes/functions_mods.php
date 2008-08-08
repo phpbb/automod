@@ -88,6 +88,12 @@ function localise_tags($header, $tagname)
 	{
 		foreach ($header[$tagname] as $i => $void)
 		{
+			if (!isset($header[$tagname][$i]['attrs']['LANG']))
+			{
+				// avoid notice...although, if we get here, MODX is invalid.
+				continue;
+			}
+
 			if (match_language($user->data['user_lang'], $header[$tagname][$i]['attrs']['LANG']))
 			{
 				$output = isset($header[$tagname][$i]['data']) ? htmlspecialchars(trim($header[$tagname][$i]['data'])) : '';

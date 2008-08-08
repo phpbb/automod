@@ -21,6 +21,8 @@
 *		~ returns an array of information about the MOD
 *	~ get_actions()
 *		~ returns an array of the MODs actions
+*	~ get_modx_version
+*		~ returns the MODX version of the MOD being looked at
 *
 */
 class parser
@@ -251,6 +253,8 @@ class parser_xml
 			'HISTORY'		=> array(0 => array('children' => array('ENTRY' => array()))),
 		);
 
+		$version = $phpbb_version = '';
+
 		$header = $this->data[0]['children']['HEADER'][0]['children'];
 
 		// get MOD version information
@@ -318,7 +322,7 @@ class parser_xml
 			$entry		= $history_info[$i]['children'];
 			$changelog	= isset($entry['CHANGELOG']) ? $entry['CHANGELOG'] : array();
 			$changelog_size = sizeof($changelog);
-
+/*
 			for ($j = 0; $j < $changelog_size; $j++)
 			{
 				// Ignore changelogs in foreign languages except in the case that there is no 
@@ -330,7 +334,7 @@ class parser_xml
 				}
 				$changes[] = $changelog[0]['children']['CHANGE'][$j]['data'];
 			}
-
+*/
 			switch ($this->modx_version)
 			{
 				case 1.0:
@@ -360,15 +364,23 @@ class parser_xml
 		// Parse links
 		if ($this->modx_version == 1.2)
 		{
-			$link_group = (isset($header['LINK-GROUP'][0]['children'])) ? $header['LINK-GROUP'][0]['children']['LINK'] : array();
+			$link_group = (isset($header['LINK-GROUP'][0]['children'])) ? $header['LINK-GROUP'][0]['children']: array();
+
 
 			for ($i = 0; $i < sizeof($link_group); $i++)
 			{
 				// do some stuff with attrs
-				$attrs = &$link_group[$i]['attrs'];
+				// commented out due to a possible PHP bug.  When using this, 
+				// sizeof($link_group) changed each time ...
+				// $attrs = &$link_group[$i]['attrs'];
 
-				$children[$attrs['TYPE']][] = array(
-					'href'	=> $attrs['HREF'],
+				if (!isset($link_grup[$i]))
+				{
+					continue;
+				}
+
+				$children[$link_group[$i]['attrs']['TYPE']][] = array(
+					'href'	=> $link_group[$i]['attrs']['HREF'],
 					'title'	=> localise_tags($link_group, 'LINK'),
 				);
 			}
@@ -414,9 +426,15 @@ class parser_xml
 			}
 			else if ($this->modx_version == 1.2)
 			{
-				// This is not perfect.  Probably needs to do a match for any MySQL 
-				// type if the correct one does not exist.
-				if (!isset($sql_info[$i]['attrs']['DBMS']) || $sql_info[$i]['attrs']['DBMS'] == $db->sql_layer)
+				// Take away anything after an _ and all integers for this
+				// comparison
+				$test_dbms = preg_replace('#[0-9]#', '', $db->sql_layer);
+				$test_dbms = substr($test_dbms, 0, strpos($test_dbms, '_'));
+
+				// Make a slightly shorter name.
+				$xml_dbms = &$sql_info[$i]['attrs']['DBMS'];
+
+				if (!isset($sql_info[$i]['attrs']['DBMS']) || $xml_dbms == $db->sql_layer || $xml_dbms == $test_dbms)
 				{
 					$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim(str_replace('phpbb_', $table_prefix, $sql_info[$i]['data'])) : '';
 				}
