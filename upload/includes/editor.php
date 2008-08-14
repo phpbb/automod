@@ -490,7 +490,6 @@ class editor
 		for ($i = $start_offset; $i <= $end_offset; $i++)
 		{
 			$full_find[] = $this->file_contents[$i];
-			$this->file_contents[$i] = '';
 		}
 
 		// make sure our new lines are correct
