@@ -78,7 +78,7 @@ function match_language($user_language, $xml_language)
 * @param $tagname - tag name to fetch
 * @return $output - Localised contents of the tag in question
 */
-function localise_tags($header, $tagname)
+function localise_tags($header, $tagname, $index = false)
 {
 	global $user;
 
@@ -88,6 +88,12 @@ function localise_tags($header, $tagname)
 	{
 		foreach ($header[$tagname] as $i => $void)
 		{
+			// Ugly.
+			if ($index !== false && $index != $i)
+			{
+				continue;
+			}
+
 			if (!isset($header[$tagname][$i]['attrs']['LANG']))
 			{
 				// avoid notice...although, if we get here, MODX is invalid.

@@ -107,10 +107,22 @@ class parser
 		$remove_remarks = $available_dbms[$dbms]['COMMENTS'];
 		$delimiter = $available_dbms[$dbms]['DELIM'];
 
-		$sql_query = implode(' ', $sql_query);
-		$sql_query = preg_replace('#phpbb_#i', $table_prefix, $sql_query);
-		$remove_remarks($sql_query);
-		$sql_query = split_sql_file($sql_query, $delimiter);
+		if (!is_array($sql_query))
+		{
+			// do some splitting here
+			$sql_query = preg_replace('#phpbb_#i', $table_prefix, $sql_query);
+			$remove_remarks($sql_query[$i]);
+			$sql_query = split_sql_file($sql_query, $delimiter);
+		}
+		else
+		{
+			$query_count = sizeof($sql_query);
+			for ($i = 0; $i < $query_count; $i++)
+			{
+				$sql_query[$i] = preg_replace('#phpbb_#i', $table_prefix, $sql_query[$i]);
+				$remove_remarks($sql_query[$i]);
+			}
+		}
 
 		//return $sql_query;
 	}
@@ -364,24 +376,23 @@ class parser_xml
 		// Parse links
 		if ($this->modx_version == 1.2)
 		{
-			$link_group = (isset($header['LINK-GROUP'][0]['children'])) ? $header['LINK-GROUP'][0]['children']: array();
+			$link_group = (isset($header['LINK-GROUP'][0]['children'])) ? $header['LINK-GROUP'][0]['children'] : array();
 
-
-			for ($i = 0; $i < sizeof($link_group); $i++)
+			for ($i = 0; $i <= sizeof($link_group); $i++)
 			{
 				// do some stuff with attrs
 				// commented out due to a possible PHP bug.  When using this, 
 				// sizeof($link_group) changed each time ...
 				// $attrs = &$link_group[$i]['attrs'];
 
-				if (!isset($link_grup[$i]))
+				if (!isset($link_group['LINK'][$i]))
 				{
 					continue;
 				}
 
-				$children[$link_group[$i]['attrs']['TYPE']][] = array(
-					'href'	=> $link_group[$i]['attrs']['HREF'],
-					'title'	=> localise_tags($link_group, 'LINK'),
+				$children[$link_group['LINK'][$i]['attrs']['TYPE']][] = array(
+					'href'	=> $link_group['LINK'][$i]['attrs']['HREF'],
+					'title'	=> localise_tags($link_group, 'LINK', $i),
 				);
 			}
 		}
@@ -418,8 +429,10 @@ class parser_xml
 		// sql
 		$actions['SQL'] = array();
 		$sql_info = (!empty($xml_actions['SQL'])) ? $xml_actions['SQL'] : array();
+
 		for ($i = 0; $i < sizeof($sql_info); $i++)
 		{
+//print_r($sql_info[$i]);
 			if ($this->modx_version == 1.0)
 			{
 				$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim(str_replace('phpbb_', $table_prefix, $sql_info[$i]['data'])) : '';
@@ -444,7 +457,9 @@ class parser_xml
 				}
 			}
 		}
-
+//echo '<strong>FOO!</strong><br /><br />';
+//print_r($actions['SQL']);
+//exit;
 		// new files
 		$new_files_info = (!empty($xml_actions['COPY'])) ? $xml_actions['COPY'] : array();
 		for ($i = 0; $i < sizeof($new_files_info); $i++)
