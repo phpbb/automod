@@ -432,7 +432,6 @@ class parser_xml
 
 		for ($i = 0; $i < sizeof($sql_info); $i++)
 		{
-//print_r($sql_info[$i]);
 			if ($this->modx_version == 1.0)
 			{
 				$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim(str_replace('phpbb_', $table_prefix, $sql_info[$i]['data'])) : '';
@@ -457,9 +456,7 @@ class parser_xml
 				}
 			}
 		}
-//echo '<strong>FOO!</strong><br /><br />';
-//print_r($actions['SQL']);
-//exit;
+
 		// new files
 		$new_files_info = (!empty($xml_actions['COPY'])) ? $xml_actions['COPY'] : array();
 		for ($i = 0; $i < sizeof($new_files_info); $i++)
