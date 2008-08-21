@@ -430,6 +430,50 @@ class parser_xml
 		$actions['SQL'] = array();
 		$sql_info = (!empty($xml_actions['SQL'])) ? $xml_actions['SQL'] : array();
 
+		$match_dbms = array();
+		switch ($db->sql_layer)
+		{
+			case 'firebird':
+			case 'oracle':
+			case 'postgres':
+			case 'sqlite':
+			case 'mssql':
+			case 'db2':
+				$match_dbms = array($db->sql_layer);
+			break;
+
+			case 'mssql_odbc':
+				$match_dbms = array('mssql');
+			break;
+
+			// and now for the MySQL fun
+			// This will generate an array of things we can probably use, but	
+			// will not have any priority
+			case 'mysqli':
+				$match_dbms = array('mysql_41', 'mysqli', 'mysql');
+			break;
+
+			case 'mysql4':
+			case 'mysql':
+				if (version_compare($db->mysql_version, '4.1.3', '>='))
+				{
+					$match_dbms = array('mysql_41', 'mysql4', 'mysql', 'mysqli');
+				}
+				else if (version_compare($db->mysql_version, '4.0.0', '>='))
+				{
+					$match_dbms = array('mysql_40', 'mysql4', 'mysql', 'mysqli');
+				}
+				else
+				{
+					$match_dbms = array('mysql');
+				}
+			break;
+
+			// Should never happen
+			default:
+			break;
+		}
+
 		for ($i = 0; $i < sizeof($sql_info); $i++)
 		{
 			if ($this->modx_version == 1.0)
@@ -438,20 +482,16 @@ class parser_xml
 			}
 			else if ($this->modx_version == 1.2)
 			{
-				// Take away anything after an _ and all integers for this
-				// comparison
-				$test_dbms = preg_replace('#[0-9]#', '', $db->sql_layer);
-				$test_dbms = substr($test_dbms, 0, strpos($test_dbms, '_'));
-
 				// Make a slightly shorter name.
 				$xml_dbms = &$sql_info[$i]['attrs']['DBMS'];
 
-				if (!isset($sql_info[$i]['attrs']['DBMS']) || $xml_dbms == $db->sql_layer || $xml_dbms == $test_dbms)
+				if (!isset($sql_info[$i]['attrs']['DBMS']) || in_array($xml_dbms, $match_dbms))
 				{
 					$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim(str_replace('phpbb_', $table_prefix, $sql_info[$i]['data'])) : '';
 				}
 				else
 				{
+					// NOTE: skipped SQL is not currently useful
 					$sql_skipped = true;
 				}
 			}
