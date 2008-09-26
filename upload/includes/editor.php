@@ -331,12 +331,6 @@ class editor
 			for ($j = 0; $j < $find_lines; $j++)
 			{
 				$find_ary[$j] = trim($find_ary[$j]);
-				if (!$find_ary[$j])
-				{
-					// line is blank.  Assume we can find a blank line, and continue on
-					$find_success += 1;
-					continue;
-				}
 
 				// if we've reached the EOF, the find failed.
 				if (!isset($this->file_contents[$i + $j]))
@@ -344,11 +338,16 @@ class editor
 					return false;
 				}
 
+				if (!$find_ary[$j])
+				{
+					// line is blank.  Assume we can find a blank line, and continue on
+					$find_success += 1;
+				}
 				// using $this->file_contents[$i + $j] to keep the array pointer where I want it
 				// if the first line of the find (index 0) is being looked at, $i + $j = $i.
 				// if $j is > 0, we look at the next line of the file being inspected
 				// hopefully, this is a decent performer.
-				if (strpos($this->file_contents[$i + $j], $find_ary[$j]) !== false)
+				else if (strpos($this->file_contents[$i + $j], $find_ary[$j]) !== false)
 				{
 					// we found this part of the find
 					$find_success += 1;
@@ -379,13 +378,6 @@ class editor
 				if ($find_success == $find_lines)
 				{
 					// we found the proper number of lines
-					/* note: this causes a small problem when finding the same thing
-					* twice in a row in a file.  In those situations, start_index 
-					* should be set to $i+1.  However, this is preferable behavior
-					* since it is more likely that we will want to perform
-					* a second action on the same find than to find the same
-					* thing twice in a row
-					*/
 					$this->start_index = $i;
 
 					// return our array offsets
@@ -400,6 +392,15 @@ class editor
 
 		// if return has not been previously invoked, the find failed.
 		return false;
+	}
+
+	/**
+	* This function is used to determine when an edit has ended, so we know that 
+	* the current line will not be looked at again.  This fixes some former bugs.
+	*/
+	function close_edit()
+	{
+		$this->start_index++;
 	}
 
 	/**
@@ -894,8 +895,13 @@ class editor
 * @param integer This one is used internally to control recursion level.
 * @return array List of all files found matching the specified pattern.
 */
-function find_files($directory, $pattern, $max_levels = 3, $_current_level = 1)
+function find_files($directory, $pattern, $max_levels = 4, $_current_level = 1)
 {
+	if ($_current_level == $max_levels && DEBUG)
+	{
+		add_log('admin', 'MAX_LEVELS_FIND_FILES');
+	}
+
 	if ($_current_level <= 1)
 	{
 		if (strpos($directory, '\\') !== false)

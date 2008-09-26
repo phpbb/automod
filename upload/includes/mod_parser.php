@@ -107,12 +107,12 @@ class parser
 		$remove_remarks = $available_dbms[$dbms]['COMMENTS'];
 		$delimiter = $available_dbms[$dbms]['DELIM'];
 
-		if (!is_array($sql_query))
+		if (sizeof($sql_query) == 1)
 		{
 			// do some splitting here
 			$sql_query = preg_replace('#phpbb_#i', $table_prefix, $sql_query);
-			$remove_remarks($sql_query[$i]);
-			$sql_query = split_sql_file($sql_query, $delimiter);
+			$remove_remarks($sql_query);
+			$sql_query = split_sql_file($sql_query[0], $delimiter);
 		}
 		else
 		{
@@ -149,13 +149,13 @@ class parser
 							// this isn't perfect, but it seems better than having
 							// finds of only a couple characters, like "/*"
 							case 'AFTER ADD':
-								$total_find = $find . "\n" . $command;
+								$total_find = $find . "\n\n" . $command;
 
 								$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
 							break;
 
 							case 'BEFORE ADD':
-								$total_find = $command . "\n" . $find;
+								$total_find = $command . "\n\n" . $find;
 
 								// replace with the find
 								$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
