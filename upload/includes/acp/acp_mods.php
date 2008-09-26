@@ -849,7 +849,7 @@ class acp_mods
 
 	function process_edits($editor, $actions, $details, $change = false, $display = true, $reverse = false)
 	{
-		global $template, $user, $db, $phpbb_root_path;
+		global $template, $user, $db, $phpbb_root_path, $force_install;
 
 		$mod_installed = true;
 
@@ -930,15 +930,21 @@ class acp_mods
 								'FIND_STRING'	=> htmlspecialchars($find),
 							));
 	
+							$offset_ary = $editor->find($find);
+
 							// special case for FINDs with no action associated
 							if (is_null($commands))
 							{
-								$editor->find($find);
 								continue;
 							}
 
 							foreach ($commands as $type => $contents)
 							{
+								if (!$offset_ary)
+								{
+									$offset_ary['start'] = $offset_ary['end'] = false;
+								}
+
 								$status = false;
 								$inline_template_ary = array();
 								$contents_orig = $contents;
@@ -946,11 +952,11 @@ class acp_mods
 								switch (strtoupper($type))
 								{
 									case 'AFTER ADD':
-										$status = $editor->add_string($find, $contents, 'AFTER');
+										$status = $editor->add_string($find, $contents, 'AFTER', $offset_ary['start'], $offset_ary['end']);
 									break;
 
 									case 'BEFORE ADD':
-										$status = $editor->add_string($find, $contents, 'BEFORE');
+										$status = $editor->add_string($find, $contents, 'BEFORE', $offset_ary['start'], $offset_ary['end']);
 									break;
 
 									case 'INCREMENT':
@@ -960,7 +966,7 @@ class acp_mods
 									break;
 
 									case 'REPLACE WITH':
-										$status = $editor->replace_string($find, $contents);
+										$status = $editor->replace_string($find, $contents, $offset_ary['start'], $offset_ary['end']);
 									break;
 
 									case 'IN-LINE-EDIT':
@@ -1044,6 +1050,8 @@ class acp_mods
 								}
 							}
 						}
+
+						$editor->close_edit();
 					}
 				}
 
@@ -1065,7 +1073,7 @@ class acp_mods
 		// Perform SQL queries last -- Queries usually cannot be done a second
 		// time, so do them only if the edits were successful.  Still complies
 		// with the MODX spec in this location
-		if (isset($actions['SQL']) && !empty($actions['SQL']) && $mod_installed)
+		if (!empty($actions['SQL']) && ($mod_installed || $force_install))
 		{
 			$template->assign_var('S_SQL', true);
 
@@ -1187,9 +1195,7 @@ class acp_mods
 		if (isset($children['language']) && sizeof($children['language']))
 		{
 			// additional languages are available...find out which ones we may want to apply
-			// we don't care about english because it is included in the main MODX file
-			$sql = 'SELECT lang_id, lang_iso FROM ' . LANG_TABLE . "
-				WHERE lang_iso <> 'en'";
+			$sql = 'SELECT lang_id, lang_iso FROM ' . LANG_TABLE;
 			$result = $db->sql_query($sql);
 
 			$installed_languages = array();
@@ -1203,6 +1209,7 @@ class acp_mods
 				// remove useless title from MODX 1.2.0 tags
 				$children['language'][$key] = is_array($tag) ? $tag['href'] : $tag;
 			}
+			$children['language'] = array_unique($children['language']);
 
 			// We _must_ have language xml files that are named "nl.xml" or "en-US.xml" for this to work
 			// it appears that the MODX packaging standards call for this anyway
@@ -1259,6 +1266,7 @@ class acp_mods
 					foreach ($actions_ary['NEW_FILES'] as $source => $destination)
 					{
 						// if the source file does not exist, and languages/ is not at the beginning
+						// this is probably only applicable with MODX 1.0.
 						if (!file_exists($phpbb_root_path . $this->mod_root . $source) && strpos('languages/', $source) === false)
 						{
 							// and it does exist if we force a languages/ into the path
@@ -1295,6 +1303,7 @@ class acp_mods
 				// remove useless title from MODX 1.2.0 tags
 				$children['template'][$key] = is_array($tag) ? $tag['href'] : $tag;
 			}
+			$children['template'] = array_unique($children['template']);
 
 			// We _must_ have language xml files that are named like "subsilver2.xml" for this to work
 			$available_templates = array_map('core_basename', $children['template']);
