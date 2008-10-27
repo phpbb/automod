@@ -116,11 +116,13 @@ function localise_tags($header, $tagname, $index = false)
 
 	if (!$output)
 	{
-		// Should never happen.  If it does, MOD is not valid MODX
+		// Should never happen.  If it does, either the MOD is not valid MODX
+		// or the tag being localised is optional
 		$output = isset($user->lang['UNKNOWN_MOD_' . $tagname]) ? $user->lang['UNKNOWN_MOD_' . $tagname] : 'UNKNOWN_MOD_' .$tagname;
 	}
 
 	return $output;
 }
+
 
 ?>

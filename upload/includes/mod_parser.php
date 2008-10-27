@@ -401,7 +401,7 @@ class parser_xml
 		$details = array(
 			'MOD_PATH' 		=> $this->file,
 			'MOD_NAME'		=> localise_tags($header, 'TITLE'),
-			'MOD_DESCRIPTION'	=> localise_tags($header, 'DESCRIPTION'),
+			'MOD_DESCRIPTION'	=> nl2br(localise_tags($header, 'DESCRIPTION')),
 			'MOD_VERSION'		=> htmlspecialchars(trim($version)),
 //			'MOD_DEPENDENCIES'	=> (isset($header['TITLE'][0]['data'])) ? htmlspecialchars(trim($header['TITLE'][0]['data'])) : '',
 
@@ -420,7 +420,7 @@ class parser_xml
 	*/
 	function get_actions()
 	{
-		global $table_prefix, $db;
+		global $table_prefix, $db, $user;
 
 		$actions = array();
 
@@ -627,7 +627,10 @@ class parser_xml
 		{
 			foreach ($xml_actions['DIY-INSTRUCTIONS'] as $diy_instruction_set)
 			{
-				$actions['DIY_INSTRUCTIONS'][] = $diy_instruction_set['data'];
+				if (match_language($user->data['user_lang'], $diy_instruction_set['attrs']['LANG']))
+				{
+					$actions['DIY_INSTRUCTIONS'][] = $diy_instruction_set['data'];
+				}
 			}
 		}
 

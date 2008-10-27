@@ -265,6 +265,11 @@ class editor
 				if (is_dir($to))
 				{
 					$dest = str_replace($from, $to, $file);
+
+					if (!file_exists($dest))
+					{
+						$this->recursive_mkdir(dirname($dest));
+					}
 				}
 				else
 				{
