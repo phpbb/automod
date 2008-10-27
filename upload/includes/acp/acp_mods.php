@@ -859,7 +859,7 @@ class acp_mods
 			$actions = parser::reverse_edits($actions);
 		}
 
-		if (!empty($details['AUTHOR_NOTES']))
+		if (!empty($details['AUTHOR_NOTES']) && $details['AUTHOR_NOTES'] != $user->lang['UNKNOWN_MOD_AUTHOR-NOTES'])
 		{
 			$template->assign_vars(array(
 				'S_AUTHOR_NOTES'	=> true,
