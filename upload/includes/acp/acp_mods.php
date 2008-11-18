@@ -859,6 +859,8 @@ class acp_mods
 			$actions = parser::reverse_edits($actions);
 		}
 
+		$template->assign_var('S_DISPLAY_DETAILS', (bool) $display);
+
 		if (!empty($details['AUTHOR_NOTES']) && $details['AUTHOR_NOTES'] != $user->lang['UNKNOWN_MOD_AUTHOR-NOTES'])
 		{
 			$template->assign_vars(array(
@@ -911,7 +913,7 @@ class acp_mods
 					$template->assign_block_vars('edit_files', array(
 						'FILENAME'	=> $filename,
 					));
-	
+
 					$template->assign_var('S_EDITS', true);
 	
 					$status = $editor->open_file($filename);
@@ -976,7 +978,7 @@ class acp_mods
 											foreach ($inline_edit as $inline_action => $inline_contents)
 											{
 												// inline finds are pretty contancerous, so so them in the loop
-												$line = $editor->inline_find($find, $inline_find);
+												$line = $editor->inline_find($find, $inline_find, $offset_ary['start'], $offset_ary['end']);
 												if (!$line)
 												{
 													// find failed

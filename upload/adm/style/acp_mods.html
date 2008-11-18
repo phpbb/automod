@@ -98,7 +98,7 @@
 		</dl>
 		<dl>
 			<dt><label for="author_url">{L_AUTHOR_URL}:</label></dt>
-			<dd><strong id="author_url">{author_list.AUTHOR_WEBSITE}</strong></dd>
+			<dd><strong id="author_url"><a href="{author_list.AUTHOR_WEBSITE}">{author_list.AUTHOR_WEBSITE}</a></strong></dd>
 		</dl>
 		<!-- END author_list -->
 	</fieldset>
@@ -215,74 +215,7 @@
 	</form>
 
 
-	<!-- IF S_NEW_FILES -->
-	<fieldset>
-		<legend>{L_NEW_FILES}</legend>
-
-		<table cellspacing="1">
-			<col class="row1" width="50%" /><col class="row2" />
-		<thead>
-		<tr>
-			<th>{L_SOURCE}</th>
-			<th>{L_TARGET}</th>
-		</tr>
-		</thead>
-		<tbody>
-			<!-- BEGIN new_files -->
-				<tr>
-					<td><strong>{new_files.SOURCE}</strong><!-- IF new_files.S_MISSING_FILE -->&nbsp;&nbsp;&nbsp;<strong><font color="red">({L_FILE_MISSING})</font></strong>&nbsp;<!-- ENDIF --></td>
-					<td>{new_files.TARGET}</td>
-				</tr>
-			<!-- END new_files -->
-		</tbody>
-		</table>
-	</fieldset>
-	<!-- ENDIF -->
-
-	<!-- IF S_SQL -->
-	<fieldset>
-		<legend>{L_SQL_QUERIES}</legend>
-		<!-- BEGIN sql_queries -->
-			<fieldset>
-				<strong>{sql_queries.QUERY}</strong>
-			</fieldset>
-		<!-- END sql_queries -->
-	</fieldset>
-	<!-- ENDIF -->
-
-	<!-- IF S_EDITS -->
-	<h2>{L_FILE_EDITS}</h2>
-	<!-- BEGIN edit_files -->
-	<fieldset>
-		<legend>{edit_files.FILENAME}</legend>
-		<!-- IF edit_files.S_MISSING_FILE -->
-		<strong><font color="red">{L_FILE_MISSING}</font></strong>
-		<!-- ENDIF -->
-		<!-- BEGIN finds -->
-		<fieldset>
-			<h4>{L_FIND}</h4>
-			<pre style="overflow-x: scroll;">{edit_files.finds.FIND_STRING}</pre>
-			<!-- IF edit_files.finds.S_MISSING_FIND -->
-			<strong><font color="red">{L_FIND_MISSING}</font></strong>
-			<!-- ENDIF -->
-			<!-- BEGIN actions -->
-				<div>
-					<hr />
-					<h4>{edit_files.finds.actions.NAME}</h4>
-					<pre style="overflow-x: scroll;">{edit_files.finds.actions.COMMAND}</pre>
-					<!-- BEGIN inline -->
-						<fieldset>
-							<legend>{edit_files.finds.actions.inline.NAME}</legend>
-							<pre style="overflow-x: scroll;">{edit_files.finds.actions.inline.COMMAND}</pre>
-						</fieldset>
-					<!-- END inline -->
-				</div>
-			<!-- END actions -->
-			</fieldset>
-		<!-- END finds -->
-		</fieldset>
-		<!-- END edit_files -->
-	<!-- ENDIF -->
+	<!-- INCLUDE acp_mods_actions.html -->
 
 	<!-- IF S_NEW_FILES or S_EDITS or S_SQL -->
 	<form id="acp_mods" method="post" action="{U_INSTALL}">
@@ -350,75 +283,7 @@
 	</fieldset>
 	<!-- ENDIF -->
 
-	<!-- IF S_NEW_FILES -->
-	<fieldset>
-		<legend>{L_NEW_FILES}</legend>
-
-		<table cellspacing="1">
-			<col class="row1" /><col class="row1" /><col class="row2" />
-		<thead>
-		<tr>
-			<th>{L_SOURCE}</th>
-			<th>{L_TARGET}</th>
-			<th>{L_STATUS}</th>
-		</tr>
-		</thead>
-		<tbody>
-			<!-- BEGIN new_files -->
-				<tr>
-					<td><strong>{new_files.SOURCE}</strong></td>
-					<td>{new_files.TARGET}</td>
-					<td><!-- IF new_files.S_SUCCESS --><font color="green">{L_SUCCESS}</font><!-- ELSEIF S_NO_ATTEMPT -->{L_MANUAL_COPY}<!-- ELSE --><font color="red">{L_ERROR}</font><!-- ENDIF --></td>
-				<tr>
-			<!-- END new_files -->
-		</tbody>
-		</table>
-	</fieldset>
-	<!-- ENDIF -->
-
-	<!-- IF S_SQL -->
-	<fieldset>
-		<legend>{L_SQL_QUERIES}</legend>
-		<!-- BEGIN sql_queries -->
-			<fieldset>
-				<strong><!-- IF sql_queries.S_SUCCESS --><font color="green">{L_SUCCESS}:</font><!-- ELSE --><font color="red">{L_ERROR}:</font><!-- ENDIF --> {sql_queries.ERROR_MSG} <br />{sql_queries.QUERY}</strong>
-			</fieldset>
-		<!-- END sql_queries -->
-	</fieldset>
-	<!-- ENDIF -->
-
-	<!-- IF S_EDITS -->
-	<fieldset>
-		<legend>{L_FILE_EDITS}</legend>
-		<!-- BEGIN edit_files -->
-			<fieldset>
-				<legend>{edit_files.FILENAME}</legend>
-				<!-- IF edit_files.S_MISSING_FILE -->
-				<strong><font color="red">{L_FILE_MISSING}</font></strong>
-				<!-- ENDIF -->
-				<!-- BEGIN finds -->
-					<fieldset>
-						<legend>{L_FIND}</legend>
-						<pre>{edit_files.finds.FIND_STRING}</pre>
-						<!-- BEGIN actions -->
-							<fieldset>
-								<legend>{edit_files.finds.actions.NAME}</legend>
-								<pre>{edit_files.finds.actions.COMMAND}</pre>
-								<!-- BEGIN inline -->
-									<fieldset>
-										<legend>{edit_files.finds.actions.inline.NAME}</legend>
-										<!-- IF edit_files.finds.actions.S_SUCCESS --><pre>{edit_files.finds.actions.inline.COMMAND}</pre><!-- ELSE --><span>{L_FIND_FAILED}</span><!-- ENDIF -->
-									</fieldset>
-								<!-- END inline -->
-							</fieldset>
-							<!-- IF edit_files.finds.actions.S_SUCCESS --><font color="green">{L_SUCCESS}</font><!-- ELSE --><font color="red">{L_ERROR}</font><!-- ENDIF -->
-						<!-- END actions -->
-					</fieldset>
-				<!-- END finds -->
-			</fieldset>
-		<!-- END edit_files -->
-	</fieldset>
-	<!-- ENDIF -->
+	<!-- INCLUDE acp_mods_actions.html -->
 
 	<form id="acp_mods" method="post" action="{U_RETURN}">
 	<fieldset class="submit-buttons">
@@ -533,7 +398,7 @@
 	</fieldset>
 	</form>
 
-	<br/>
+	<br />
 
 	<a href="{U_BACK}" style="float: right">&laquo; {L_BACK}</a>
 
