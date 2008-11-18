@@ -924,12 +924,20 @@ class acp_mods
 						));
 					}
 
+					$comment = '';
 					foreach ($edits as $finds)
 					{
 						foreach ($finds as $find => $commands)
 						{
+							if ($find == 'comment')
+							{
+								$comment = $commands;
+								continue;
+							}
+
 							$template->assign_block_vars('edit_files.finds', array(
 								'FIND_STRING'	=> htmlspecialchars($find),
+								'COMMENT'		=> htmlspecialchars($comment),
 							));
 	
 							$offset_ary = $editor->find($find);
@@ -973,9 +981,17 @@ class acp_mods
 
 									case 'IN-LINE-EDIT':
 										// these aren't quite as straight forward.  Still have multi-level arrays to sort through
-										foreach ($contents as $inline_find => $inline_edit)
+										$inline_comment = '';
+										foreach ($contents as $inline_find => $inline_commands)
 										{
-											foreach ($inline_edit as $inline_action => $inline_contents)
+											if ($inline_find == 'inline-comment')
+											{
+												// This is a special case for tucking comments in the array
+												$inline_comment = $inline_commands;
+												continue;
+											}
+
+											foreach ($inline_commands as $inline_action => $inline_contents)
 											{
 												// inline finds are pretty contancerous, so so them in the loop
 												$line = $editor->inline_find($find, $inline_find, $offset_ary['start'], $offset_ary['end']);
@@ -1018,12 +1034,13 @@ class acp_mods
 													$inline_template_ary[] = array(
 														'NAME'		=> $user->lang[$inline_action],
 														'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
+														'COMMENT'	=> $inline_comment,
 													);
 												}
 											}
 										}
 									break;
-	
+
 									default:
 										trigger_error("Error, unrecognised command $type"); // ERROR!
 									break;
@@ -1034,6 +1051,7 @@ class acp_mods
 	
 									'NAME'		=> $user->lang[$type],
 									'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
+									'COMMENT'	=> $comment,
 								));
 	
 								if (!$status)

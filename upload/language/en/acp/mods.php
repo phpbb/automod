@@ -41,6 +41,7 @@ $lang = array_merge($lang, array(
 	'CHANGE_DATE'	=> 'Release Date',
 	'CHANGE_VERSION'=> 'Version Number',
 	'CHANGES'		=> 'Changes',
+	'COMMENT'		=> 'Comment',
 
 	'DIY_INSTRUCTIONS'	=> 'Do It Yourself Instructions',
 	'DESCRIPTION'	=> 'Description',
