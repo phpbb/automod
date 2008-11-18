@@ -111,7 +111,7 @@ class parser
 		{
 			// do some splitting here
 			$sql_query = preg_replace('#phpbb_#i', $table_prefix, $sql_query);
-			$remove_remarks($sql_query);
+			$remove_remarks($sql_query[0]);
 			$sql_query = split_sql_file($sql_query[0], $delimiter);
 		}
 		else
@@ -562,7 +562,7 @@ class parser_xml
 							// this is the last iteration, assign the find/action combo
 							// hopefully, it is safe to assume there is only one action 
 							$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
-							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])][$type] = $action_info['ACTION'][0]['data'];
+							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])][$type] = (isset($action_info['ACTION'][0]['data'])) ? $action_info['ACTION'][0]['data'] : '';
 						}
 					}
 				}
