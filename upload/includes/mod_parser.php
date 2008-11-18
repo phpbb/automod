@@ -578,7 +578,7 @@ class parser_xml
 				}
 
 				// add comment to the actions array
-				$actions['EDITS'][$current_file][$j]['comment'] = $action_info['COMMENT'][0]['data'];
+				$actions['EDITS'][$current_file][$j]['comment'] = (isset($action_info['COMMENT'][0]['data'])) ? $action_info['COMMENT'][0]['data'] : '';
 
 				// inline
 				if (isset($action_info['INLINE-EDIT']))

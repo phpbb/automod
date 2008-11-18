@@ -73,7 +73,7 @@
 		</table>
 			<!-- ELSE -->
 			<fieldset>
-				<strong><!-- IF sql_queries.S_SUCCESS --><font color="green">{L_SUCCESS}:</font><br /><!-- ELSE --><font color="red">{L_ERROR}:</font>{sql_queries.ERROR_MSG}<br /><!-- ENDIF -->{sql_queries.QUERY}</strong>
+				<strong><!-- IF S_CHANGE_FILES --><!-- IF sql_queries.S_SUCCESS --><font color="green">{L_SUCCESS}:</font><br /><!-- ELSE --><font color="red">{L_ERROR}:</font>{sql_queries.ERROR_MSG}<br /><!-- ENDIF --><!-- ENDIF -->{sql_queries.QUERY}</strong>
 			</fieldset>
 			<!-- ENDIF -->
 		<!-- END sql_queries -->
@@ -106,9 +106,9 @@
 						<h4 style="margin: 0; padding:0;">{edit_files.finds.actions.inline.NAME}</h4>
 						<!-- IF edit_files.finds.actions.inline.COMMENT --><p><strong>{L_COMMENT}</strong>:<p>{edit_files.finds.actions.inline.COMMENT}</p><!-- ENDIF -->
 						<pre style="overflow-x: scroll;">{edit_files.finds.actions.inline.COMMAND}</pre>
-						<!-- IF not edit_files.finds.actions.inline.S_SUCCESS --><span>{L_INLINE_FIND_MISSING}</span><!-- ENDIF -->
+						<!-- IF not edit_files.finds.actions.inline.S_SUCCESS and S_CHANGE_FILES --><span>{L_INLINE_FIND_MISSING}</span><!-- ENDIF -->
 					<!-- END inline -->
-					<!-- IF edit_files.finds.actions.S_SUCCESS --><font color="green">{L_SUCCESS}</font><!-- ELSE --><font color="red">{L_FIND_MISSING}</font><!-- ENDIF -->
+					<!-- IF S_CHANGE_FILES --><!-- IF edit_files.finds.actions.S_SUCCESS --><font color="green">{L_SUCCESS}</font><!-- ELSE --><font color="red">{L_FIND_MISSING}</font><!-- ENDIF --><!-- ENDIF -->
 				</div>
 			<!-- END actions -->
 			</fieldset>
