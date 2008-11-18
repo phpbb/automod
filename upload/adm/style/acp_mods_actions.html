@@ -91,6 +91,7 @@
 		<!-- BEGIN finds -->
 		<fieldset>
 			<h4 style="margin: 0; padding:0;">{L_FIND}</h4>
+			<!-- IF edit_files.finds.COMMENT --><p><strong>{L_COMMENT}</strong>: {edit_files.finds.COMMENT}</p><!-- ENDIF -->
 			<pre style="overflow-x: scroll;">{edit_files.finds.FIND_STRING}</pre>
 			<!-- IF edit_files.finds.S_MISSING_FIND -->
 			<strong><font color="red">{L_FIND_MISSING}</font></strong>
@@ -103,6 +104,7 @@
 					<!-- BEGIN inline -->
 						<hr style="padding-top: 10px; margin-top: 10px;" />
 						<h4 style="margin: 0; padding:0;">{edit_files.finds.actions.inline.NAME}</h4>
+						<!-- IF edit_files.finds.actions.inline.COMMENT --><p><strong>{L_COMMENT}</strong>:<p>{edit_files.finds.actions.inline.COMMENT}</p><!-- ENDIF -->
 						<pre style="overflow-x: scroll;">{edit_files.finds.actions.inline.COMMAND}</pre>
 						<!-- IF not edit_files.finds.actions.inline.S_SUCCESS --><span>{L_INLINE_FIND_MISSING}</span><!-- ENDIF -->
 					<!-- END inline -->

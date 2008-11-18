@@ -577,6 +577,9 @@ class parser_xml
 					}
 				}
 
+				// add comment to the actions array
+				$actions['EDITS'][$current_file][$j]['comment'] = $action_info['COMMENT'][0]['data'];
+
 				// inline
 				if (isset($action_info['INLINE-EDIT']))
 				{
@@ -606,6 +609,10 @@ class parser_xml
 						$inline_actions = (!empty($inline_info[$k]['children'])) ? $inline_info[$k]['children'] : array();
 
 						$inline_find = $inline_actions['INLINE-FIND'][0]['data'];
+
+						$inline_comment = (isset($inline_actions['INLINE-COMMENT'][0]['data'])) ? $inline_actions['INLINE-COMMENT'][0]['data'] : '';
+						$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'])]['in-line-edit']['inline-comment'] = $inline_comment;
+
 						$inline_actions = (!empty($inline_actions['INLINE-ACTION'])) ? $inline_actions['INLINE-ACTION'] : array();
 						for ($l = 0; $l < sizeof($inline_actions); $l++)
 						{
