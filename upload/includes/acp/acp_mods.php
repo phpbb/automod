@@ -859,7 +859,10 @@ class acp_mods
 			$actions = parser::reverse_edits($actions);
 		}
 
-		$template->assign_var('S_DISPLAY_DETAILS', (bool) $display);
+		$template->assign_vars(array(
+			'S_DISPLAY_DETAILS'	=> (bool) $display,
+			'S_CHANGE_FILES'	=> (bool) $change,
+		));
 
 		if (!empty($details['AUTHOR_NOTES']) && $details['AUTHOR_NOTES'] != $user->lang['UNKNOWN_MOD_AUTHOR-NOTES'])
 		{
@@ -1032,6 +1035,8 @@ class acp_mods
 												if ($status)
 												{
 													$inline_template_ary[] = array(
+														'S_SUCCESS'	=> $status,
+
 														'NAME'		=> $user->lang[$inline_action],
 														'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
 														'COMMENT'	=> $inline_comment,
