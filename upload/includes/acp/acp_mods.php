@@ -927,14 +927,19 @@ class acp_mods
 						));
 					}
 
-					$comment = '';
 					foreach ($edits as $finds)
 					{
+						$comment = '';
 						foreach ($finds as $find => $commands)
 						{
+							if (isset($finds['comment']) && !$comment && $finds['comment'] != $user->lang['UNKNOWN_MOD_COMMENT'])
+							{
+								$comment = $finds['comment'];
+								unset($finds['comment']);
+							}
+
 							if ($find == 'comment')
 							{
-								$comment = $commands;
 								continue;
 							}
 
@@ -1056,7 +1061,6 @@ class acp_mods
 	
 									'NAME'		=> $user->lang[$type],
 									'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
-									'COMMENT'	=> $comment,
 								));
 	
 								if (!$status)

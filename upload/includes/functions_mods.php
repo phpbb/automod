@@ -76,6 +76,7 @@ function match_language($user_language, $xml_language)
 * Easy method to grab localisable tags from the XML array
 * @param $header - variable holding all relevant tag information
 * @param $tagname - tag name to fetch
+* @param $index - Index number to pull.  Not required.
 * @return $output - Localised contents of the tag in question
 */
 function localise_tags($header, $tagname, $index = false)
