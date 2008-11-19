@@ -536,18 +536,9 @@ class parser_xml
 				}
 
 				$find_count = sizeof($action_info['FIND']);
-
 				// first we try all the possibilities for a FIND/ACTION combo, then look at inline possibilities.
 
-				// straight edit, no inline
-				// simple 1:1 relation between find and action
-				if (isset($action_info['ACTION']) && $find_count == $action_count)
-				{
-					$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
-					$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])][$type] = isset($action_info['ACTION'][0]['data']) ? $action_info['ACTION'][0]['data'] : '';
-				}
-				// there is at least one find simply to advance the array pointer
-				else if (isset($action_info['ACTION']) && $find_count > $action_count)
+				if (isset($action_info['ACTION']))
 				{
 					for ($k = 0; $k < $find_count; $k++)
 					{
@@ -559,26 +550,19 @@ class parser_xml
 						}
 						else
 						{
-							// this is the last iteration, assign the find/action combo
-							// hopefully, it is safe to assume there is only one action 
-							$type = str_replace('-', ' ', $action_info['ACTION'][0]['attrs']['TYPE']);
-							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])][$type] = (isset($action_info['ACTION'][0]['data'])) ? $action_info['ACTION'][0]['data'] : '';
+							// this is the last iteration, assign the action tags 
+			
+							for ($l = 0; $l < $action_count; $l++)
+							{
+								$type = str_replace('-', ' ', $action_info['ACTION'][$l]['attrs']['TYPE']);
+								$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])][$type] = (isset($action_info['ACTION'][$l]['data'])) ? $action_info['ACTION'][$l]['data'] : '';
+							}
 						}
-					}
-				}
-				// in this case, there are many actions on one find
-				// assumption: $find_count = 1
-				else if (isset($action_info['ACTION']) && $action_count > $find_count)
-				{
-					for ($k = 0; $k < $action_count; $k++)
-					{
-						$type = str_replace('-', ' ', $action_info['ACTION'][$k]['attrs']['TYPE']);
-						$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][0]['data'])][$type] = $action_info['ACTION'][$k]['data'];
 					}
 				}
 
 				// add comment to the actions array
-				$actions['EDITS'][$current_file][$j]['comment'] = (isset($action_info['COMMENT'][0]['data'])) ? $action_info['COMMENT'][0]['data'] : '';
+				$actions['EDITS'][$current_file][$j]['comment'] = localise_tags($action_info, 'COMMENT');
 
 				// inline
 				if (isset($action_info['INLINE-EDIT']))
@@ -610,7 +594,7 @@ class parser_xml
 
 						$inline_find = $inline_actions['INLINE-FIND'][0]['data'];
 
-						$inline_comment = (isset($inline_actions['INLINE-COMMENT'][0]['data'])) ? $inline_actions['INLINE-COMMENT'][0]['data'] : '';
+						$inline_comment = localise_tags($inline_actions, 'INLINE-COMMENT');
 						$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'])]['in-line-edit']['inline-comment'] = $inline_comment;
 
 						$inline_actions = (!empty($inline_actions['INLINE-ACTION'])) ? $inline_actions['INLINE-ACTION'] : array();

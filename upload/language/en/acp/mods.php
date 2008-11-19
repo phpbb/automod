@@ -117,6 +117,7 @@ $lang = array_merge($lang, array(
 	'TARGET'		=> 'Target',
 
 	'UNKNOWN_MOD_AUTHOR-NOTES'	=> 'No Author Notes were specified.',
+	'UNKNOWN_MOD_COMMENT'		=> 'No comment.',
 	'UNKNOWN_QUERY_REVERSE' => 'Unknown reverse query',
 
 	'UNINSTALL'				=> 'Uninstall',
