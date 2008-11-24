@@ -1278,12 +1278,12 @@ class acp_mods
 				// add the actions to our $actions array...give praise to array_merge_recursive
 				foreach ($process_languages as $key => $void)
 				{
-					$children['template'][$key] = (is_array($children['template'][$key])) ? $children['template'][$key]['href'] : $children['template'][$key];
+					$children['language'][$key] = (is_array($children['language'][$key])) ? $children['language'][$key]['href'] : $children['language'][$key];
 
 					// Prepend the proper directory structure if it is not already there
-					if (isset($children['template'][$key]) && strpos($children['template'][$key], $phpbb_root_path . $this->mod_root) !== 0)
+					if (isset($children['language'][$key]) && strpos($children['language'][$key], $phpbb_root_path . $this->mod_root) !== 0)
 					{
-						$children['template'][$key] = $phpbb_root_path . $this->mod_root . $children['template'][$key];
+						$children['language'][$key] = $phpbb_root_path . $this->mod_root . $children['language'][$key];
 					}
 
 					$actions_ary = $this->mod_actions($children['language'][$key]);
