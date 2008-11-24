@@ -900,7 +900,7 @@ class editor
 * @param integer This one is used internally to control recursion level.
 * @return array List of all files found matching the specified pattern.
 */
-function find_files($directory, $pattern, $max_levels = 4, $_current_level = 1)
+function find_files($directory, $pattern, $max_levels = 20, $_current_level = 1)
 {
 	if ($_current_level == $max_levels && DEBUG)
 	{

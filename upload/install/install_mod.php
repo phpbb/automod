@@ -198,12 +198,6 @@ class install_mod extends module
 	{
 		global $config;
 
-		if (!class_exists('editor'))
-		{
-			global $phpbb_root_path, $phpEx;
-			include("{$phpbb_root_path}includes/editor.$phpEx");
-		}
-
 		$data = $this->get_submitted_data();
 
 		// we should have some config variables from the previous step
@@ -278,7 +272,10 @@ class install_mod extends module
 
 	function add_modules($mode, $sub)
 	{
-		global $db;
+		global $db, $phpbb_root_path, $phpEx;
+
+		include($phpbb_root_path . 'includes/acp/acp_modules.'.$phpEx);
+		$module = new acp_modules();
 
 		$sql = 'SELECT module_id FROM ' . MODULES_TABLE . "
 			WHERE module_langname = 'ACP_CAT_MODS'";
@@ -286,93 +283,73 @@ class install_mod extends module
 
 		if (!$db->sql_fetchrow($result))
 		{
-			// Get some Module info
-			$sql = 'SELECT MAX(module_id) AS last_m_id, MAX(right_id) AS last_r_id
-				FROM ' . MODULES_TABLE;
-			$result = $db->sql_query($sql);
-			$row = $db->sql_fetchrow($result);
-			$db->sql_freeresult($result);
-
 			// Insert Category Module
-			$module_data = array(
-				'module_id'			=> ($row['last_m_id'] + 1),
+			$cat_module_data = array(
 				'module_enabled'	=> 1,
 				'module_display'	=> 1,
 				'module_class'		=> 'acp',
 				'parent_id'			=> 0,
 				'module_langname'	=> 'ACP_CAT_MODS',
-				'left_id'			=> ($row['last_r_id'] + 1),
-				'right_id'			=> ($row['last_r_id'] + 8),
+				'module_auth'		=> 'acl_a_mods',
 			);
 
-			$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
-			$db->sql_query($sql);
+			$module->update_module_data($cat_module_data, true);
 
 			// Insert Parent Module
-			$module_data = array(
-				'module_id'			=> ($row['last_m_id'] + 2),
+			$parent_module_data = array(
 				'module_enabled'	=> 1,
 				'module_display'	=> 1,
 				'module_class'		=> 'acp',
-				'parent_id'			=> ($row['last_m_id'] + 1),
+				'parent_id'			=> $cat_module_data['module_id'],
 				'module_langname'	=> 'ACP_MODS',
-				'left_id'			=> ($row['last_r_id'] + 2),
-				'right_id'			=> ($row['last_r_id'] + 7),
 			);
 
-			$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
-			$db->sql_query($sql);
+			$module->update_module_data($parent_module_data, true);
 
 			// Frontend Module
-			$module_data = array(
-				'module_id'			=> ($row['last_m_id'] + 3),
+			$front_module_data = array(
 				'module_enabled'	=> 1,
 				'module_display'	=> 1,
 				'module_class'		=> 'acp',
-				'parent_id'			=> ($row['last_m_id'] + 2),
+				'parent_id'			=> $parent_module_data['module_id'],
 				'module_langname'	=> 'ACP_MOD_MANAGEMENT',
-				'left_id'			=> ($row['last_r_id'] + 3),
-				'right_id'			=> ($row['last_r_id'] + 4),
 
 				'module_basename'	=> 'mods',
 				'module_mode'		=> 'frontend',
 				'module_auth'		=> 'acl_a_mods',
 			);
 
-			$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
-			$db->sql_query($sql);
+			$module->update_module_data($front_module_data, true);
 
 			// Config Module
-			$module_data = array(
-				'module_id'			=> ($row['last_m_id'] + 4),
+			$config_module_data = array(
 				'module_enabled'	=> 1,
 				'module_display'	=> 1,
 				'module_class'		=> 'acp',
-				'parent_id'			=> ($row['last_m_id'] + 2),
+				'parent_id'			=> $parent_module_data['module_id'],
 				'module_langname'	=> 'ACP_MOD_CONFIG',
-				'left_id'			=> ($row['last_r_id'] + 5),
-				'right_id'			=> ($row['last_r_id'] + 6),
 
 				'module_basename'	=> 'mods',
 				'module_mode'		=> 'config',
 				'module_auth'		=> 'acl_a_mods',
 			);
 
-			$sql = 'INSERT INTO ' . MODULES_TABLE . ' ' . $db->sql_build_array('INSERT', $module_data);
-			$db->sql_query($sql);
+			$module->update_module_data($config_module_data, true);
 
-			// Insert the auth option
-			$auth_data = array(
-				'auth_option'		=> 'a_mods',
-				'is_global'			=> 1,
-				'is_local'			=> 0,
-				'founder_only'		=> 0,
-			);
+			include($phpbb_root_path . 'includes/acp/auth.'.$phpEx);
+			$auth_admin = new auth_admin();
+			
+			// Add permissions
+			$auth_admin->acl_add_option(array(
+			    'local'      => array(),
+			    'global'   => array('a_mods'),
+			));
 
-			$sql = 'INSERT INTO ' . ACL_OPTIONS_TABLE . ' ' . $db->sql_build_array('INSERT', $auth_data);
-			$db->sql_query($sql);
-
-			$auth_option_id = $db->sql_nextid();
+			$sql = 'SELECT auth_option_id FROM ' . ACL_OPTIONS_TABLE . "
+				WHERE auth_option = 'a_mods'";
+			$result = $db->sql_query($sql);
+			$auth_option_id = $db->sql_fetchfield('auth_option_id');
+			$db->sql_freeresult($result);
 
 			$sql = 'SELECT role_id FROM ' . ACL_ROLES_TABLE . "
 				WHERE role_name = 'ROLE_ADMIN_FULL'";
@@ -390,10 +367,6 @@ class install_mod extends module
 			$sql = 'INSERT INTO ' . ACL_ROLES_DATA_TABLE . ' ' . $db->sql_build_array('INSERT', $roles_data);
 			$db->sql_query($sql);
 		}
-
-		// and we need to clear the acl prefetch.  $auth does not exist here, so just do the query
-		$sql = 'UPDATE ' . USERS_TABLE . " SET user_permissions = ''";
-		$db->sql_query($sql);
 	}
 
 	/**

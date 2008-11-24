@@ -41,6 +41,10 @@ $lang = array_merge($lang, array(
 	'LOG_MOD_REMOVE'	=> '<strong>Removed MOD</strong><br />» %s',
 
 	'MOD_CHANGELOG'		=> 'MOD Changelog',
+
+	'acl_a_mods'		=> array('lang' => 'Can use MODs Manager', 'cat' => 'misc'),
 ));
+
+
 
 ?>

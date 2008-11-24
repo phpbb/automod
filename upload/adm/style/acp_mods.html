@@ -92,14 +92,18 @@
 			<dt><label for="author_name">{L_AUTHOR_NAME}:</label></dt>
 			<dd><strong id="author_name">{author_list.AUTHOR_NAME}</strong></dd>
 		</dl>
+		<!-- IF author_list.AUTHOR_EMAIL -->
 		<dl>
 			<dt><label for="author_email">{L_AUTHOR_EMAIL}:</label></dt>
 			<dd><strong id="author_email"><a href="mailto:{author_list.AUTHOR_EMAIL}">{author_list.AUTHOR_EMAIL}</a></strong></dd>
 		</dl>
+		<!-- ENDIF -->
+		<!-- IF author_list.AUTHOR_WEBSITE -->
 		<dl>
 			<dt><label for="author_url">{L_AUTHOR_URL}:</label></dt>
 			<dd><strong id="author_url"><a href="{author_list.AUTHOR_WEBSITE}">{author_list.AUTHOR_WEBSITE}</a></strong></dd>
 		</dl>
+		<!-- ENDIF -->
 		<!-- END author_list -->
 	</fieldset>
 
