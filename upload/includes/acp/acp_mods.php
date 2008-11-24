@@ -995,7 +995,10 @@ class acp_mods
 											if ($inline_find == 'inline-comment')
 											{
 												// This is a special case for tucking comments in the array
-												$inline_comment = $inline_commands;
+												if ($inline_commands != $user->lang['UNKNOWN_MOD_INLINE-COMMENT'])
+												{
+													$inline_comment = $inline_commands;
+												}
 												continue;
 											}
 
