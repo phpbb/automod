@@ -1,7 +1,7 @@
 <?php
 /**
 *
-* @package phpBB3
+* @package automod
 * @version $Id$
 * @copyright (c) 2006 phpBB Group
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
@@ -10,13 +10,15 @@
 * The filenames will be prefixed with an underscore to not overwrite the current schema files.
 *
 * If you overwrite the original schema files please make sure you save the file with UNIX linefeeds.
+* 
+* @note: this file is not intended to be in releases of automod
 */
 
 die("Please read the first lines of this script for instructions on how to enable it");
 
 @set_time_limit(0);
 
-$schema_path = './../install/schemas/mods_manager/';
+$schema_path = './../install/schemas/automod/';
 
 if (!is_writable($schema_path))
 {

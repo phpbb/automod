@@ -1,11 +1,11 @@
 <?php
 /**
 *
-* MOD Manager [English]
+* AutoMOD [English]
 *
 * @package language
 * @version $Id$
-* @copyright (c) 2005 phpBB Group
+* @copyright (c) 2008 phpBB Group
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
@@ -31,10 +31,10 @@ if (empty($lang) || !is_array($lang))
 // in a url you again do not need to specify an order e.g., 'Click %sHERE%s' is fine
 
 $lang = array_merge($lang, array(
-	'ACP_CAT_MODS'			=> 'MODs',
-	'ACP_MODS'				=> 'MODs',
-	'ACP_MOD_MANAGEMENT'	=> 'MOD Management',
-	'ACP_MOD_CONFIG'		=> 'MOD Manager Configuration',
+	'ACP_CAT_MODS'			=> 'AutoMOD',
+	'ACP_MODS'				=> 'AutoMOD',
+	'ACP_AUTOMOD'			=> 'AutoMOD',
+	'ACP_AUTOMOD_CONFIG'	=> 'AutoMOD Configuration',
 	
 	'LOG_MOD_ADD'		=> '<strong>Added new MOD</strong><br />» %s',
 	'LOG_MOD_CHANGE'	=> '<strong>Changed components for MOD</strong><br />» %x',
@@ -42,7 +42,7 @@ $lang = array_merge($lang, array(
 
 	'MOD_CHANGELOG'		=> 'MOD Changelog',
 
-	'acl_a_mods'		=> array('lang' => 'Can use MODs Manager', 'cat' => 'misc'),
+	'acl_a_mods'		=> array('lang' => 'Can use AutoMOD', 'cat' => 'misc'),
 ));
 
 

@@ -1,15 +1,15 @@
 <?php
 /**
 *
-* @package acp
+* @package automod
 * @version $Id$
-* @copyright (c) 2005 phpBB Group
-* @license http://opensource.org/licenses/gpl-license.php GNU Public License
+* @copyright (c) 2008 phpBB Group
+* @license http://opensource.org/licenses/gpl-2.0.php GNU Public License
 *
 */
 
 /**
-* @package acp
+* @package automod
 */
 class acp_mods
 {
@@ -1105,7 +1105,7 @@ class acp_mods
 		// Perform SQL queries last -- Queries usually cannot be done a second
 		// time, so do them only if the edits were successful.  Still complies
 		// with the MODX spec in this location
-		if (!empty($actions['SQL']) && ($mod_installed || $force_install))
+		if (!empty($actions['SQL']) && ($mod_installed || $force_install || ($display && !$change)))
 		{
 			$template->assign_var('S_SQL', true);
 

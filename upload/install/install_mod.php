@@ -1,10 +1,10 @@
 <?php
 /**
 *
-* @package mod_manager
+* @package automod
 * @version $Id$
-* @copyright (c) 2007 phpBB Group
-* @license http://opensource.org/licenses/gpl-license.php GNU Public License
+* @copyright (c) 2008 phpBB Group
+* @license http://opensource.org/licenses/gpl-2.0.php GNU Public License
 *
 *
 *
@@ -39,7 +39,7 @@ if (!empty($setmodules))
 
 	$module[] = array(
 		'module_type'		=> 'install',
-		'module_title'		=> 'INSTALL_MODMANAGER',
+		'module_title'		=> 'INSTALL_AUTOMOD',
 		'module_filename'	=> substr(basename(__FILE__), 0, -strlen($phpEx)-1),
 		'module_order'		=> 30,
 		'module_subs'		=> '',
@@ -131,8 +131,8 @@ class install_mod extends module
 			case 'intro':
 				$template->assign_vars(array(
 					'S_OVERVIEW'		=> true,
-					'TITLE'				=> $user->lang['MODMANAGER_INSTALLATION'],
-					'BODY'				=> $user->lang['MODMANAGER_INSTALLATION_EXPLAIN'],
+					'TITLE'				=> $user->lang['AUTOMOD_INSTALLATION'],
+					'BODY'				=> $user->lang['AUTOMOD_INSTALLATION_EXPLAIN'],
 					'L_SUBMIT'			=> $user->lang['NEXT_STEP'],
 					'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=create_table&amp;language=$language",
 				));
@@ -245,7 +245,7 @@ class install_mod extends module
 
 		// Ok we have the db info go ahead and read in the relevant schema
 		// and work on building the table
-		$dbms_schema = 'schemas/mods_manager/' . $available_dbms[$dbms]['SCHEMA'] . '_schema.sql';
+		$dbms_schema = 'schemas/automod/' . $available_dbms[$dbms]['SCHEMA'] . '_schema.sql';
 
 		// How should we treat this schema?
 		$remove_remarks = $available_dbms[$dbms]['COMMENTS'];
@@ -312,7 +312,7 @@ class install_mod extends module
 				'module_display'	=> 1,
 				'module_class'		=> 'acp',
 				'parent_id'			=> $parent_module_data['module_id'],
-				'module_langname'	=> 'ACP_MOD_MANAGEMENT',
+				'module_langname'	=> 'ACP_AUTOMOD',
 
 				'module_basename'	=> 'mods',
 				'module_mode'		=> 'frontend',
@@ -327,7 +327,7 @@ class install_mod extends module
 				'module_display'	=> 1,
 				'module_class'		=> 'acp',
 				'parent_id'			=> $parent_module_data['module_id'],
-				'module_langname'	=> 'ACP_MOD_CONFIG',
+				'module_langname'	=> 'ACP_AUTOMOD_CONFIG',
 
 				'module_basename'	=> 'mods',
 				'module_mode'		=> 'config',
