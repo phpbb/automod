@@ -1,10 +1,10 @@
 <?php
 /**
 *
-* @package mods_manager
+* @package automod
 * @version $Id$
-* @copyright (c) 2007 phpBB Group
-* @license http://opensource.org/licenses/gpl-license.php GNU Public License
+* @copyright (c) 2008 phpBB Group
+* @license http://opensource.org/licenses/gpl-2.0.php GNU Public License
 *
 */
 
@@ -21,7 +21,7 @@ define('WRITE_MANUAL', 3);
 * Editor Class
 * Runs through file sequential, ie new finds must come after previous finds
 * Handles placing the files after being edited
-* @package mods_manager
+* @package automod
 * @todo: implement some string checkin, way too much can go wild here
 */
 class editor
@@ -106,7 +106,7 @@ class editor
 			}
 		}
 		// or zip or tarballs
-		else if (!$config['ftp_method'] && $config['compress_method'] || $config['write_method'] == WRITE_MANUAL)
+		else if ($config['compress_method'] && (!$config['ftp_method'] || $config['write_method'] == WRITE_MANUAL))
 		{
 			$this->write_method = WRITE_MANUAL;
 			if (!class_exists('compress'))

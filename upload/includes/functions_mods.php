@@ -1,10 +1,10 @@
 <?php
 /**
 *
-* @package mod_manager
+* @package automod
 * @version $Id: functions_admin.php,v 1.254 2007/11/17 12:14:27 acydburn Exp $
-* @copyright (c) 2005 phpBB Group
-* @license http://opensource.org/licenses/gpl-license.php GNU Public License
+* @copyright (c) 2008 phpBB Group
+* @license http://opensource.org/licenses/gpl-2.0.php GNU Public License
 *
 */
 

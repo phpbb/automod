@@ -1,10 +1,10 @@
 <?php
 /** 
 *
-* @package mods_manager
+* @package automod
 * @version $Id$
-* @copyright (c) 2005 phpBB Group
-* @license http://opensource.org/licenses/gpl-license.php GNU Public License 
+* @copyright (c) 2008 phpBB Group
+* @license http://opensource.org/licenses/gpl-2.0.php GNU Public License 
 *
 */
 
@@ -12,7 +12,7 @@
 * MOD Parser class
 * Basic wrapper to run individual parser functions
 * Also contains some parsing functions that are global (i.e. needed for all parsers)
-* @package mods_manager
+* @package automod
 *
 * Each parser requires the following functions:
 *	~ set_file($path_to_mod_file)

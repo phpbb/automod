@@ -1,15 +1,15 @@
 <?php
 /** 
 *
-* @package acp
+* @package automod
 * @version $Id$
-* @copyright (c) 2005 phpBB Group 
-* @license http://opensource.org/licenses/gpl-license.php GNU Public License 
+* @copyright (c) 2008 phpBB Group 
+* @license http://opensource.org/licenses/gpl-2.0.php GNU Public License 
 *
 */
 
 /**
-* @package module_install
+* @package automod
 */
 class acp_mods_info
 {
