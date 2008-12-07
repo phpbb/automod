@@ -58,7 +58,7 @@ class acp_mods
 					}
 				}
 
-				if (isset($_POST['submit']))
+				if (isset($_POST['submit']) && check_form_key('acp_mods'))
 				{
 					$ftp_host		= request_var('host', '');
 					$ftp_username	= request_var('username', '');
@@ -117,6 +117,8 @@ class acp_mods
 						$template->assign_var('ERROR', $user->lang[$error]);
 					}
 				}
+
+				add_form_key('acp_mods');
 
 				include("{$phpbb_root_path}includes/functions_compress.$phpEx");
 				foreach (compress::methods() as $method)
@@ -503,6 +505,7 @@ class acp_mods
 			'U_BACK'		=> $this->u_action,
 		));
 
+		$s_hidden_fields = '';
 		// get FTP information if we need it
 		if ($config['write_method'] == WRITE_FTP)
 		{
@@ -536,6 +539,9 @@ class acp_mods
 				'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
 			));
 		}
+
+		$s_hidden_fields .= build_hidden_fields(array('dependency_confirm' => !empty($_REQUEST['dependency_confirm'])));
+		$template->assign_var('S_HIDDEN_FIELDS', $s_hidden_fields);
 
 		$editor = new editor($phpbb_root_path, true);
 
@@ -898,7 +904,9 @@ class acp_mods
 
 		// not all MODs will have edits (!)
 		if (isset($actions['EDITS']))
-		{	
+		{
+			$template->assign_var('S_EDITS', true);
+
 			foreach ($actions['EDITS'] as $filename => $edits)
 			{
 				// see if the file to be opened actually exists
@@ -906,18 +914,18 @@ class acp_mods
 				{
 					$template->assign_block_vars('edit_files', array(
 						'S_MISSING_FILE' => true,
-	
 						'FILENAME'	=> $filename,
 					));
+
 					$mod_installed = false;
+
+					continue;
 				}
 				else
 				{
 					$template->assign_block_vars('edit_files', array(
 						'FILENAME'	=> $filename,
 					));
-
-					$template->assign_var('S_EDITS', true);
 	
 					$status = $editor->open_file($filename);
 					if (is_string($status))
@@ -925,6 +933,9 @@ class acp_mods
 						$template->assign_block_vars('error', array(
 							'ERROR'	=> $status,
 						));
+
+						$mod_installed = false;
+						continue;
 					}
 
 					foreach ($edits as $finds)
@@ -1122,7 +1133,7 @@ class acp_mods
 					if ($query_success)
 					{
 						$template->assign_block_vars('sql_queries', array(
-							'S_SUCCESS'	=> ($query_success) ? true : false,
+							'S_SUCCESS'	=> true,
 							'QUERY'		=> $query,
 						));
 					}
@@ -1131,7 +1142,7 @@ class acp_mods
 						$error = $db->sql_error();
 
 						$template->assign_block_vars('sql_queries', array(
-							'S_SUCCESS'	=> ($query_success) ? true : false,
+							'S_SUCCESS'	=> false,
 							'QUERY'		=> $query,
 							'ERROR_MSG'	=> $error['message'],
 							'ERROR_CODE'=> $error['code'], 
@@ -1194,17 +1205,29 @@ class acp_mods
 			// TODO: check for the chance that the MOD has been installed by the MODs Manager
 			// previously
 			// TODO: Pass the name back from the mod_parser
-			$template->assign_var('S_DEPENDENCY_NEEDED', true);
-			foreach ($children['dependency'] as $dependency_url)
+			if (confirm_box(true))
 			{
-				$template->assign_block_vars('dependency', array(
-					'URL'	=> $dependency_url,
-				));
+				// do nothing
 			}
+			else if (!isset($_REQUEST['dependency_confirm']))
+			{
+				global $user, $id, $mode;
 
-			// TODO: die gracefully ... decide how to do this.  Probably 
-			// using a confirm_box()
-			trigger_error('MODs Manager currently doesn\'t handle dependencies.');
+				$full_url_list = array();
+				$message = '';
+				foreach ($children['dependency'] as $dependency)
+				{
+					//$full_url_list[] = $dependency_url;
+					$message .= sprintf($user->lang['DEPENDENCY_INSTRUCTIONS'], $dependency['href'], $dependency['title']) . '<br /><br />';
+				}
+
+				confirm_box(false, $message, build_hidden_fields(array(
+						'dependency_confirm'	=> true,
+						'mode'		=> $mode,
+						'action'	=> $action,
+						'mod_path'	=> $mod_path,
+				)));
+			}
 		}
 
 		if (isset($children['contrib']) && sizeof($children['contrib']) && $action == 'details')

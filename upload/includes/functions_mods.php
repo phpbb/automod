@@ -19,6 +19,10 @@ if (!defined('IN_PHPBB'))
 global $table_prefix;
 define('MODS_TABLE', $table_prefix . 'mods');
 
+define('WRITE_DIRECT', 1);
+define('WRITE_FTP', 2);
+define('WRITE_MANUAL', 3);
+
 function test_ftp_connection($method, &$test_ftp_connection, &$test_connection)
 {
 	global $phpbb_root_path, $phpEx;

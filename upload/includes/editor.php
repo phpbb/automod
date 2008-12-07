@@ -12,11 +12,6 @@
 //define('AFTER',		1);
 //define('BEFORE',	2);
 
-define('WRITE_DIRECT', 1);
-define('WRITE_FTP', 2);
-define('WRITE_MANUAL', 3);
-
-
 /**
 * Editor Class
 * Runs through file sequential, ie new finds must come after previous finds
@@ -146,9 +141,16 @@ class editor
 	*/
 	function open_file($filename)
 	{
-		global $phpbb_root_path, $db;
+		global $phpbb_root_path, $db, $user;
 
-		$this->file_contents = $this->normalize(@file($phpbb_root_path . $filename));
+		$this->file_contents = @file($phpbb_root_path . $filename);
+
+		if ($this->file_contents === false)
+		{
+			return $user->lang['FILE_EMPTY'];
+		}
+
+		$this->file_contents = $this->normalize($this->file_contents);
 
 		// Check for file contents in the database if this is a template file
 		// this will overwrite the @file call if it exists in the DB. 
@@ -161,6 +163,7 @@ class editor
 				FROM ' . STYLES_TEMPLATE_DATA_TABLE . ' d, ' . STYLES_TEMPLATE_TABLE . " t
 				WHERE d.template_filename = '" . $db->sql_escape($match[2]) . "'
 					AND t.template_id = d.template_id
+					AND t.template_storedb = 1
 					AND t.template_name = '" . $db->sql_escape($match[1]) . "'";
 			$result = $db->sql_query($sql);
 

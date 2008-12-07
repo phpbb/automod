@@ -5,6 +5,14 @@
 <!-- IF BODY --><p>{BODY}</p><!-- ENDIF -->
 
 <!-- IF S_OVERVIEW -->
+<!-- IF ROOT_NOT_READABLE or STORE_NOT_WRITABLE -->
+<h1>{L_ERROR}</h1>
+	<!-- IF ROOT_NOT_READABLE --><p class="errorbox">{L_ROOT_NOT_READABLE}</p><!-- ENDIF -->
+	<!-- IF STORE_NOT_WRITABLE --><p class="errorbox">{L_STORE_NOT_WRITABLE}</p><!-- ENDIF -->
+<!-- ELSE -->
+<div class="successbox"><h3>{L_TESTS_PASSED}</h3></div>
+<!-- ENDIF -->
+
 <!-- IF .data -->
 	<!-- IF S_CONNECTION_SUCCESS -->
 		<div class="successbox">
@@ -30,10 +38,6 @@
 		<!-- END data -->
 	</fieldset>
 <!-- ENDIF -->
-<!-- ENDIF -->
-
-<!-- IF S_CREATE_TABLES -->
-	<p>The SQL queries have been performed. If you didn't get an error, then they were done successfully I hope.</p>
 <!-- ENDIF -->
 
 

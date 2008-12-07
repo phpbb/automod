@@ -100,6 +100,8 @@ class install_mod extends module
 		// Set custom template again. ;)
 		$template->set_custom_template('../adm/style', 'admin');
 
+		$this->page_title = $user->lang['AUTOMOD_INSTALLATION'];
+
 		$method = basename(request_var('method', ''));
 		if (!$method || !class_exists($method))
 		{
@@ -129,12 +131,27 @@ class install_mod extends module
 		switch ($sub)
 		{
 			case 'intro':
+				$can_proceed = true;
+
+				if (!is_readable($phpbb_root_path . 'index.'.$phpEx))
+				{
+					$template->assign_vars('ROOT_NOT_READABLE', true);
+					$can_proceed = false;
+				}
+				if (!is_writable($phpbb_root_path . 'store/'))
+				{
+					$template->assign_var('STORE_NOT_WRITABLE', true);
+					$can_proceed = false;
+				}
+
+				$u_action = $this->p_master->module_url . "?mode=$mode&amp;language=$language" . (($can_proceed) ? '&amp;sub=create_table' : '&amp;sub=intro');
+
 				$template->assign_vars(array(
 					'S_OVERVIEW'		=> true,
 					'TITLE'				=> $user->lang['AUTOMOD_INSTALLATION'],
 					'BODY'				=> $user->lang['AUTOMOD_INSTALLATION_EXPLAIN'],
 					'L_SUBMIT'			=> $user->lang['NEXT_STEP'],
-					'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=create_table&amp;language=$language",
+					'U_ACTION'			=> $u_action,
 				));
 
 				if (!is_writeable($phpbb_root_path))
@@ -207,8 +224,9 @@ class install_mod extends module
 		set_config('ftp_root_path', $data['root_path']);
 		set_config('ftp_port',		$data['port']);
 		set_config('ftp_timeout',	$data['timeout']);
-		set_config('write_method',	(!empty($config['ftp_method'])) ? WRITE_FTP : WRITE_DIRECT);
-		set_config('compress_method', 'tar');
+		set_config('write_method',	(!empty($data['method'])) ? WRITE_FTP : WRITE_DIRECT);
+		set_config('compress_method', '.tar');
+		set_config('automod_version', '1.0.0-B1');
 	}
 
 	function perform_sql($mode, $sub)
@@ -219,8 +237,8 @@ class install_mod extends module
 
 		$template->assign_vars(array(
 			'S_CREATE_TABLES'	=> true,
-			'TITLE'				=> $user->lang['STAGE_CREATE_TABLE'],
-			'BODY'				=> $user->lang['STAGE_CREATE_TABLE_EXPLAIN'],
+			'TITLE'				=> $user->lang['CREATE_TABLE'],
+			'BODY'				=> $user->lang['CREATE_TABLE_EXPLAIN'],
 			'L_SUBMIT'			=> $user->lang['NEXT_STEP'],
 			'U_ACTION'			=> $this->p_master->module_url . "?mode=$mode&amp;sub=final&amp;language=$language",
 		));
@@ -233,7 +251,7 @@ class install_mod extends module
 		// If mysql is chosen, we need to adjust the schema filename slightly to reflect the correct version. ;)
 		if ($dbms == 'mysql')
 		{
-			if (version_compare($db->mysql_version, '4.1.3', '>='))
+			if (version_compare($db->sql_server_info(true), '4.1.3', '>='))
 			{
 				$available_dbms[$dbms]['SCHEMA'] .= '_41';
 			}
