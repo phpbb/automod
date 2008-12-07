@@ -42,14 +42,18 @@ $lang = array_merge($lang, array(
 	'CHANGE_VERSION'=> 'Version Number',
 	'CHANGES'		=> 'Changes',
 	'COMMENT'		=> 'Comment',
+	'CREATE_TABLE'	=> 'Database Alterations',
+	'CREATE_TABLE_EXPLAIN'	=> 'AutoMOD has successfully made its database alterations, including a permission which has been assigned to the “Full Administrator” role.',
 
 	'DIY_INSTRUCTIONS'	=> 'Do It Yourself Instructions',
+	'DEPENDENCY_INSTRUCTIONS'	=>	'The MOD you are trying to install depends on another MOD.  AutoMOD cannot detect if this MOD has been installed.  Please verify that you have installed <strong><a href="%1$s">%2$s</a></strong> and press the continue button to continue installing your MOD.',
 	'DESCRIPTION'	=> 'Description',
 	'DETAILS'		=> 'Details',
 
 	'ERROR'			=> 'Error',
 
-	'FILE_EDITS'		=> 'File edits',	
+	'FILE_EDITS'		=> 'File edits',
+	'FILE_EMPTY'		=> 'File empty',
 	'FILE_MISSING'		=> 'Cannot locate file',
 	'FILE_TYPE'			=> 'Compressed File Type',
 	'FILE_TYPE_EXPLAIN'	=> 'This is only valid with the “Compressed File Download” write method',
@@ -59,6 +63,7 @@ $lang = array_merge($lang, array(
 	'FTP_INFORMATION'	=> 'FTP Information',
 
 	'INLINE_FIND_MISSING'=> 'The In-Line Find specified by the MOD could not be found.',
+	'INSTALL_AUTOMOD'	=> 'AutoMOD Installation',
 	'INSTALL_TIME'		=> 'Installation time',
 	'INSTALL_MOD'		=> 'Install this MOD',
 	'INSTALL_ERROR'		=> 'One or more install actions failed. Please review the actions below, make any adjustments and retry. You may continue with the installation even though some of the actions failed. <strong>This is not recommended and may cause your board to not function correctly.</strong>',
@@ -67,7 +72,7 @@ $lang = array_merge($lang, array(
 	'INSTALLED_EXPLAIN'	=> 'Your MOD has been installed! Here you can view some of the results from the installation. Please note any errors, and seek support at <a href="http://www.phpbb.com">phpBB.com</a>',
 	'INSTALLED_MODS'	=> 'Installed MODs',
 	'INSTALLING'		=> 'AutoMOD Installing...',
-	'INSTALLATION_SUCCESSFUL'	=> 'AutoMOD installed successfully! Please remove this <strong>install/</strong> directory.',
+	'INSTALLATION_SUCCESSFUL'	=> 'AutoMOD installed successfully!',
 	'INVALID_MOD_INSTRUCTION'	=> 'This MOD has an invalid instruction, or an in-line find operation failed.',
 
 	'MOD_CONFIG'				=> 'AutoMOD Configuration',
@@ -78,7 +83,7 @@ $lang = array_merge($lang, array(
 	'MOD_NAME'					=> 'MOD Name',
 	'MOD_OPEN_FILE_FAIL'		=> 'AutoMOD was unable to open %s.',
 	'AUTOMOD_INSTALLATION'		=> 'AutoMOD Installation',
-	'AUTOMOD_INSTALLATION_EXPLAIN'	=> 'Welcome to the AutoMOD Installation. The installer will perform the following steps.  You will need to have your FTP details handy if AutoMOD detects that is the best way to write files.',
+	'AUTOMOD_INSTALLATION_EXPLAIN'	=> 'Welcome to the AutoMOD Installation.  You will need to have your FTP details handy if AutoMOD detects that is the best way to write files.  The requirements test results are below.',
 
 	'MODS_CONFIG_EXPLAIN'		=> 'You can select how AutoMOD adjusts your files here.  The most basic method is Compressed File Download.  The others require additional permissions on the server.',
 	'MODS_COPY_FAILURE'			=> 'The file %s could not be copied into place.  Please check your permissions or use an alternate write method.',
@@ -107,11 +112,13 @@ $lang = array_merge($lang, array(
 	'RETRY'				=> 'Retry',
 	'RETURN_MODS'		=> 'Return to AutoMOD',
 	'REVERSE'			=> 'Reverse',
+	'ROOT_NOT_READABLE'	=> 'AutoMOD was not able to open phpBB\'s index.php for reading.  This probably means that permissions are too restrictive on your phpBB root directory, which will prevent AutoMOD from working.  Please adjust your permissions and try the check again.',
 
 
 	'SOURCE'		=> 'Source',
 	'SQL_QUERIES'	=> 'SQL Queries',
 	'STATUS'		=> 'Status',
+	'STORE_NOT_WRITABLE'	=> 'AutoMOD installation has detected that the store/ directory is not writable.  This is required for AutoMOD to work properly.  Please adjust your permissions and try again.',
 	'STYLE_NAME'	=> 'Style name',
 	'SUCCESS'		=> 'Success',
 
