@@ -829,7 +829,7 @@ class acp_mods
 					$mods = array_merge($mods, $this->find_mods("$dir/$file", $recurse - 1));
 				}
 				// this might be better as an str function, especially being in a loop
-				else if (preg_match('#.*install.*xml$#i', $file))
+				else if (preg_match('#.*install.*xml$#i', $file) || (preg_match('#(contrib|templates|languages)#i', $dir, $match)) || ($recurse === 0 && strpos($file, '.xml') !== false))
 				{
 					// if this is an "extra" MODX file, make a record of it as such
 					// we are assuming the MOD follows MODX packaging standards here
@@ -843,7 +843,17 @@ class acp_mods
 					}
 					else
 					{
-						$mods['main'][] = "$dir/$file";
+						if (dirname(end($mods['main'])) == $dir)
+						{
+							if (preg_match('#.*install.*xml$#i', $file))
+							{
+								$mods['main'][sizeof($mods['main']) - 1] = "$dir/$file";
+							}				
+						}
+						else
+						{
+							$mods['main'][] = "$dir/$file";
+						}
 					}
 				}
 			}
