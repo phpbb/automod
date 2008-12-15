@@ -292,7 +292,11 @@ class install_mod extends module
 	{
 		global $db, $phpbb_root_path, $phpEx;
 
-		include($phpbb_root_path . 'includes/acp/acp_modules.'.$phpEx);
+		if (!class_exists('acp_modules'))
+		{
+			include($phpbb_root_path . 'includes/acp/acp_modules.'.$phpEx);
+		}
+		
 		$module = new acp_modules();
 
 		$sql = 'SELECT module_id FROM ' . MODULES_TABLE . "
