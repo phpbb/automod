@@ -346,7 +346,7 @@ class editor
 					return false;
 				}
 
-				if (!$find_ary[$j])
+				if (!trim($find_ary[$j]))
 				{
 					// line is blank.  Assume we can find a blank line, and continue on
 					$find_success += 1;
@@ -502,19 +502,19 @@ class editor
 		}
 
 		// make sure our new lines are correct
-		$add = "\n" . $add . "\n";
+		$add = "\n\n" . $add . "\n\n";
 
 		if ($pos == 'AFTER')
 		{
-			$this->file_contents[$end_offset] .= $add;
+			$this->file_contents[$end_offset] = rtrim($this->file_contents[$end_offset], "\n") . $add;
 		}
 
 		if ($pos == 'BEFORE')
 		{
-			$this->file_contents[$start_offset] = $add . $this->file_contents[$start_offset];
+			$this->file_contents[$start_offset] = $add . ltrim($this->file_contents[$start_offset], "\n");
 		}
 
-		$this->build_uninstall(implode("\n", $full_find), NULL, strtolower($pos) . ' add', $add);
+		$this->build_uninstall(implode("", $full_find), NULL, strtolower($pos) . ' add', $add);
 
 		return true;
 	}
