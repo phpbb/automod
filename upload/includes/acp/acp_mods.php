@@ -594,7 +594,7 @@ class acp_mods
 		}
 
 		// see if directory exists
-		if (!file_exists($phpbb_root_path . $this->edited_root) && $editor->write_method == WRITE_DIRECT)
+		if (!file_exists($phpbb_root_path . $this->edited_root))
 		{
 			mkdir($phpbb_root_path . $this->edited_root, 0777);
 			chmod($phpbb_root_path . $this->edited_root, 0777);
@@ -620,7 +620,7 @@ class acp_mods
 
 		if ($editor->write_method != WRITE_MANUAL && ($mod_installed || $force_install))
 		{
-			// Move edited files back, and delete temp storage folder
+			// Move edited files back
 			$status = $editor->copy_content($this->edited_root, '', $this->edited_root);
 
 			if (is_string($status))
@@ -770,6 +770,51 @@ class acp_mods
 		$editor = new editor($phpbb_root_path);
 		$execute_edits = ($action == 'pre_uninstall') ? false : true;
 
+		// get mod install root && make temporary edited folder root
+//		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
+		$this->edited_root = "store/mods/{$mod_id}_uninst/";
+
+		// get FTP information if we need it
+		if ($editor->write_method == WRITE_FTP && !$execute_edits)
+		{
+			$s_hidden_fields = build_hidden_fields(array('method' => $method));
+
+			if (!class_exists($method))
+			{
+				trigger_error('Method does not exist.', E_USER_ERROR);
+			}
+
+			$requested_data = call_user_func(array($method, 'data'));
+			foreach ($requested_data as $data => $default)
+			{
+				$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+
+				$template->assign_block_vars('data', array(
+					'DATA'		=> $data,
+					'NAME'		=> $user->lang[strtoupper($method . '_' . $data)],
+					'EXPLAIN'	=> $user->lang[strtoupper($method . '_' . $data) . '_EXPLAIN'],
+					'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
+				));
+			}
+
+			$template->assign_vars(array(
+				'S_CONNECTION_SUCCESS'		=> ($test_ftp_connection && $test_connection === true) ? true : false,
+				'S_CONNECTION_FAILED'		=> ($test_ftp_connection && $test_connection !== true) ? true : false,
+				'ERROR_MSG'					=> ($test_ftp_connection && $test_connection !== true) ? $user->lang[$test_connection] : '',
+
+				'S_FTP_UPLOAD'		=> true,
+				'UPLOAD_METHOD'		=> $method,
+				'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
+			));
+		}
+
+		// see if directory exists
+		if (!file_exists($phpbb_root_path . $this->edited_root))
+		{
+			mkdir($phpbb_root_path . $this->edited_root, 0777);
+			chmod($phpbb_root_path . $this->edited_root, 0777);
+		}
+
 		$template->assign_vars(array(
 			'S_UNINSTALL'		=> $execute_edits,
 			'S_PRE_UNINSTALL'	=> !$execute_edits,
@@ -787,6 +832,38 @@ class acp_mods
 		// process the actions
 		$mod_uninstalled = $this->process_edits($editor, $actions, $details, $execute_edits, true, true);
 
+		if (!$execute_edits)
+		{
+			return;
+		}
+
+		$force_uninstall = request_var('force', false);
+
+		if ($editor->write_method != WRITE_MANUAL && ($mod_uninstalled || $force_uninstall))
+		{
+			// Move edited files back
+			$status = $editor->copy_content($this->edited_root, '', $this->edited_root);
+
+			if (is_string($status))
+			{
+				$mod_uninstalled = false;
+
+				$template->assign_block_vars('error', array(
+					'ERROR'	=> $status,
+				));
+			}
+		}
+		else if ($mod_uninstalled || $force_uninstall)
+		{
+			// download the compressed file
+			$editor->compress->close();
+		}
+
+		if ($force_uninstall)
+		{
+			$template->assign_var('S_FORCE', true);
+		}
+
 		$template->assign_var('S_ERROR', !$mod_uninstalled);
 
 		if ($execute_edits && $mod_uninstalled)
@@ -798,6 +875,12 @@ class acp_mods
 
 			// Add log
 			add_log('admin', 'LOG_MOD_REMOVE', $details['MOD_NAME']);
+		}
+
+		if ($editor->write_method == WRITE_MANUAL && ($mod_uninstalled || $force_install))
+		{
+			$editor->compress->download('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
+			exit;
 		}
 	}
 

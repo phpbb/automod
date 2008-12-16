@@ -149,13 +149,13 @@ class parser
 							// this isn't perfect, but it seems better than having
 							// finds of only a couple characters, like "/*"
 							case 'AFTER ADD':
-								$total_find = $find . "\n\n" . $command;
+								$total_find = rtrim($find, "\n") . "\n\n" . trim($command, "\n");
 
 								$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
 							break;
 
 							case 'BEFORE ADD':
-								$total_find = $command . "\n\n" . $find;
+								$total_find = rtrim($command, "\n") . "\n\n" . trim($find, "\n");
 
 								// replace with the find
 								$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
@@ -216,7 +216,7 @@ class parser
 
 /**
 * XML parser
-* @package mods_manager
+* @package automod
 */
 class parser_xml
 {
@@ -555,7 +555,7 @@ class parser_xml
 							for ($l = 0; $l < $action_count; $l++)
 							{
 								$type = str_replace('-', ' ', $action_info['ACTION'][$l]['attrs']['TYPE']);
-								$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])][$type] = (isset($action_info['ACTION'][$l]['data'])) ? $action_info['ACTION'][$l]['data'] : '';
+								$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])][$type] = (isset($action_info['ACTION'][$l]['data'])) ? preg_replace("#^(\s)+\n#", '', rtrim(trim($action_info['ACTION'][$l]['data'], "\n"))) : '';
 							}
 						}
 					}
@@ -607,7 +607,7 @@ class parser_xml
 							//
 							// inline actions must be trimmed in case the MOD author
 							// inserts a new line by mistake
-							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'])]['in-line-edit'][trim($inline_find)]['in-line-' . $type][] = $inline_actions[$l]['data'];
+							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'])]['in-line-edit'][trim($inline_find)]['in-line-' . $type][] = trim($inline_actions[$l]['data'], "\n");
 						}
 					}
 				}
@@ -631,7 +631,7 @@ class parser_xml
 
 /**
 * XML processing
-* @package mods_manager
+* @package automod
 */
 class xml_array
 {

@@ -36,6 +36,7 @@ $lang = array_merge($lang, array(
 	'AUTHOR_NAME'			=> 'Author Name',
 	'AUTHOR_NOTES'			=> 'Author Notes',
 	'AUTHOR_URL'			=> 'Author URL',
+	'AUTOMOD_CANNOT_INSTALL_OLD_VERSION'	=> 'The version of AutoMOD you are trying to install has already been installed.  Please delete this install_automod.php file.',
 
 	'CAT_INSTALL_AUTOMOD'	=> 'AutoMOD',
 	'CHANGE_DATE'	=> 'Release Date',
@@ -112,12 +113,14 @@ $lang = array_merge($lang, array(
 	'RETRY'				=> 'Retry',
 	'RETURN_MODS'		=> 'Return to AutoMOD',
 	'REVERSE'			=> 'Reverse',
+	'ROOT_IS_READABLE'	=> 'The phpBB root directory is readable.',
 	'ROOT_NOT_READABLE'	=> 'AutoMOD was not able to open phpBB\'s index.php for reading.  This probably means that permissions are too restrictive on your phpBB root directory, which will prevent AutoMOD from working.  Please adjust your permissions and try the check again.',
 
 
 	'SOURCE'		=> 'Source',
 	'SQL_QUERIES'	=> 'SQL Queries',
 	'STATUS'		=> 'Status',
+	'STORE_IS_WRITABLE'		=> 'The store/ directory is writable.',
 	'STORE_NOT_WRITABLE'	=> 'AutoMOD installation has detected that the store/ directory is not writable.  This is required for AutoMOD to work properly.  Please adjust your permissions and try again.',
 	'STYLE_NAME'	=> 'Style name',
 	'SUCCESS'		=> 'Success',
