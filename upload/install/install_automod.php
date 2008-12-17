@@ -24,7 +24,7 @@ $user->session_begin();
 $auth->acl($user->data);
 $user->setup(array('install', 'acp/mods'));
 
-$template->set_custom_template($phpbb_root_path . 'adm/style', 'admin');
+
 
 if ($user->data['user_type'] != USER_FOUNDER)
 {
@@ -36,13 +36,15 @@ $sub = request_var('sub', 'intro');
 $current_version = '1.0.0-b1';
 $page_title = $user->lang['AUTOMOD_INSTALLATION'];
 
-if (isset($config['automod_version']))
+if (isset($config['automod_version']) && $sub == 'intro')
 {
 	if (version_compare($config['automod_version'], $current_version, '<='))
 	{
 		trigger_error('AUTOMOD_CANNOT_INSTALL_OLD_VERSION');
 	}
 }
+
+$template->set_custom_template($phpbb_root_path . 'adm/style', 'admin');
 
 $method = basename(request_var('method', ''));
 if (!$method || !class_exists($method))
@@ -86,7 +88,7 @@ switch ($sub)
 			$can_proceed = false;
 		}
 
-		$u_action = append_sid($phpbb_root_path . 'install_automod.'.$phpEx, (($can_proceed) ? '&amp;sub=create_table' : '&amp;sub=intro'));
+		$u_action = append_sid($phpbb_root_path . 'install/install_automod.'.$phpEx, (($can_proceed) ? '&amp;sub=create_table' : '&amp;sub=intro'));
 
 		$template->assign_vars(array(
 			'S_OVERVIEW'		=> true,
@@ -188,7 +190,7 @@ function perform_sql($mode, $sub)
 		'TITLE'				=> $user->lang['CREATE_TABLE'],
 		'BODY'				=> $user->lang['CREATE_TABLE_EXPLAIN'],
 		'L_SUBMIT'			=> $user->lang['NEXT_STEP'],
-		'U_ACTION'			=> append_sid($phpbb_root_path . 'install_automod.'.$phpEx, "?mode=$mode&amp;sub=final&amp;language=$language"),
+		'U_ACTION'			=> append_sid($phpbb_root_path . 'install/install_automod.'.$phpEx, "?sub=final"),
 	));
 
 	include($phpbb_root_path . 'includes/functions_install.'.$phpEx);
@@ -210,7 +212,7 @@ function perform_sql($mode, $sub)
 
 	// Ok we have the db info go ahead and read in the relevant schema
 	// and work on building the table
-	$dbms_schema = $phpbb_root_path .'install/schemas/automod/' . $available_dbms[$dbms]['SCHEMA'] . '_schema.sql';
+	$dbms_schema = $phpbb_root_path . 'install/schemas/automod/' . $available_dbms[$dbms]['SCHEMA'] . '_schema.sql';
 
 	// How should we treat this schema?
 	$remove_remarks = $available_dbms[$dbms]['COMMENTS'];
