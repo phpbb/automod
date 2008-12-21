@@ -34,14 +34,14 @@ $mode = request_var('mode', '');
 $sub = request_var('sub', 'intro');
 $current_version = '1.0.0-b1';
 $page_title = $user->lang['AUTOMOD_INSTALLATION'];
-/*
+
 if (isset($config['automod_version']) && $sub == 'intro')
 {
 	if (version_compare($config['automod_version'], $current_version, '<='))
 	{
 		trigger_error('AUTOMOD_CANNOT_INSTALL_OLD_VERSION');
 	}
-}*/
+}
 
 $template->set_custom_template($phpbb_root_path . 'adm/style', 'admin');
 $install = new install_automod();
