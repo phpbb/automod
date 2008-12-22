@@ -54,13 +54,20 @@ if (!$method || !class_exists($method))
 
 	if (!in_array('ftp', $methods))
 	{
-		$method = $methods[0];
+		if (sizeof($method) == 0)
+		{
+			$method = false;
+		}
+		else
+		{
+			$method = $methods[0];
+		}
 	}
 }
 
 $test_connection = false;
 $test_ftp_connection = request_var('test_connection', '');
-if (!empty($test_ftp_connection))
+if (!empty($test_ftp_connection) && $method !== false)
 {
 	test_ftp_connection($method, $test_ftp_connection, $test_connection);
 
@@ -87,6 +94,22 @@ switch ($sub)
 		{
 			$template->assign_var('STORE_NOT_WRITABLE', true);
 			$can_proceed = false;
+		}
+		if ($method === false)
+		{
+			$template->assign_var('FTP_NOT_USABLE', true);
+
+			$ftp_test = is_writable($phpbb_root_path);
+
+			if ($can_proceed)
+			{
+				$can_proceed = $ftp_test;
+			}
+
+			if ($ftp_test)
+			{
+				$template->assign_var('ROOT_WRITEABLE', true);
+			}
 		}
 
 		$u_action = append_sid($phpbb_root_path . 'install/index.'.$phpEx, 'sub=' . (($can_proceed) ? 'create_table' : 'intro'));
