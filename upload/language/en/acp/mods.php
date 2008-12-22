@@ -62,6 +62,7 @@ $lang = array_merge($lang, array(
 	'FIND_MISSING'		=> 'The Find specified by the MOD could not be found',
 	'FORCE_INSTALL'		=> 'Force Install',
 	'FTP_INFORMATION'	=> 'FTP Information',
+	'FTP_NOT_USABLE'  => 'The FTP function can\'t be used as this has been disabled by your hosting.',
 
 	'INLINE_FIND_MISSING'=> 'The In-Line Find specified by the MOD could not be found.',
 	'INSTALL_AUTOMOD'	=> 'AutoMOD Installation',
