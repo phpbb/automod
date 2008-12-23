@@ -54,7 +54,7 @@ if (!$method || !class_exists($method))
 
 	if (!in_array('ftp', $methods))
 	{
-		if (sizeof($method) == 0)
+		if (sizeof($methods) == 0)
 		{
 			$method = false;
 		}
