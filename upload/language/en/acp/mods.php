@@ -42,6 +42,7 @@ $lang = array_merge($lang, array(
 	'CHANGE_DATE'	=> 'Release Date',
 	'CHANGE_VERSION'=> 'Version Number',
 	'CHANGES'		=> 'Changes',
+	'CHECK_AGAIN'  => 'Check again',
 	'COMMENT'		=> 'Comment',
 	'CREATE_TABLE'	=> 'Database Alterations',
 	'CREATE_TABLE_EXPLAIN'	=> 'AutoMOD has successfully made its database alterations, including a permission which has been assigned to the “Full Administrator” role.',

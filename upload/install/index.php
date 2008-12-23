@@ -118,7 +118,7 @@ switch ($sub)
 			'S_OVERVIEW'		=> true,
 			'TITLE'				=> $user->lang['AUTOMOD_INSTALLATION'],
 			'BODY'				=> $user->lang['AUTOMOD_INSTALLATION_EXPLAIN'],
-			'L_SUBMIT'			=> $user->lang['NEXT_STEP'],
+			'L_SUBMIT'			=> $can_proceed ? $user->lang['NEXT_STEP'] : $user->lang['CHECK_AGAIN'],
 			'U_ACTION'			=> $u_action,
 		));
 
