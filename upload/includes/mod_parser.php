@@ -163,6 +163,7 @@ class parser
 
 							case 'REPLACE WITH':
 							case 'REPLACE, WITH':
+							case 'REPLACE-WITH':
 							case 'REPLACE':
 								// replace $command (new code) with $find (original code)
 								$reverse_edits['EDITS'][$file][$edit_id][$command]['replace with'] = $find;
@@ -334,7 +335,7 @@ class parser_xml
 			$entry		= $history_info[$i]['children'];
 			$changelog	= isset($entry['CHANGELOG']) ? $entry['CHANGELOG'] : array();
 			$changelog_size = sizeof($changelog);
-/*
+
 			for ($j = 0; $j < $changelog_size; $j++)
 			{
 				// Ignore changelogs in foreign languages except in the case that there is no 
@@ -346,7 +347,7 @@ class parser_xml
 				}
 				$changes[] = $changelog[0]['children']['CHANGE'][$j]['data'];
 			}
-*/
+
 			switch ($this->modx_version)
 			{
 				case 1.0:
@@ -378,22 +379,25 @@ class parser_xml
 		{
 			$link_group = (isset($header['LINK-GROUP'][0]['children'])) ? $header['LINK-GROUP'][0]['children'] : array();
 
-			for ($i = 0; $i <= sizeof($link_group); $i++)
+			if (isset($link_group['LINK']))
 			{
-				// do some stuff with attrs
-				// commented out due to a possible PHP bug.  When using this, 
-				// sizeof($link_group) changed each time ...
-				// $attrs = &$link_group[$i]['attrs'];
-
-				if (!isset($link_group['LINK'][$i]))
+				for ($i = 0, $size = sizeof($link_group['LINK']); $i <= $size; $i++)
 				{
-					continue;
+					// do some stuff with attrs
+					// commented out due to a possible PHP bug.  When using this, 
+					// sizeof($link_group) changed each time ...
+					// $attrs = &$link_group[$i]['attrs'];
+	
+					if (!isset($link_group['LINK'][$i]))
+					{
+						continue;
+					}
+	
+					$children[$link_group['LINK'][$i]['attrs']['TYPE']][] = array(
+						'href'	=> $link_group['LINK'][$i]['attrs']['HREF'],
+						'title'	=> localise_tags($link_group, 'LINK', $i),
+					);
 				}
-
-				$children[$link_group['LINK'][$i]['attrs']['TYPE']][] = array(
-					'href'	=> $link_group['LINK'][$i]['attrs']['HREF'],
-					'title'	=> localise_tags($link_group, 'LINK', $i),
-				);
 			}
 		}
 

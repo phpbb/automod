@@ -268,7 +268,7 @@
 	</div>
 	<!-- ELSE -->
 	<div class="successbox">
-		<p>{L_INSTALLED}</p>
+		<p><!-- IF S_INSTALL -->{L_INSTALLED}<!-- ELSE -->{L_UNINSTALLED}<!-- ENDIF --></p>
 
 		<!-- IF S_FORCE -->
 		<p><strong>{L_INSTALL_FORCED}</strong></p>
