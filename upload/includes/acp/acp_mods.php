@@ -926,12 +926,15 @@ class acp_mods
 					}
 					else
 					{
-						if (dirname(end($mods['main'])) == $dir)
+						$check = end($mods['main']);
+
+						// we take the first file alphabetically with install in the filename
+						if (dirname($check) == $dir)
 						{
-							if (preg_match('#.*install.*xml$#i', $file))
+							if (preg_match('#.*install.*xml$#i', $file) && strnatcasecmp(basename($check), $file) < 0)
 							{
 								$mods['main'][sizeof($mods['main']) - 1] = "$dir/$file";
-							}				
+							}			
 						}
 						else
 						{
@@ -1297,7 +1300,6 @@ class acp_mods
 		{
 			// TODO: check for the chance that the MOD has been installed by the MODs Manager
 			// previously
-			// TODO: Pass the name back from the mod_parser
 			if (confirm_box(true))
 			{
 				// do nothing
@@ -1351,6 +1353,7 @@ class acp_mods
 			{
 				$installed_languages[$row['lang_id']] = $row['lang_iso'];
 			}
+			$db->sql_freeresult($result);
 
 			foreach ($children['language'] as $key => $tag)
 			{
@@ -1387,6 +1390,7 @@ class acp_mods
 						'LOCAL_NAME'	=> $row['lang_local_name'],
 					));
 				}
+				$db->sql_freeresult($result);
 			}
 
 			if (sizeof($process_languages) && ((defined('DEBUG') || isset($_GET['full_details'])) || $action == 'install'))
@@ -1445,6 +1449,7 @@ class acp_mods
 			{
 				$installed_templates[$row['template_id']] = $row['template_name'];
 			}
+			$db->sql_freeresult($result);
 
 			foreach ($children['template'] as $key => $tag)
 			{

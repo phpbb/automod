@@ -112,7 +112,7 @@ switch ($sub)
 			}
 		}
 
-		$u_action = append_sid($phpbb_root_path . 'install/index.'.$phpEx, 'sub=' . (($can_proceed) ? 'create_table' : 'intro'));
+		$u_action = append_sid($phpbb_root_path . 'install/index.'.$phpEx, 'sub=' . (($can_proceed) ? 'sql' : 'intro'));
 
 		$template->assign_vars(array(
 			'S_OVERVIEW'		=> true,
@@ -156,7 +156,7 @@ switch ($sub)
 		}
 	break;
 
-	case 'create_table':
+	case 'sql':
 		$install->add_config($mode, $sub);
 		$install->perform_sql($mode, $sub);
 		$install->add_modules($mode, $sub);
