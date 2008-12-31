@@ -65,6 +65,7 @@ $lang = array_merge($lang, array(
 	'FILE_MISSING'		=> 'Cannot locate file',
 	'FILE_TYPE'			=> 'Compressed File Type',
 	'FILE_TYPE_EXPLAIN'	=> 'This is only valid with the “Compressed File Download” write method',
+	'FILESYSTEM_NOT_WRITABLE'	=> 'AutoMOD has determined the filesystem is not writable, so the direct write method cannot be used.',
 	'FIND'				=> 'Find',
 	'FIND_MISSING'		=> 'The Find specified by the MOD could not be found',
 	'FORCE_INSTALL'		=> 'Force Install',
@@ -84,6 +85,7 @@ $lang = array_merge($lang, array(
 	'INSTALLATION_SUCCESSFUL'	=> 'AutoMOD installed successfully.  You can now manage phpBB MODifications through the AutoMOD tab in the Administration Control Panel.',
 	'INVALID_MOD_INSTRUCTION'	=> 'This MOD has an invalid instruction, or an in-line find operation failed.',
 
+	'MANUAL_COPY'				=> 'Needs manual copy',
 	'MOD_CONFIG'				=> 'AutoMOD Configuration',
 	'MOD_CONFIG_UPDATED'        => 'AutoMOD configuration has been updated.',
 	'MOD_DETAILS'				=> 'MOD Details',
@@ -128,16 +130,17 @@ $lang = array_merge($lang, array(
 	'SOURCE'		=> 'Source',
 	'SQL_QUERIES'	=> 'SQL Queries',
 	'STATUS'		=> 'Status',
-	'STORE_IS_WRITABLE'		=> 'The store/ directory is writable.',
-	'STORE_NOT_WRITABLE'	=> 'AutoMOD installation has detected that the store/ directory is not writable.  This is required for AutoMOD to work properly.  Please adjust your permissions and try again.',
+	'STORE_IS_WRITABLE'			=> 'The store/ directory is writable.',
+	'STORE_NOT_WRITABLE_INST'	=> 'AutoMOD installation has detected that the store/ directory is not writable.  This is required for AutoMOD to work properly.  Please adjust your permissions and try again.',
+	'STORE_NOT_WRITABLE'		=> 'The store/ directory is not writable.',
 	'STYLE_NAME'	=> 'Style name',
 	'SUCCESS'		=> 'Success',
 
 	'TARGET'		=> 'Target',
 
 	'UNKNOWN_MOD_AUTHOR-NOTES'	=> 'No Author Notes were specified.',
-	'UNKNOWN_MOD_COMMENT'		=> 'No comment.',
-	'UNKNOWN_MOD_INLINE-COMMENT'=> 'No comment.',
+	'UNKNOWN_MOD_COMMENT'		=> '',
+	'UNKNOWN_MOD_INLINE-COMMENT'=> '',
 	'UNKNOWN_QUERY_REVERSE' => 'Unknown reverse query',
 
 	'UNINSTALL'				=> 'Uninstall',
@@ -148,6 +151,7 @@ $lang = array_merge($lang, array(
 	'VERSION'		=> 'Version',
 
 	'WRITE_DIRECT_FAIL'		=> 'AutoMOD could not copy the file %s into place using the direct method.  Please use another write method and try again.',
+	'WRITE_DIRECT_TOO_SHORT'=> 'AutoMOD was unable to finish writing the file %s.  This can often be solved with the Retry button.  If this does not work, try another write method.',
 	'WRITE_MANUAL_FAIL'		=> 'AutoMOD could not add the file %s to a compressed archive.  Please try another write method.',
 	'WRITE_METHOD'			=> 'Write Method',
 	'WRITE_METHOD_DIRECT'	=> 'Direct',

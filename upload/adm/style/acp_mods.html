@@ -193,19 +193,7 @@
 		</div>
 	<!-- ENDIF -->
 
-	<fieldset>
-		<legend>{L_FTP_SETTINGS}</legend>
-		<dl>
-			<dt><label>{L_UPLOAD_METHOD}:</label></dt>
-			<dd><strong>{UPLOAD_METHOD}</strong></dd>
-		</dl>
-		<!-- BEGIN data -->
-		<dl>
-			<dt><label for="{data.DATA}">{data.NAME}:</label><br /><span>{data.EXPLAIN}</span></dt>
-			<dd><input type="<!-- IF data.DATA == 'password' -->password<!-- ELSE -->text<!-- ENDIF -->" id="{data.DATA}" name="{data.DATA}" value="{data.DEFAULT}" /></dd>
-		</dl>
-		<!-- END data -->
-	</fieldset>
+	<!-- INCLUDE acp_mods_ftp.html -->
 <!-- ENDIF -->
 	<fieldset class="submit-buttons">
 		<legend>{L_INSTALL}</legend>
@@ -216,20 +204,17 @@
 		<!-- ENDIF -->
 		<input class="button1" type="submit" name="install" value="{L_INSTALL}" />
 	</fieldset>
-	</form>
-
 
 	<!-- INCLUDE acp_mods_actions.html -->
 
 	<!-- IF S_NEW_FILES or S_EDITS or S_SQL -->
-	<form id="acp_mods" method="post" action="{U_INSTALL}">
 	<fieldset class="submit-buttons">
 		<legend>{L_INSTALL}</legend>
 		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
 		<input class="button1" type="submit" name="install" value="{L_INSTALL}" />
-	</fieldset>
-	</form>
+	</fieldset>	
 	<!-- ENDIF -->
+	</form>
 
 	<br />
 
@@ -238,7 +223,6 @@
 <!-- ELSEIF S_INSTALL or S_UNINSTALL -->
 
 	<!-- IF S_UNINSTALL -->
-
 	<h1>{L_UNINSTALLED}</h1>
 
 	<p>{L_UNINSTALLED_EXPLAIN}</p>
@@ -257,7 +241,7 @@
 		<!-- END error -->
 		<br />
 
-		<form id="acp_mods" method="post" action="{U_RETRY}">
+		<form id="acp_mods_err" method="post" action="{U_RETRY}">
 		<fieldset class="submit-buttons">
 			<legend>{L_RETRY}</legend>
 			<input class="button1" type="submit" name="retry" value="{L_RETRY}" />
@@ -312,16 +296,27 @@
 	<!-- ENDIF -->
 
 	<form id="acp_mods" method="post" action="{U_UNINSTALL}">
+<!-- IF .data -->
+	<!-- IF S_CONNECTION_SUCCESS -->
+		<div class="successbox">
+			<p>{L_CONNECTION_SUCCESS}</p>
+		</div>
+	<!-- ELSEIF S_CONNECTION_FAILED -->
+		<div class="errorbox">
+			<p>{L_CONNECTION_FAILED}<br />{ERROR_MSG}</p>
+		</div>
+	<!-- ENDIF -->
+
+	<!-- INCLUDE acp_mods_ftp.html -->
+<!-- ENDIF -->
 	<fieldset class="submit-buttons">
 		<legend>{L_UNINSTALL}</legend>
 		<input type="hidden" name="mod_id" value="{MOD_ID}" />
 		<input class="button1" type="submit" name="uninstall" value="{L_UNINSTALL}" />
 	</fieldset>
-	</form>
 
 	<!-- INCLUDE acp_mods_actions.html -->
 
-	<form id="acp_mods" method="post" action="{U_UNINSTALL}">
 	<fieldset class="submit-buttons">
 		<legend>{L_UNINSTALL}</legend>
 		<input type="hidden" name="mod_id" value="{MOD_ID}" />
@@ -345,14 +340,14 @@
 	<!-- ENDIF -->
 
 	<p>{L_MODS_CONFIG_EXPLAIN}</p>
-	<form action="{U_CONFIG}" method="post">
+	<form action="{U_CONFIG}" method="post" id="automod_config">
 	<fieldset>
 		<legend>{L_MOD_CONFIG}</legend>
 		<dl>
 			<dt><label for="write_method">{L_WRITE_METHOD}:</label><br /><span>{L_WRITE_METHOD_EXPLAIN}</span></dt>
-			<dd><label><input type="radio" name="write_method" value="{WRITE_METHOD_DIRECT}"{WRITE_DIRECT} /> {L_WRITE_METHOD_DIRECT}</label>
-				<label><input type="radio" name="write_method" value="{WRITE_METHOD_FTP}"{WRITE_FTP} /> {L_WRITE_METHOD_FTP}</label>
-				<label><input type="radio" name="write_method" value="{WRITE_METHOD_MANUAL}"{WRITE_MANUAL} /> {L_WRITE_METHOD_MANUAL}</label>
+			<dd><label><input type="radio" name="write_method" value="{WRITE_METHOD_DIRECT}"{WRITE_DIRECT} onclick="dE('ftp_detailss', -1, 'block');" /> {L_WRITE_METHOD_DIRECT}</label>
+				<label><input type="radio" name="write_method" value="{WRITE_METHOD_FTP}"{WRITE_FTP} onclick="dE('ftp_details', 1, 'block');" /> {L_WRITE_METHOD_FTP}</label>
+				<label><input type="radio" name="write_method" value="{WRITE_METHOD_MANUAL}"{WRITE_MANUAL} onclick="dE('ftp_details', -1, 'block');" /> {L_WRITE_METHOD_MANUAL}</label>
 			</dd>
 		</dl>
 		<dl>
@@ -360,21 +355,11 @@
 			<dd><!-- BEGIN compress --><label><input type="radio" name="compress_method"<!-- IF compress.METHOD eq COMPRESS_METHOD --> id="method" checked="checked"<!-- ENDIF --> value="{compress.METHOD}" /> {compress.METHOD}</label><!-- END compress --></dd>
 		</dl>
 	</fieldset>
-	<fieldset>
-		<legend>{L_FTP_SETTINGS}</legend>
-		<dl>
-			<dt><label>{L_UPLOAD_METHOD}:</label></dt>
-			<dd><strong>{UPLOAD_METHOD}</strong></dd>
-		</dl>
-		<!-- BEGIN data -->
-		<dl>
-			<dt><label for="{data.DATA}">{data.NAME}:</label><br /><span>{data.EXPLAIN}</span></dt>
-			<dd><input type="<!-- IF data.DATA == 'password' -->password<!-- ELSE -->text<!-- ENDIF -->" id="{data.DATA}" name="{data.DATA}" value="{data.DEFAULT}" /></dd>
-		</dl>
-		<!-- END data -->
-	</fieldset>
+
+	<!-- INCLUDE acp_mods_ftp.html -->
+
 	<fieldset class="submit-buttons">
-	  {S_FORM_TOKEN}
+		{S_FORM_TOKEN}
 		<input type="submit" name="submit" value="{L_SUBMIT}" id="submit" class="button1" />
 	</fieldset>
 	</form>

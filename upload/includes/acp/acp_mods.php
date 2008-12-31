@@ -123,9 +123,14 @@ class acp_mods
 						$template->assign_var('ERROR', $user->lang[$error]);
 					}
 				}
+				else if (isset($_POST['submit']) && !check_form_key('acp_mods'))
+				{
+					trigger_error($user->lang['FORM_INVALID'] . adm_back_link($this->u_action), E_USER_WARNING);
+				}
 
 				add_form_key('acp_mods');
 
+				// implicit else
 				include("{$phpbb_root_path}includes/functions_compress.$phpEx");
 				foreach (compress::methods() as $method)
 				{
@@ -137,6 +142,11 @@ class acp_mods
 				$requested_data = call_user_func(array($ftp_method, 'data'));
 				foreach ($requested_data as $data => $default)
 				{
+					if ($data == 'password')
+					{
+						continue;
+					}
+
 					$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
 					$template->assign_block_vars('data', array(
 						'DATA'		=> $data,
@@ -146,7 +156,6 @@ class acp_mods
 					));
 				}
 
-				// implicit else
 				$template->assign_vars(array(
 					'S_CONFIG'			=> true,
 					'U_CONFIG'			=> $this->u_action . '&amp;mode=config',
@@ -161,6 +170,7 @@ class acp_mods
 					'WRITE_METHOD_MANUAL'	=> WRITE_MANUAL,
 
 					'COMPRESS_METHOD'	=> $config['compress_method'],
+					'S_HIDE_FTP'		=> true,
 				));
 			break;
 
@@ -197,7 +207,7 @@ class acp_mods
 				switch ($action)
 				{
 					case 'pre_install':
-						$this->pre_install($mod_path, $method);
+						$this->pre_install($mod_path);
 					break;
 
 					case 'install':
@@ -515,48 +525,20 @@ class acp_mods
 		// get FTP information if we need it
 		if ($config['write_method'] == WRITE_FTP)
 		{
-			$s_hidden_fields = build_hidden_fields(array('method' => $method));
-
-			if (!class_exists($method))
-			{
-				trigger_error('Method does not exist.', E_USER_ERROR);
-			}
-
-			$requested_data = call_user_func(array($method, 'data'));
-			foreach ($requested_data as $data => $default)
-			{
-				$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-
-				$template->assign_block_vars('data', array(
-					'DATA'		=> $data,
-					'NAME'		=> $user->lang[strtoupper($method . '_' . $data)],
-					'EXPLAIN'	=> $user->lang[strtoupper($method . '_' . $data) . '_EXPLAIN'],
-					'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
-				));
-			}
-
-			$template->assign_vars(array(
-				'S_CONNECTION_SUCCESS'		=> ($test_ftp_connection && $test_connection === true) ? true : false,
-				'S_CONNECTION_FAILED'		=> ($test_ftp_connection && $test_connection !== true) ? true : false,
-				'ERROR_MSG'					=> ($test_ftp_connection && $test_connection !== true) ? $user->lang[$test_connection] : '',
-
-				'S_FTP_UPLOAD'		=> true,
-				'UPLOAD_METHOD'		=> $method,
-				'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
-			));
+			handle_ftp_details($method, $test_ftp_connection, $test_connection);
 		}
 
 		$s_hidden_fields .= build_hidden_fields(array('dependency_confirm' => !empty($_REQUEST['dependency_confirm'])));
 		$template->assign_var('S_HIDDEN_FIELDS', $s_hidden_fields);
 
-		$editor = new editor($phpbb_root_path, true);
+		$write_method = 'editor_' . determine_write_method(true);
+		$editor = new $write_method();
 
 		// Only display full actions if the user has requested them.
 		if (!defined('DEBUG') && !isset($_GET['full_details']) || ($editor->write_method == WRITE_FTP && empty($_REQUEST['password'])))
 		{
 			return;
 		}
-
 
 		$this->process_edits($editor, $actions, $details, false, true, false);
 
@@ -585,7 +567,9 @@ class acp_mods
 		set_config('ftp_timeout',	request_var('timeout', 10));
 
 		$details = $this->mod_details($mod_path, false);
-		$editor = new editor($phpbb_root_path);
+
+		$write_method = 'editor_' . determine_write_method(false);
+		$editor = new $write_method();
 
 		// get mod install root && make temporary edited folder root
 		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
@@ -624,24 +608,19 @@ class acp_mods
 
 		$force_install = request_var('force', false);
 
-		if ($editor->write_method != WRITE_MANUAL && ($mod_installed || $force_install))
+		if ($mod_installed || $force_install)
 		{
 			// Move edited files back
-			$status = $editor->copy_content($this->edited_root, '', $this->edited_root);
+			$status = $editor->commit_changes($this->edited_root, '');
 
 			if (is_string($status))
 			{
-				$mod_installed = false;
+				$mod_uninstalled = false;
 
 				$template->assign_block_vars('error', array(
 					'ERROR'	=> $status,
 				));
 			}
-		}
-		else if ($mod_installed || $force_install)
-		{
-			// download the compressed file
-			$editor->compress->close();
 		}
 
 		// Finish by sending template data
@@ -751,20 +730,20 @@ class acp_mods
 			$template->assign_var('S_FORCE', true);
 		}
 
-		if ($editor->write_method == WRITE_MANUAL && ($mod_installed || $force_install))
+		if ($mod_installed || $force_install)
 		{
-			$editor->compress->download('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
+			$editor->commit_changes_final('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
 			exit;
 		}
 	}
 
 	/**
 	* Uninstall/pre uninstall a mod
-	* @TODO: Allow uninstaller to use FTP & so forth
 	*/
 	function uninstall($action, $mod_id)
 	{
 		global $phpbb_root_path, $phpEx, $db, $template;
+		global $method, $test_ftp_connection, $test_connection;
 
 		// mod_id blank?
 		if (!$mod_id)
@@ -773,45 +752,19 @@ class acp_mods
 			return false;
 		}
 
-		$editor = new editor($phpbb_root_path);
+		$write_method = 'editor_' . determine_write_method(false);
+		$editor = new $write_method();
+
 		$execute_edits = ($action == 'pre_uninstall') ? false : true;
 
 		// get mod install root && make temporary edited folder root
-//		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
 		$this->edited_root = "store/mods/{$mod_id}_uninst/";
+
 
 		// get FTP information if we need it
 		if ($editor->write_method == WRITE_FTP && !$execute_edits)
 		{
-			$s_hidden_fields = build_hidden_fields(array('method' => $method));
-
-			if (!class_exists($method))
-			{
-				trigger_error('Method does not exist.', E_USER_ERROR);
-			}
-
-			$requested_data = call_user_func(array($method, 'data'));
-			foreach ($requested_data as $data => $default)
-			{
-				$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-
-				$template->assign_block_vars('data', array(
-					'DATA'		=> $data,
-					'NAME'		=> $user->lang[strtoupper($method . '_' . $data)],
-					'EXPLAIN'	=> $user->lang[strtoupper($method . '_' . $data) . '_EXPLAIN'],
-					'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
-				));
-			}
-
-			$template->assign_vars(array(
-				'S_CONNECTION_SUCCESS'		=> ($test_ftp_connection && $test_connection === true) ? true : false,
-				'S_CONNECTION_FAILED'		=> ($test_ftp_connection && $test_connection !== true) ? true : false,
-				'ERROR_MSG'					=> ($test_ftp_connection && $test_connection !== true) ? $user->lang[$test_connection] : '',
-
-				'S_FTP_UPLOAD'		=> true,
-				'UPLOAD_METHOD'		=> $method,
-				'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
-			));
+			handle_ftp_details($method, $test_ftp_connection);
 		}
 
 		// see if directory exists
@@ -845,10 +798,10 @@ class acp_mods
 
 		$force_uninstall = request_var('force', false);
 
-		if ($editor->write_method != WRITE_MANUAL && ($mod_uninstalled || $force_uninstall))
+		if ($mod_uninstalled || $force_uninstall)
 		{
 			// Move edited files back
-			$status = $editor->copy_content($this->edited_root, '', $this->edited_root);
+			$status = $editor->commit_changes($this->edited_root, '');
 
 			if (is_string($status))
 			{
@@ -858,11 +811,6 @@ class acp_mods
 					'ERROR'	=> $status,
 				));
 			}
-		}
-		else if ($mod_uninstalled || $force_uninstall)
-		{
-			// download the compressed file
-			$editor->compress->close();
 		}
 
 		if ($force_uninstall)
@@ -883,9 +831,9 @@ class acp_mods
 			add_log('admin', 'LOG_MOD_REMOVE', $details['MOD_NAME']);
 		}
 
-		if ($editor->write_method == WRITE_MANUAL && ($mod_uninstalled || $force_install))
+		if ($mod_uninstalled || $force_uninstall)
 		{
-			$editor->compress->download('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
+			$editor->commit_changes_final('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
 			exit;
 		}
 	}
