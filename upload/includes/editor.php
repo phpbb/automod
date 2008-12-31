@@ -8,6 +8,13 @@
 *
 */
 
+/**
+*/
+if (!defined('IN_PHPBB'))
+{
+	exit;
+}
+
 // Constant Defines for actions
 //define('AFTER',		1);
 //define('BEFORE',	2);
