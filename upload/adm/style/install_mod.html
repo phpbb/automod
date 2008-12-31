@@ -61,8 +61,9 @@ function popup(url, width, height, name)
 	<!-- ELSE -->
 	<h1>{L_TESTS_PASSED}</h1>
 	<!-- ENDIF -->
+
 	<!-- IF ROOT_NOT_READABLE --><p class="errorbox">{L_ROOT_NOT_READABLE}</p><!-- ELSE --><p class="successbox">{L_ROOT_IS_READABLE}</p><!-- ENDIF -->
-	<!-- IF STORE_NOT_WRITABLE --><p class="errorbox">{L_STORE_NOT_WRITABLE}</p><!-- ELSE --><p class="successbox">{L_STORE_IS_WRITABLE}</p><!-- ENDIF -->
+	<!-- IF STORE_NOT_WRITABLE --><p class="errorbox">{L_STORE_NOT_WRITABLE_INST}</p><!-- ELSE --><p class="successbox">{L_STORE_IS_WRITABLE}</p><!-- ENDIF -->
 	<!-- IF FTP_NOT_USABLE --><p class="errorbox<!-- IF ROOT_WRITEABLE --> notice<!-- ENDIF -->">{L_FTP_NOT_USABLE}<!-- ENDIF -->
 
 
@@ -77,19 +78,7 @@ function popup(url, width, height, name)
 		</div>
 	<!-- ENDIF -->
 	
-	<fieldset>
-		<legend>{L_FTP_SETTINGS}</legend>
-		<dl>
-			<dt><label>{L_UPLOAD_METHOD}:</label></dt>
-			<dd><strong>{UPLOAD_METHOD}</strong></dd>
-		</dl>
-		<!-- BEGIN data -->
-		<dl>
-			<dt><label for="{data.DATA}">{data.NAME}:</label><br /><span>{data.EXPLAIN}</span></dt>
-			<dd><input type="<!-- IF data.DATA == 'password' -->password<!-- ELSE -->text<!-- ENDIF -->" id="{data.DATA}" name="{data.DATA}" value="{data.DEFAULT}" /></dd>
-		</dl>
-		<!-- END data -->
-	</fieldset>
+	<!-- INCLUDE acp_mods_ftp.html -->
 <!-- ENDIF -->
 <!-- ENDIF -->
 

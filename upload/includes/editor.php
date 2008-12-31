@@ -44,19 +44,9 @@ class editor
 	var $mod_actions = array();
 
 	/**
-	* One of the three constants defined above
+	* One of the three constants defined in functions_mods.php
 	*/
 	var $write_method = 0;
-
-	/**
-	* Transfer object for $this->write_method == WRITE_FTP
-	*/
-	var $transfer;
-
-	/**
-	* Compress object for $this->write_method == WRITE_MANUAL
-	*/
-	var $compress;
 
 	/**
 	* Keeps finds sequential, plus loop optimization
@@ -75,60 +65,11 @@ class editor
 
 	/**
 	* Constructor method
-	* Creates transfer and/or compress instances as needed
+	* This is not called directly in AutoMOD
 	*/
-	function editor($phpbb_root_path, $pre_install = false)
+	function editor()
 	{
-		global $config, $user;
 
-		$this->install_time = time();
-
-		// to be truly correct, we should scan all files ...
-		if ((is_writable($phpbb_root_path) && $config['write_method'] == WRITE_DIRECT) || $pre_install)
-		{
-			$this->write_method = WRITE_DIRECT;
-		}
-		// user needs to select ftp or ftp using fsock
-		else if (!is_writable($phpbb_root_path) && $config['ftp_method'] || $config['write_method'] == WRITE_FTP)
-		{
-			$this->write_method = WRITE_FTP;
-			if (!class_exists('transfer'))
-			{
-				global $phpEx;
-				include($phpbb_root_path . 'includes/functions_transfer.' . $phpEx);
-			}
-
-			$this->transfer = new $config['ftp_method']($config['ftp_host'], $config['ftp_username'], request_var('password', ''), $config['ftp_root_path'], $config['ftp_port'], $config['ftp_timeout']);
-			$error = $this->transfer->open_session();
-
-			if (is_string($error))
-			{
-				// FTP login failed
-				trigger_error(sprintf($user->lang['MODS_FTP_CONNECT_FAILURE'], $user->lang[$error]), E_USER_ERROR);
-			}
-		}
-		// or zip or tarballs
-		else if ($config['compress_method'] && (!$config['ftp_method'] || $config['write_method'] == WRITE_MANUAL))
-		{
-			$this->write_method = WRITE_MANUAL;
-			if (!class_exists('compress'))
-			{
-				global $phpEx;
-				include($phpbb_root_path . 'includes/functions_compress.' . $phpEx);
-			}
-
-			// Ugly regular expression to extract "tar" from "tar.gz" or "tar.bz2"
-			// Made ugly because it does nothing with "zip"
-			preg_match('#\.(\w{3})\.?.*#', $config['compress_method'], $match);
-			$class = 'compress_' . $match[1];
-
-			$this->compress = new $class('w', $phpbb_root_path . 'store/mod_' . $this->install_time . $config['compress_method']);
-		}
-		else
-		{
-			// We cannot go on without a write method set up.
-			trigger_error('MODS_SETUP_INCOMPLETE', E_USER_ERROR);
-		}
 	}
 
 	/**
@@ -199,128 +140,6 @@ class editor
 
 		$this->start_index = 0;
 		$this->open_filename = $filename;
-	}
-
-	/**
-	* Moves files or complete directories
-	*
-	* @param $from string Can be a file or a directory. Will move either the file or all files within the directory
-	* @param $to string Where to move the file(s) to. If not specified then will get moved to the root folder
-	* @param $strip Used for FTP only
-	* @return mixed: Bool true on success, error string on failure, NULL if no action was taken
-	* 
-	* NOTE: function should preferably not return in case of failure on only one file.  
-	* 	The current method makes error handling difficult 
-	*/
-	function copy_content($from, $to = '', $strip = '')
-	{
-		global $phpbb_root_path, $user;
-
-		if (strpos($from, $phpbb_root_path) !== 0)
-		{
-			$from = $phpbb_root_path . $from;
-		}
-
-		// When installing a MODX 1.2.0 MOD, this happens once in a long while.
-		// Not sure why yet.
-		if (is_array($to))
-		{
-			return NULL;
-		}
-
-		if (strpos($to, $phpbb_root_path) !== 0)
-		{
-			$to = $phpbb_root_path . $to;
-		}
-
-		$files = array();
-		if (is_dir($from))
-		{
-			// get all of the files within the directory
-			$files = find_files($from, '.*', 5);
-		}
-		else if (is_file($from))
-		{
-			$files = array($from);
-		}
-
-		if (empty($files))
-		{
-			return false;
-		}
-
-		// is the directory writeable? if so, then we don't have to deal with FTP
-		if ($this->write_method == WRITE_DIRECT)
-		{
-			// Look at the last character of $to and compare it to '/'
-			if ($to[strlen($to) - 1] == '/')
-			{
-				$dirname_check = $to;
-			}
-			else
-			{
-				$dirname_check = dirname($to);
-			}
-
-			if (!is_dir($dirname_check))
-			{
-				if ($this->recursive_mkdir($dirname_check) === false)
-				{
-					return sprintf($user->lang['MODS_MKDIR_FAILURE'], $dirname_check);
-				}
-			}
-
-			foreach ($files as $file)
-			{
-				if (is_dir($to))
-				{
-					$dest = str_replace($from, $to, $file);
-
-					if (!file_exists($dest))
-					{
-						$this->recursive_mkdir(dirname($dest));
-					}
-				}
-				else
-				{
-					$dest = $to;
-				}
-
-				if (!@copy($file, $dest))
-				{
-					return sprintf($user->lang['MODS_COPY_FAILURE'], $dest);
-				}
-			}
-		}
-		else if ($this->write_method == WRITE_FTP)
-		{
-			// ftp
-			foreach ($files as $file)
-			{
-				//$file = str_replace($phpbb_root_path, '', $file);
-				if (is_dir($to))
-				{
-					$to_file = str_replace(array($phpbb_root_path, $strip), '', $file);
-				}
-				else
-				{
-					$to_file = str_replace($phpbb_root_path, '', $to);
-				}
-
-				if (!$this->transfer->overwrite_file($file, $to_file))
-				{
-					// may as well return ... the MOD is likely dependent upon
-					// the file that is being copied
-					return sprintf($user->lang['MODS_FTP_FAILURE'], $to_file);
-				}
-			}
-		}
-		else
-		{
-			return NULL;
-		}
-
-		return true;
 	}
 
 	/**
@@ -730,129 +549,6 @@ class editor
 	}
 
 	/**
-	* Write & close file
-	*/
-	function close_file($new_filename)
-	{
-		global $phpbb_root_path, $edited_root;
-		global $db, $user;
-
-		if (!is_dir($phpbb_root_path . $new_filename) && !file_exists($phpbb_root_path . dirname($new_filename)))
-		{
-			if ($this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777) === false)
-			{
-				return sprintf($user->lang['MODS_MKDIR_FAILED'], dirname($new_filename));
-			}
-		}
-
-		$file_contents = implode('', $this->file_contents);
-
-		if ($this->write_method == WRITE_DIRECT && file_exists($new_filename) && !is_writable($new_filename))
-		{
-			if (is_object($this->compress))
-			{
-				// this possibility is not currently ... possible :/
-				$this->write_method = WRITE_MANUAL;
-			}
-			else
-			{
-				return sprintf($user->lang['WRITE_DIRECT_FAIL'], $new_filename);
-			}
-		}
-
-		if ($this->template_id)
-		{
-			// grab filename
-			preg_match('#styles/[a-z0-9_]+/template/([a-z0-9_]+.html)#i', $new_filename, $match);
-
-			$sql = 'UPDATE ' . STYLES_TEMPLATE_DATA_TABLE . " 
-				SET template_data = '" . $db->sql_escape($file_contents) . "', template_mtime = " . (int) $this->install_time . ' 
-				WHERE template_id = ' . (int) $this->template_id . "
-					AND template_filename = '" . $db->sql_escape($match[1]) . "'";
-			$db->sql_query($sql);
-
-			// if something failed, sql_query will error out
-			return true;
-		}
-		else if ($this->write_method == WRITE_DIRECT)
-		{
-			// skip FTP, use local file functions
-			$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
-			@fwrite($fr, $file_contents);
-
-			if (!@fclose($fr))
-			{
-				return sprintf($user->lang['WRITE_DIRECT_FAIL'], $new_filename);			
-			}
-		}
-		else if ($this->write_method == WRITE_FTP)
-		{
-			if (!$this->transfer->write_file($new_filename, $file_contents))
-			{
-				return sprintf($user->lang['MODS_FTP_FAILURE'], $new_filename);
-			}
-		}
-		else if ($this->write_method == WRITE_MANUAL)
-		{
-			// don't include extra dirs in zip file
-			$strip_position = strpos($new_filename, '_edited') + 8; // want the end of the string
-			$new_filename = substr($new_filename, $strip_position);
-
-			if (!$this->compress->add_data($file_contents, $new_filename))
-			{
-				return sprintf($user->lang['WRITE_MANUAL_FAIL'], $new_filename);
-			}
-		}
-		else
-		{
-			trigger_error('MODS_SETUP_INCOMPLETE', E_USER_ERROR);
-		}
-
-		return true;
-	}
-
-	/**
-	* @author Michal Nazarewicz (from the php manual)
-	* Creates all non-existant directories in a path
-	* @param $path - path to create
-	* @param $mode - CHMOD the new dir to these permissions
-	* @return bool - success or NULL - no action taken
-	*/
-	function recursive_mkdir($path, $mode = 0777)
-	{
-		// if files aren't writable, we can't do this...
-		if ($this->write_method == WRITE_FTP)
-		{
-			// ... luckily, the FTP class provides an alternative
-			return ($this->transfer->make_dir($path)) ? true : false;
-		}
-		else if ($this->write_method == WRITE_MANUAL)
-		{
-			return NULL;
-		}
-
-		$dirs = explode('/', $path);
-		$count = sizeof($dirs);
-		$path = '.';
-		for ($i = 0; $i < $count; $i++)
-		{
-			$path .= '/' . $dirs[$i];
-
-			if (!is_dir($path))
-			{
-				@mkdir($path, $mode);
-				@chmod($path, $mode);
-
-				if (!is_dir($path))
-				{
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	/**
 	* Function to build full edits such that uninstall will work more often
 	* 
 	* @param $find - The largest find we can put together -- sometimes this
@@ -901,72 +597,420 @@ class editor
 }
 
 /**
-* List files matching specified PCRE pattern.
-*
-* @access public
-* @param string Relative or absolute path to the directory to be scanned.
-* @param string Search pattern (perl compatible regular expression).
-* @param integer Number of subdirectory levels to scan (set to 1 to scan only current).
-* @param integer This one is used internally to control recursion level.
-* @return array List of all files found matching the specified pattern.
+* @package automod
+* class editor_direct will alter files by using the local file access functions 
+* such as fopen and fwrite.  This is typically only useful in Windows environments
+* due to permissions settings.
 */
-function find_files($directory, $pattern, $max_levels = 20, $_current_level = 1)
+class editor_direct extends editor
 {
-	if ($_current_level == $max_levels && DEBUG)
+	function editor_direct()
 	{
-		add_log('admin', 'MAX_LEVELS_FIND_FILES');
+		$this->write_method = WRITE_DIRECT;
+		$this->install_time = time();
 	}
 
-	if ($_current_level <= 1)
+	/**
+	* Moves files or complete directories
+	*
+	* @param $from string Can be a file or a directory. Will move either the file or all files within the directory
+	* @param $to string Where to move the file(s) to. If not specified then will get moved to the root folder
+	* @param $strip Used for FTP only
+	* @return mixed: Bool true on success, error string on failure, NULL if no action was taken
+	* 
+	* NOTE: function should preferably not return in case of failure on only one file.  
+	* 	The current method makes error handling difficult 
+	*/
+	function copy_content($from, $to = '', $strip = '')
 	{
-		if (strpos($directory, '\\') !== false)
-		{
-			$directory = str_replace('\\', '/', $directory);
-		}
-		if (empty($directory))
-		{
-			$directory = './';
-		}
-		else if (substr($directory, -1) != '/')
-		{
-			$directory .= '/';
-		}
-	}
+		global $phpbb_root_path, $user;
 
-	$files = array();
-	$subdir = array();
-	if (is_dir($directory))
-	{
-		$handle = @opendir($directory);
-		while (($file = @readdir($handle)) !== false)
+		if (strpos($from, $phpbb_root_path) !== 0)
 		{
-			if ($file == '.' || $file == '..')
+			$from = $phpbb_root_path . $from;
+		}
+
+		// When installing a MODX 1.2.0 MOD, this happens once in a long while.
+		// Not sure why yet.
+		if (is_array($to))
+		{
+			return NULL;
+		}
+
+		if (strpos($to, $phpbb_root_path) !== 0)
+		{
+			$to = $phpbb_root_path . $to;
+		}
+
+		$files = array();
+		if (is_dir($from))
+		{
+			// get all of the files within the directory
+			$files = find_files($from, '.*', 5);
+		}
+		else if (is_file($from))
+		{
+			$files = array($from);
+		}
+
+		if (empty($files))
+		{
+			return false;
+		}
+
+		// Look at the last character of $to and compare it to '/'
+		if ($to[strlen($to) - 1] == '/')
+		{
+			$dirname_check = $to;
+		}
+		else
+		{
+			$dirname_check = dirname($to);
+		}
+
+		if (!is_dir($dirname_check))
+		{
+			if ($this->recursive_mkdir($dirname_check) === false)
 			{
-				continue;
+				return sprintf($user->lang['MODS_MKDIR_FAILURE'], $dirname_check);
 			}
+		}
 
-			$fullname = $directory . $file;
-
-			if (is_dir($fullname))
+		foreach ($files as $file)
+		{
+			if (is_dir($to))
 			{
-				if ($_current_level < $max_levels)
+				$dest = str_replace($from, $to, $file);
+
+				if (!file_exists($dest))
 				{
-					$subdir = array_merge($subdir, find_files($fullname . '/', $pattern, $max_levels, $_current_level + 1));
+					$this->recursive_mkdir(dirname($dest));
 				}
 			}
 			else
 			{
-				if (preg_match('/^' . $pattern . '$/i', $file))
+				$dest = $to;
+			}
+
+			if (!@copy($file, $dest))
+			{
+				return sprintf($user->lang['MODS_COPY_FAILURE'], $dest);
+			}
+		}
+	}
+
+	function close_file($new_filename)
+	{
+		global $phpbb_root_path;
+		global $db, $user;
+
+		if (!is_dir($phpbb_root_path . $new_filename) && !file_exists($phpbb_root_path . dirname($new_filename)))
+		{
+			if ($this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777) === false)
+			{
+				return sprintf($user->lang['MODS_MKDIR_FAILED'], dirname($new_filename));
+			}
+		}
+
+		$file_contents = implode('', $this->file_contents);
+
+		if (file_exists($new_filename) && !is_writable($new_filename))
+		{
+			return sprintf($user->lang['WRITE_DIRECT_FAIL'], $new_filename);
+		}
+
+		if ($this->template_id)
+		{
+			return update_database_template($new_filename, $this->template_id, $file_contents, $this->install_time);
+		}
+
+		// If we are not looking at a file stored in the database, use local file functions
+		$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
+		$length_written = @fwrite($fr, $file_contents);
+
+		// This appears to be correct even with multibyte encodings.  strlen and 
+		// fwrite both return the number of bytes written, not the number of chars
+		if ($length_written < strlen($file_contents))
+		{
+			return sprintf($user->lang['WRITE_DIRECT_TOO_SHORT'], $new_filename);
+		}
+
+		if (!@fclose($fr))
+		{
+			return sprintf($user->lang['WRITE_DIRECT_FAIL'], $new_filename);			
+		}
+
+		return true;
+	}
+
+	/**
+	* @author Michal Nazarewicz (from the php manual)
+	* Creates all non-existant directories in a path
+	* @param $path - path to create
+	* @param $mode - CHMOD the new dir to these permissions
+	* @return bool - success or NULL - no action taken
+	*/
+	function recursive_mkdir($path, $mode = 0777)
+	{
+		$dirs = explode('/', $path);
+		$count = sizeof($dirs);
+		$path = '.';
+		for ($i = 0; $i < $count; $i++)
+		{
+			$path .= '/' . $dirs[$i];
+
+			if (!is_dir($path))
+			{
+				@mkdir($path, $mode);
+				@chmod($path, $mode);
+
+				if (!is_dir($path))
 				{
-					$files[] = $fullname;
+					return false;
 				}
 			}
 		}
-		@closedir($handle);
-		sort($files);
+		return true;
 	}
 
-	return array_merge($files, $subdir);
+	function commit_changes($source, $destination)
+	{
+		return $this->copy_content($source, $destination, $source);
+	}
+
+	function commit_changes_final($source, $destination)
+	{
+		return NULL;
+	}
 }
+
+class editor_ftp extends editor
+{
+	var $transfer;
+
+	function editor_ftp()
+	{
+		global $config;
+
+		$this->write_method = WRITE_FTP;
+		$this->install_time = time();
+
+		if (!class_exists('transfer'))
+		{
+			global $phpbb_root_path, $phpEx;
+			include($phpbb_root_path . 'includes/functions_transfer.' . $phpEx);
+		}
+
+		$this->transfer = new $config['ftp_method']($config['ftp_host'], $config['ftp_username'], request_var('password', ''), $config['ftp_root_path'], $config['ftp_port'], $config['ftp_timeout']);
+		$error = $this->transfer->open_session();
+
+		if (is_string($error))
+		{
+			// FTP login failed
+			trigger_error(sprintf($user->lang['MODS_FTP_CONNECT_FAILURE'], $user->lang[$error]), E_USER_ERROR);
+		}
+	}
+
+	/**
+	* Moves files or complete directories
+	*
+	* @param $from string Can be a file or a directory. Will move either the file or all files within the directory
+	* @param $to string Where to move the file(s) to. If not specified then will get moved to the root folder
+	* @param $strip Used for FTP only
+	* @return mixed: Bool true on success, error string on failure, NULL if no action was taken
+	* 
+	* NOTE: function should preferably not return in case of failure on only one file.  
+	* 	The current method makes error handling difficult 
+	*/
+	function copy_content($from, $to = '', $strip = '')
+	{
+		global $phpbb_root_path, $user;
+
+		if (strpos($from, $phpbb_root_path) !== 0)
+		{
+			$from = $phpbb_root_path . $from;
+		}
+
+		// When installing a MODX 1.2.0 MOD, this happens once in a long while.
+		// Not sure why yet.
+		if (is_array($to))
+		{
+			return NULL;
+		}
+
+		if (strpos($to, $phpbb_root_path) !== 0)
+		{
+			$to = $phpbb_root_path . $to;
+		}
+
+		$files = array();
+		if (is_dir($from))
+		{
+			// get all of the files within the directory
+			$files = find_files($from, '.*', 5);
+		}
+		else if (is_file($from))
+		{
+			$files = array($from);
+		}
+
+		if (empty($files))
+		{
+			return false;
+		}
+
+		// ftp
+		foreach ($files as $file)
+		{
+			if (is_dir($to))
+			{
+				$to_file = str_replace(array($phpbb_root_path, $strip), '', $file);
+			}
+			else
+			{
+				$to_file = str_replace($phpbb_root_path, '', $to);
+			}
+
+			if (!$this->transfer->overwrite_file($file, $to_file))
+			{
+				// may as well return ... the MOD is likely dependent upon
+				// the file that is being copied
+				return sprintf($user->lang['MODS_FTP_FAILURE'], $to_file);
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	* Write & close file
+	*/
+	function close_file($new_filename)
+	{
+		global $phpbb_root_path, $edited_root;
+		global $db, $user;
+
+		if (!is_dir($phpbb_root_path . $new_filename) && !file_exists($phpbb_root_path . dirname($new_filename)))
+		{
+			if ($this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777) === false)
+			{
+				return sprintf($user->lang['MODS_MKDIR_FAILED'], dirname($new_filename));
+			}
+		}
+
+		$file_contents = implode('', $this->file_contents);
+
+		if ($this->template_id)
+		{
+			return update_database_template($new_filename, $this->template_id, $file_contents, $this->install_time);
+		}
+
+		if (!$this->transfer->write_file($new_filename, $file_contents))
+		{
+			return sprintf($user->lang['MODS_FTP_FAILURE'], $new_filename);
+		}
+
+		return true;
+	}
+
+	/**
+	* @ignore
+	*/
+	function recursive_mkdir($path, $mode = 0777)
+	{
+		return $this->transfer->make_dir($path);
+	}
+
+	function commit_changes($source, $destination)
+	{
+		// Move edited files back
+		return $this->copy_content($source, $destination, $source);
+	}
+
+	function commit_changes_final($source, $destionation)
+	{
+		return NULL;
+	}
+}
+
+class editor_manual extends editor
+{
+	function editor_manual()
+	{
+		global $config, $phpbb_root_path;
+
+		$this->write_method = WRITE_MANUAL;
+		$this->install_time = time();
+
+		if (!class_exists('compress'))
+		{
+			global $phpEx;
+			include($phpbb_root_path . 'includes/functions_compress.' . $phpEx);
+		}
+
+		// Ugly regular expression to extract "tar" from "tar.gz" or "tar.bz2"
+		// Made ugly because it does nothing with "zip"
+		preg_match('#\.(\w{3})\.?.*#', $config['compress_method'], $match);
+		$class = 'compress_' . $match[1];
+
+		$this->compress = new $class('w', $phpbb_root_path . 'store/mod_' . $this->install_time . $config['compress_method'], $config['compress_method']);
+	}
+
+	function copy_content($from, $to = '', $strip = '')
+	{
+		return NULL;
+	}
+
+	/**
+	* Write & close file
+	*/
+	function close_file($new_filename)
+	{
+		global $phpbb_root_path, $edited_root;
+		global $db, $user;
+
+		if (!is_dir($phpbb_root_path . $new_filename) && !file_exists($phpbb_root_path . dirname($new_filename)))
+		{
+			if ($this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777) === false)
+			{
+				return sprintf($user->lang['MODS_MKDIR_FAILED'], dirname($new_filename));
+			}
+		}
+
+		$file_contents = implode('', $this->file_contents);
+
+		if ($this->template_id)
+		{
+			return update_database_template($new_filename, $this->template_id, $file_contents, $this->install_time);
+		}
+
+		// don't include extra dirs in zip file
+		$strip_position = strpos($new_filename, '_edited') + 8; // want the end of the string
+		$new_filename = substr($new_filename, $strip_position);
+
+		if (!$this->compress->add_data($file_contents, $new_filename))
+		{
+			return sprintf($user->lang['WRITE_MANUAL_FAIL'], $new_filename);
+		}
+
+		return true;
+	}
+
+	function recursive_mkdir($path, $mode = 0777)
+	{
+		return NULL;
+	}
+
+	function commit_changes($source, $destination)
+	{
+		$this->compress->close();
+		return true;
+	}
+
+	function commit_changes_final($source, $destination)
+	{
+		$this->compress->download($source, $destination);
+	}
+} 
 
 ?>

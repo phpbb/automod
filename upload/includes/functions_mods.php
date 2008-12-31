@@ -129,5 +129,161 @@ function localise_tags($header, $tagname, $index = false)
 	return $output;
 }
 
+/**
+* List files matching specified PCRE pattern.
+*
+* @access public
+* @param string Relative or absolute path to the directory to be scanned.
+* @param string Search pattern (perl compatible regular expression).
+* @param integer Number of subdirectory levels to scan (set to 1 to scan only current).
+* @param integer This one is used internally to control recursion level.
+* @return array List of all files found matching the specified pattern.
+*/
+function find_files($directory, $pattern, $max_levels = 20, $_current_level = 1)
+{
+	if ($_current_level == $max_levels && DEBUG)
+	{
+		add_log('admin', 'MAX_LEVELS_FIND_FILES');
+	}
+
+	if ($_current_level <= 1)
+	{
+		if (strpos($directory, '\\') !== false)
+		{
+			$directory = str_replace('\\', '/', $directory);
+		}
+		if (empty($directory))
+		{
+			$directory = './';
+		}
+		else if (substr($directory, -1) != '/')
+		{
+			$directory .= '/';
+		}
+	}
+
+	$files = array();
+	$subdir = array();
+	if (is_dir($directory))
+	{
+		$handle = @opendir($directory);
+		while (($file = @readdir($handle)) !== false)
+		{
+			if ($file == '.' || $file == '..')
+			{
+				continue;
+			}
+
+			$fullname = $directory . $file;
+
+			if (is_dir($fullname))
+			{
+				if ($_current_level < $max_levels)
+				{
+					$subdir = array_merge($subdir, find_files($fullname . '/', $pattern, $max_levels, $_current_level + 1));
+				}
+			}
+			else
+			{
+				if (preg_match('/^' . $pattern . '$/i', $file))
+				{
+					$files[] = $fullname;
+				}
+			}
+		}
+		@closedir($handle);
+		sort($files);
+	}
+
+	return array_merge($files, $subdir);
+}
+
+/**
+* This function is common to all editor classes, so it is pulled out from them
+* @param $filename - The filename to update
+* @param $template_id - The template set to update
+* @param $file_contents - The data to write
+* @param $install_time - Essentially the current time
+* @return bool true
+*/ 
+function update_database_template($filename, $template_id, $file_contents, $install_time)
+{
+	global $db;
+
+	// grab filename
+	preg_match('#styles/[a-z0-9_]+/template/([a-z0-9_]+.html)#i', $filename, $match);
+
+	$sql = 'UPDATE ' . STYLES_TEMPLATE_DATA_TABLE . " 
+		SET template_data = '" . $db->sql_escape($file_contents) . "', template_mtime = " . (int) $install_time . ' 
+		WHERE template_id = ' . (int) $template_id . "
+		AND template_filename = '" . $db->sql_escape($match[1]) . "'";
+	$db->sql_query($sql);
+
+	// if something failed, sql_query will error out
+	return true;
+}
+
+function determine_write_method($pre_install = false)
+{
+	global $phpbb_root_path, $config;
+
+	// to be truly correct, we should scan all files ...
+	if ((is_writable($phpbb_root_path) && $config['write_method'] == WRITE_DIRECT) || $pre_install)
+	{
+		$write_method = 'direct';
+	}
+	// user needs to select ftp or ftp using fsock
+	else if ($config['ftp_method'] && $config['write_method'] == WRITE_FTP)
+	{
+		$write_method = 'ftp';
+	}
+	// or zip or tarballs
+	else if ($config['compress_method'])
+	{
+		$write_method = 'manual';
+	}
+	else
+	{
+		// We cannot go on without a write method set up.
+		trigger_error('MODS_SETUP_INCOMPLETE', E_USER_ERROR);
+	}
+
+	return $write_method;
+}
+
+function handle_ftp_details($method, $test_ftp_connection, $test_connection)
+{
+	global $config, $template;
+
+	$s_hidden_fields = build_hidden_fields(array('method' => $method));
+
+	if (!class_exists($method))
+	{
+		trigger_error('Method does not exist.', E_USER_ERROR);
+	}
+
+	$requested_data = call_user_func(array($method, 'data'));
+	foreach ($requested_data as $data => $default)
+	{
+		$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+
+		$template->assign_block_vars('data', array(
+			'DATA'		=> $data,
+			'NAME'		=> $user->lang[strtoupper($method . '_' . $data)],
+			'EXPLAIN'	=> $user->lang[strtoupper($method . '_' . $data) . '_EXPLAIN'],
+			'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
+		));
+	}
+
+	$template->assign_vars(array(
+		'S_CONNECTION_SUCCESS'		=> ($test_ftp_connection && $test_connection === true) ? true : false,
+		'S_CONNECTION_FAILED'		=> ($test_ftp_connection && $test_connection !== true) ? true : false,
+		'ERROR_MSG'					=> ($test_ftp_connection && $test_connection !== true) ? $user->lang[$test_connection] : '',
+
+		'S_FTP_UPLOAD'		=> true,
+		'UPLOAD_METHOD'		=> $method,
+		'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
+	));
+}
 
 ?>
