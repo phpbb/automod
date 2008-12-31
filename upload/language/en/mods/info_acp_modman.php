@@ -9,6 +9,12 @@
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
+/**
+*/
+if (!defined('IN_PHPBB'))
+{
+	exit;
+}
 
 /**
 * DO NOT CHANGE
@@ -35,7 +41,7 @@ $lang = array_merge($lang, array(
 	'ACP_MODS'				=> 'AutoMOD',
 	'ACP_AUTOMOD'			=> 'AutoMOD',
 	'ACP_AUTOMOD_CONFIG'	=> 'AutoMOD Configuration',
-	
+
 	'LOG_MOD_ADD'		=> '<strong>Added new MOD</strong><br />» %s',
 	'LOG_MOD_CHANGE'	=> '<strong>Changed components for MOD</strong><br />» %x',
 	'LOG_MOD_REMOVE'	=> '<strong>Removed MOD</strong><br />» %s',
