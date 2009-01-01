@@ -151,7 +151,7 @@ class parser
 					{
 						// it is possible for a single edit in the install process
 						// to become more than one in the uninstall process
-						if (isset($reverse_edits['EDITS'][$file][$edit_id]))
+						while (isset($reverse_edits['EDITS'][$file][$edit_id]))
 						{
 							$edit_id++;
 						}

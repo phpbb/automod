@@ -733,7 +733,6 @@ class acp_mods
 		if ($mod_installed || $force_install)
 		{
 			$editor->commit_changes_final('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
-			exit;
 		}
 	}
 
@@ -834,7 +833,6 @@ class acp_mods
 		if ($mod_uninstalled || $force_uninstall)
 		{
 			$editor->commit_changes_final('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
-			exit;
 		}
 	}
 

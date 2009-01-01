@@ -1010,6 +1010,7 @@ class editor_manual extends editor
 	function commit_changes_final($source, $destination)
 	{
 		$this->compress->download($source, $destination);
+		exit;
 	}
 } 
 
