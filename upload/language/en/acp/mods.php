@@ -85,7 +85,7 @@ $lang = array_merge($lang, array(
 	'INSTALLATION_SUCCESSFUL'	=> 'AutoMOD installed successfully.  You can now manage phpBB MODifications through the AutoMOD tab in the Administration Control Panel.',
 	'INVALID_MOD_INSTRUCTION'	=> 'This MOD has an invalid instruction, or an in-line find operation failed.',
 
-	'MANUAL_COPY'				=> 'Needs manual copy',
+	'MANUAL_COPY'				=> 'Copy not attempted',
 	'MOD_CONFIG'				=> 'AutoMOD Configuration',
 	'MOD_CONFIG_UPDATED'        => 'AutoMOD configuration has been updated.',
 	'MOD_DETAILS'				=> 'MOD Details',
