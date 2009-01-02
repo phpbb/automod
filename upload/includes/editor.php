@@ -623,7 +623,7 @@ class editor_direct extends editor
 	*/
 	function copy_content($from, $to = '', $strip = '')
 	{
-		global $phpbb_root_path, $user;
+		global $phpbb_root_path, $user, $config;
 
 		if (strpos($from, $phpbb_root_path) !== 0)
 		{
@@ -646,7 +646,7 @@ class editor_direct extends editor
 		if (is_dir($from))
 		{
 			// get all of the files within the directory
-			$files = find_files($from, '.*', 5);
+			$files = find_files($from, '.*');
 		}
 		else if (is_file($from))
 		{
@@ -696,17 +696,18 @@ class editor_direct extends editor
 			{
 				return sprintf($user->lang['MODS_COPY_FAILURE'], $dest);
 			}
+			@chmod($dest, $config['am_file_perms']);
 		}
 	}
 
 	function close_file($new_filename)
 	{
-		global $phpbb_root_path;
+		global $phpbb_root_path, $config;
 		global $db, $user;
 
 		if (!is_dir($phpbb_root_path . $new_filename) && !file_exists($phpbb_root_path . dirname($new_filename)))
 		{
-			if ($this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777) === false)
+			if ($this->recursive_mkdir($phpbb_root_path . dirname($new_filename)) === false)
 			{
 				return sprintf($user->lang['MODS_MKDIR_FAILED'], dirname($new_filename));
 			}
@@ -727,6 +728,7 @@ class editor_direct extends editor
 		// If we are not looking at a file stored in the database, use local file functions
 		$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
 		$length_written = @fwrite($fr, $file_contents);
+		@chmod($phpbb_root_path . $new_filename, $config['am_file_perms']);
 
 		// This appears to be correct even with multibyte encodings.  strlen and 
 		// fwrite both return the number of bytes written, not the number of chars
@@ -748,10 +750,16 @@ class editor_direct extends editor
 	* Creates all non-existant directories in a path
 	* @param $path - path to create
 	* @param $mode - CHMOD the new dir to these permissions
-	* @return bool - success or NULL - no action taken
+	* @return bool
 	*/
-	function recursive_mkdir($path, $mode = 0777)
+	function recursive_mkdir($path, $mode = false)
 	{
+		if (!$mode)
+		{
+			global $config;
+			$mode = $config['am_dir_perms'];
+		}
+
 		$dirs = explode('/', $path);
 		$count = sizeof($dirs);
 		$path = '.';
@@ -782,6 +790,11 @@ class editor_direct extends editor
 	{
 		return NULL;
 	}
+
+	function create_edited_root($dir)
+	{
+		return $this->recursive_mkdir($dir);
+	}
 }
 
 class editor_ftp extends editor
@@ -803,6 +816,10 @@ class editor_ftp extends editor
 
 		$this->transfer = new $config['ftp_method']($config['ftp_host'], $config['ftp_username'], request_var('password', ''), $config['ftp_root_path'], $config['ftp_port'], $config['ftp_timeout']);
 		$error = $this->transfer->open_session();
+
+		// Use the permissions settings specified in the AutoMOD configuration
+		$this->transfer->dir_perms = $config['am_dir_perms'];
+		$this->transfer->file_perms = $config['am_file_perms'];
 
 		if (is_string($error))
 		{
@@ -847,7 +864,7 @@ class editor_ftp extends editor
 		if (is_dir($from))
 		{
 			// get all of the files within the directory
-			$files = find_files($from, '.*', 5);
+			$files = find_files($from, '.*');
 		}
 		else if (is_file($from))
 		{
@@ -871,6 +888,8 @@ class editor_ftp extends editor
 				$to_file = str_replace($phpbb_root_path, '', $to);
 			}
 
+			$this->recursive_mkdir(dirname($to_file));
+
 			if (!$this->transfer->overwrite_file($file, $to_file))
 			{
 				// may as well return ... the MOD is likely dependent upon
@@ -892,7 +911,7 @@ class editor_ftp extends editor
 
 		if (!is_dir($phpbb_root_path . $new_filename) && !file_exists($phpbb_root_path . dirname($new_filename)))
 		{
-			if ($this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777) === false)
+			if ($this->recursive_mkdir($phpbb_root_path . dirname($new_filename)) === false)
 			{
 				return sprintf($user->lang['MODS_MKDIR_FAILED'], dirname($new_filename));
 			}
@@ -930,6 +949,11 @@ class editor_ftp extends editor
 	function commit_changes_final($source, $destionation)
 	{
 		return NULL;
+	}
+
+	function create_edited_root($dir)
+	{
+		return $this->recursive_mkdir($dir);
 	}
 }
 
@@ -969,14 +993,6 @@ class editor_manual extends editor
 		global $phpbb_root_path, $edited_root;
 		global $db, $user;
 
-		if (!is_dir($phpbb_root_path . $new_filename) && !file_exists($phpbb_root_path . dirname($new_filename)))
-		{
-			if ($this->recursive_mkdir($phpbb_root_path . dirname($new_filename), 0777) === false)
-			{
-				return sprintf($user->lang['MODS_MKDIR_FAILED'], dirname($new_filename));
-			}
-		}
-
 		$file_contents = implode('', $this->file_contents);
 
 		if ($this->template_id)
@@ -1011,6 +1027,11 @@ class editor_manual extends editor
 	{
 		$this->compress->download($source, $destination);
 		exit;
+	}
+
+	function create_edited_root($dir)
+	{
+		return NULL;
 	}
 } 
 

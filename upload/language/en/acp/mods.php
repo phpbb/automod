@@ -53,6 +53,8 @@ $lang = array_merge($lang, array(
 	'CREATE_TABLE'	=> 'Database Alterations',
 	'CREATE_TABLE_EXPLAIN'	=> 'AutoMOD has successfully made its database alterations, including a permission which has been assigned to the “Full Administrator” role.',
 
+	'DIR_PERMS'			=> 'Directory Permissions',
+	'DIR_PERMS_EXPLAIN'	=> 'Some systems require directories to have certain permissions to work properly.  Normally the default 0755 is correct.  This setting has no impact on Windows systems.',
 	'DIY_INSTRUCTIONS'	=> 'Do It Yourself Instructions',
 	'DEPENDENCY_INSTRUCTIONS'	=>	'The MOD you are trying to install depends on another MOD.  AutoMOD cannot detect if this MOD has been installed.  Please verify that you have installed <strong><a href="%1$s">%2$s</a></strong> and press the continue button to continue installing your MOD.',
 	'DESCRIPTION'	=> 'Description',
@@ -63,6 +65,8 @@ $lang = array_merge($lang, array(
 	'FILE_EDITS'		=> 'File edits',
 	'FILE_EMPTY'		=> 'File empty',
 	'FILE_MISSING'		=> 'Cannot locate file',
+	'FILE_PERMS'		=> 'File Permissions',
+	'FILE_PERMS_EXPLAIN'=> 'Some systems require files to have certain permissions to work properly.  Normally the default 0644 is correct.  This setting has no impact on Windows systems.',
 	'FILE_TYPE'			=> 'Compressed File Type',
 	'FILE_TYPE_EXPLAIN'	=> 'This is only valid with the “Compressed File Download” write method',
 	'FILESYSTEM_NOT_WRITABLE'	=> 'AutoMOD has determined the filesystem is not writable, so the direct write method cannot be used.',
@@ -81,7 +85,6 @@ $lang = array_merge($lang, array(
 	'INSTALLED'			=> 'MOD installed',
 	'INSTALLED_EXPLAIN'	=> 'Your MOD has been installed! Here you can view some of the results from the installation. Please note any errors, and seek support at <a href="http://www.phpbb.com">phpBB.com</a>',
 	'INSTALLED_MODS'	=> 'Installed MODs',
-	'INSTALLING'		=> 'AutoMOD Installing...',
 	'INSTALLATION_SUCCESSFUL'	=> 'AutoMOD installed successfully.  You can now manage phpBB MODifications through the AutoMOD tab in the Administration Control Panel.',
 	'INVALID_MOD_INSTRUCTION'	=> 'This MOD has an invalid instruction, or an in-line find operation failed.',
 
@@ -113,7 +116,9 @@ $lang = array_merge($lang, array(
 
 	'ORIGINAL'	=> 'Original',
 
-	'PATH'					=> 'Path',	
+	'PATH'					=> 'Path',
+	'PREVIEW_CHANGES'		=> 'Preview Changes',
+	'PREVIEW_CHANGES_EXPLAIN'	=> 'Displays the changes to be performed before executing them.',
 	'PRE_INSTALL'			=> 'Preparing to Install',
 	'PRE_INSTALL_EXPLAIN'	=> 'Here you can preview all the modifications to be made to your board, before they are carried out. <strong>WARNING!</strong>, once accepted, your phpBB base files will be edited and database alterations may occur. However, if the install is unsuccessful, assuming you can access AutoMOD, you will be given the option to restore to this point.',
 	'PRE_UNINSTALL'			=> 'Preparing to Uninstall',

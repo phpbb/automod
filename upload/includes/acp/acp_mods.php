@@ -7,6 +7,7 @@
 * @license http://opensource.org/licenses/gpl-2.0.php GNU Public License
 *
 */
+
 /**
 */
 if (!defined('IN_PHPBB'))
@@ -73,7 +74,11 @@ class acp_mods
 					$ftp_port		= request_var('port', 21);
 					$ftp_timeout	= request_var('timeout', 10);
 					$write_method	= request_var('write_method', 0);
+					$file_perms		= request_var('file_perms', '0644');
+					$dir_perms		= request_var('dir_perms', '0777');
 					$compress_method	= request_var('compress_method', '');
+					$preview_changes	= request_var('preview_changes', 0);
+
 
 					$error = '';
 					if ($write_method == WRITE_DIRECT)
@@ -115,6 +120,9 @@ class acp_mods
 						set_config('ftp_timeout',	$ftp_timeout);
 						set_config('write_method',	$write_method);
 						set_config('compress_method',	$compress_method);
+						set_config('preview_changes',	$preview_changes);
+						set_config('am_file_perms',		$file_perms);
+						set_config('am_dir_perms',		$dir_perms);
 
 						trigger_error($user->lang['MOD_CONFIG_UPDATED'] . adm_back_link($this->u_action));
 					}
@@ -169,8 +177,12 @@ class acp_mods
 					'WRITE_METHOD_FTP'		=> WRITE_FTP,
 					'WRITE_METHOD_MANUAL'	=> WRITE_MANUAL,
 
-					'COMPRESS_METHOD'	=> $config['compress_method'],
-					'S_HIDE_FTP'		=> true,
+					'COMPRESS_METHOD'		=> $config['compress_method'],
+					'DIR_PERMS'				=> $config['am_dir_perms'],
+					'FILE_PERMS'			=> $config['am_file_perms'],
+					'PREVIEW_CHANGES_YES'	=> ($config['preview_changes']) ? ' checked="checked"' : '',
+					'PREVIEW_CHANGES_NO'	=> (!$config['preview_changes']) ? ' checked="checked"' : '',
+					'S_HIDE_FTP'			=> true,
 				));
 			break;
 
@@ -535,7 +547,7 @@ class acp_mods
 		$editor = new $write_method();
 
 		// Only display full actions if the user has requested them.
-		if (!defined('DEBUG') && !isset($_GET['full_details']) || ($editor->write_method == WRITE_FTP && empty($_REQUEST['password'])))
+		if (!$config['preview_changes'] || ($editor->write_method == WRITE_FTP && empty($_REQUEST['password'])))
 		{
 			return;
 		}
@@ -583,12 +595,7 @@ class acp_mods
 			$elements = $this->find_children($mod_path, $actions, 'install');
 		}
 
-		// see if directory exists
-		if (!file_exists($phpbb_root_path . $this->edited_root))
-		{
-			mkdir($phpbb_root_path . $this->edited_root, 0777);
-			chmod($phpbb_root_path . $this->edited_root, 0777);
-		}
+		$editor->create_edited_root($phpbb_root_path . $this->edited_root);
 
 		// handle all edits here
 		$mod_installed = $this->process_edits($editor, $actions, $details, true, true, false);
@@ -766,12 +773,7 @@ class acp_mods
 			handle_ftp_details($method, $test_ftp_connection);
 		}
 
-		// see if directory exists
-		if (!file_exists($phpbb_root_path . $this->edited_root))
-		{
-			mkdir($phpbb_root_path . $this->edited_root, 0777);
-			chmod($phpbb_root_path . $this->edited_root, 0777);
-		}
+		$editor->create_edited_root($phpbb_root_path . $this->edited_root);
 
 		$template->assign_vars(array(
 			'S_UNINSTALL'		=> $execute_edits,
@@ -1345,7 +1347,7 @@ class acp_mods
 				$db->sql_freeresult($result);
 			}
 
-			if (sizeof($process_languages) && ((defined('DEBUG') || isset($_GET['full_details'])) || $action == 'install'))
+			if (sizeof($process_languages) && ($config['preview_changes'] || $action == 'install'))
 			{
 				// add the actions to our $actions array...give praise to array_merge_recursive
 				foreach ($process_languages as $key => $void)
@@ -1433,7 +1435,7 @@ class acp_mods
 				}
 			}
 
-			if (sizeof($process_templates) && ((defined('DEBUG') || isset($_GET['full_details'])) || $action == 'install'))
+			if (sizeof($process_templates) && ($config['preview_changes'] || $action == 'install'))
 			{
 				// add the template actions to our $actions array...
 				foreach ($process_templates as $key => $void)

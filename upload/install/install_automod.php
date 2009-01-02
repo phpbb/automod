@@ -23,9 +23,9 @@ class install_automod
 	function add_config($mode, $sub)
 	{
 		global $current_version, $config;
-	
+
 		$data = $this->get_submitted_data();
-	
+
 		// we should have some config variables from the previous step
 		set_config('ftp_method',	$data['method']);
 		set_config('ftp_host',		$data['host']);
@@ -34,16 +34,20 @@ class install_automod
 		set_config('ftp_port',		$data['port']);
 		set_config('ftp_timeout',	$data['timeout']);
 		set_config('write_method',	(!empty($data['method'])) ? WRITE_FTP : WRITE_DIRECT);
-		set_config('compress_method', '.tar');
-		set_config('automod_version', $current_version);
+
+		set_config('compress_method',	'.tar');
+		set_config('automod_version',	$current_version);
+		set_config('preview_changes',	false);
+		set_config('am_file_perms',		0644);
+		set_config('am_dir_perms',		0777);
 	}
-	
+
 	function perform_sql($mode, $sub)
 	{
 		global $template, $phpbb_root_path, $phpEx, $language, $db, $user, $dbms, $table_prefix;
-	
+
 		$page_title = $user->lang['STAGE_CREATE_TABLE'];
-	
+
 		$template->assign_vars(array(
 			'S_CREATE_TABLES'	=> true,
 			'TITLE'				=> $user->lang['CREATE_TABLE'],
@@ -54,7 +58,7 @@ class install_automod
 
 		include($phpbb_root_path . 'includes/functions_install.'.$phpEx);
 		$available_dbms = get_available_dbms();
-	
+
 		// this is borrowed from the main phpBB installer, credit to the core phpBB Developers
 		// If mysql is chosen, we need to adjust the schema filename slightly to reflect the correct version. ;)
 		if ($dbms == 'mysql')
@@ -68,30 +72,30 @@ class install_automod
 				$available_dbms[$dbms]['SCHEMA'] .= '_40';
 			}
 		}
-	
+
 		// Ok we have the db info go ahead and read in the relevant schema
 		// and work on building the table
 		$dbms_schema = $phpbb_root_path . 'install/schemas/automod/' . $available_dbms[$dbms]['SCHEMA'] . '_schema.sql';
-	
+
 		// How should we treat this schema?
 		$remove_remarks = $available_dbms[$dbms]['COMMENTS'];
 		$delimiter = $available_dbms[$dbms]['DELIM'];
-	
+
 		$sql_query = @file_get_contents($dbms_schema);
-	
+
 		$sql_query = preg_replace('#phpbb_#i', $table_prefix, $sql_query);
-	
+
 		$remove_remarks($sql_query);
-	
+
 		$sql_query = split_sql_file($sql_query, $delimiter);
-	
+
 		foreach ($sql_query as $sql)
 		{
 			$db->sql_query($sql);
 		}
 		// end borrow from phpBB core
 	}
-	
+
 	function add_modules($mode, $sub)
 	{
 		global $db, $phpbb_root_path, $phpEx;
@@ -193,7 +197,7 @@ class install_automod
 			$db->sql_query($sql);
 		}
 	}
-	
+
 	/**
 	* Get submitted data
 	*/
