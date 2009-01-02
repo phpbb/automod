@@ -150,11 +150,6 @@ class acp_mods
 				$requested_data = call_user_func(array($ftp_method, 'data'));
 				foreach ($requested_data as $data => $default)
 				{
-					if ($data == 'password')
-					{
-						continue;
-					}
-
 					$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
 					$template->assign_block_vars('data', array(
 						'DATA'		=> $data,
@@ -182,7 +177,7 @@ class acp_mods
 					'FILE_PERMS'			=> $config['am_file_perms'],
 					'PREVIEW_CHANGES_YES'	=> ($config['preview_changes']) ? ' checked="checked"' : '',
 					'PREVIEW_CHANGES_NO'	=> (!$config['preview_changes']) ? ' checked="checked"' : '',
-					'S_HIDE_FTP'			=> true,
+					'S_HIDE_FTP'			=> ($config['write_method'] == WRITE_FTP) ? false : true,
 				));
 			break;
 
@@ -748,7 +743,7 @@ class acp_mods
 	*/
 	function uninstall($action, $mod_id)
 	{
-		global $phpbb_root_path, $phpEx, $db, $template;
+		global $phpbb_root_path, $phpEx, $db, $template, $config;
 		global $method, $test_ftp_connection, $test_connection;
 
 		// mod_id blank?
@@ -758,19 +753,20 @@ class acp_mods
 			return false;
 		}
 
-		$write_method = 'editor_' . determine_write_method(false);
-		$editor = new $write_method();
-
 		$execute_edits = ($action == 'pre_uninstall') ? false : true;
+
+		$write_method = 'editor_' . determine_write_method(!$execute_edits);
+		$editor = new $write_method();
 
 		// get mod install root && make temporary edited folder root
 		$this->edited_root = "store/mods/{$mod_id}_uninst/";
 
-
 		// get FTP information if we need it
-		if ($editor->write_method == WRITE_FTP && !$execute_edits)
+		// using $config instead of $editor because write_method is forced to direct
+		// when in preview mode
+		if ($config['write_method'] == WRITE_FTP && !$execute_edits)
 		{
-			handle_ftp_details($method, $test_ftp_connection);
+			handle_ftp_details($method, $test_ftp_connection, $test_connection);
 		}
 
 		$editor->create_edited_root($phpbb_root_path . $this->edited_root);

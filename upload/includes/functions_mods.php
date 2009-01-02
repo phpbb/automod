@@ -232,8 +232,8 @@ function determine_write_method($pre_install = false)
 	{
 		$write_method = 'direct';
 	}
-	// user needs to select ftp or ftp using fsock
-	else if ($config['ftp_method'] && $config['write_method'] == WRITE_FTP)
+	// FTP Method is now auto-detected
+	else if ($config['write_method'] == WRITE_FTP)
 	{
 		$write_method = 'ftp';
 	}
@@ -253,7 +253,7 @@ function determine_write_method($pre_install = false)
 
 function handle_ftp_details($method, $test_ftp_connection, $test_connection)
 {
-	global $config, $template;
+	global $config, $template, $user;
 
 	$s_hidden_fields = build_hidden_fields(array('method' => $method));
 
