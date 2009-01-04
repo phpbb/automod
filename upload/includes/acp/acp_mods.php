@@ -884,7 +884,7 @@ class acp_mods
 							if (preg_match('#.*install.*xml$#i', $file) && strnatcasecmp(basename($check), $file) < 0)
 							{
 								$mods['main'][sizeof($mods['main']) - 1] = "$dir/$file";
-							}			
+							}
 						}
 						else
 						{
@@ -972,7 +972,7 @@ class acp_mods
 					$template->assign_block_vars('edit_files', array(
 						'FILENAME'	=> $filename,
 					));
-	
+
 					$status = $editor->open_file($filename);
 					if (is_string($status))
 					{
@@ -1004,7 +1004,7 @@ class acp_mods
 								'FIND_STRING'	=> htmlspecialchars($find),
 								'COMMENT'		=> htmlspecialchars($comment),
 							));
-	
+
 							$offset_ary = $editor->find($find);
 
 							// special case for FINDs with no action associated
@@ -1072,26 +1072,26 @@ class acp_mods
 
 												$inline_contents = $inline_contents[0];
 												$contents_orig = $inline_find;
-	
+
 												switch (strtoupper($inline_action))
 												{
 													case 'IN-LINE-BEFORE-ADD':
 														$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
 													break;
-	
+
 													case 'IN-LINE-AFTER-ADD':
 														$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
 													break;
-	
+
 													case 'IN-LINE-REPLACE':
 													case 'IN-LINE-REPLACE-WITH':
 														$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
 													break;
-	
+
 													case 'IN-LINE-OPERATION':
 														$status = $editor->inc_string($find, $inline_find, $inline_contents);
 													break;
-	
+
 													default:
 														trigger_error("Error, unrecognised command $inline_action"); // ERROR!
 													break;
@@ -1115,19 +1115,19 @@ class acp_mods
 										trigger_error("Error, unrecognised command $type"); // ERROR!
 									break;
 								}
-	
+
 								$template->assign_block_vars('edit_files.finds.actions', array(
 									'S_SUCCESS'	=> $status,
-	
+
 									'NAME'		=> $user->lang[$type],
 									'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
 								));
-	
+
 								if (!$status)
 								{
 									$mod_installed = false;
 								}
-	
+
 								// these vars must be assigned after the parent block or else things break
 								if (sizeof($inline_template_ary))
 								{
@@ -1191,7 +1191,7 @@ class acp_mods
 							'S_SUCCESS'	=> false,
 							'QUERY'		=> $query,
 							'ERROR_MSG'	=> $error['message'],
-							'ERROR_CODE'=> $error['code'], 
+							'ERROR_CODE'=> $error['code'],
 						));
 
 						$mod_installed = false;
