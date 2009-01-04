@@ -38,8 +38,8 @@ class install_automod
 		set_config('compress_method',	'.tar');
 		set_config('automod_version',	$current_version);
 		set_config('preview_changes',	false);
-		set_config('am_file_perms',		0644);
-		set_config('am_dir_perms',		0777);
+		set_config('am_file_perms',		'0644');
+		set_config('am_dir_perms',		'0777');
 	}
 
 	function perform_sql($mode, $sub)
@@ -99,17 +99,17 @@ class install_automod
 	function add_modules($mode, $sub)
 	{
 		global $db, $phpbb_root_path, $phpEx;
-	
+
 		if (!class_exists('acp_modules'))
 		{
 			include($phpbb_root_path . 'includes/acp/acp_modules.'.$phpEx);
 			$module = new acp_modules();
 		}
-	
+
 		$sql = 'SELECT module_id FROM ' . MODULES_TABLE . "
 			WHERE module_langname = 'ACP_CAT_MODS'";
 		$result = $db->sql_query($sql);
-	
+
 		if (!$db->sql_fetchrow($result))
 		{
 			// Insert Category Module
@@ -121,9 +121,9 @@ class install_automod
 				'module_langname'	=> 'ACP_CAT_MODS',
 				'module_auth'		=> 'acl_a_mods',
 			);
-	
+
 			$module->update_module_data($cat_module_data, true);
-	
+
 			// Insert Parent Module
 			$parent_module_data = array(
 				'module_enabled'	=> 1,
@@ -132,9 +132,9 @@ class install_automod
 				'parent_id'			=> $cat_module_data['module_id'],
 				'module_langname'	=> 'ACP_MODS',
 			);
-	
+
 			$module->update_module_data($parent_module_data, true);
-	
+
 			// Frontend Module
 			$front_module_data = array(
 				'module_enabled'	=> 1,
@@ -142,14 +142,14 @@ class install_automod
 				'module_class'		=> 'acp',
 				'parent_id'			=> $parent_module_data['module_id'],
 				'module_langname'	=> 'ACP_AUTOMOD',
-	
+
 				'module_basename'	=> 'mods',
 				'module_mode'		=> 'frontend',
 				'module_auth'		=> 'acl_a_mods',
 			);
-	
+
 			$module->update_module_data($front_module_data, true);
-	
+
 			// Config Module
 			$config_module_data = array(
 				'module_enabled'	=> 1,
@@ -157,42 +157,42 @@ class install_automod
 				'module_class'		=> 'acp',
 				'parent_id'			=> $parent_module_data['module_id'],
 				'module_langname'	=> 'ACP_AUTOMOD_CONFIG',
-	
+
 				'module_basename'	=> 'mods',
 				'module_mode'		=> 'config',
 				'module_auth'		=> 'acl_a_mods',
 			);
-	
+
 			$module->update_module_data($config_module_data, true);
-	
+
 			include($phpbb_root_path . 'includes/acp/auth.'.$phpEx);
 			$auth_admin = new auth_admin();
-			
+
 			// Add permissions
 			$auth_admin->acl_add_option(array(
 			    'local'      => array(),
 			    'global'   => array('a_mods'),
 			));
-	
+
 			$sql = 'SELECT auth_option_id FROM ' . ACL_OPTIONS_TABLE . "
 				WHERE auth_option = 'a_mods'";
 			$result = $db->sql_query($sql);
 			$auth_option_id = $db->sql_fetchfield('auth_option_id');
 			$db->sql_freeresult($result);
-	
+
 			$sql = 'SELECT role_id FROM ' . ACL_ROLES_TABLE . "
 				WHERE role_name = 'ROLE_ADMIN_FULL'";
 			$result = $db->sql_query($sql);
 			$role_id = (int) $db->sql_fetchfield('role_id');
 			$db->sql_freeresult($result);
-	
+
 			// Give the wanted role its option
 			$roles_data = array(
 				'role_id'			=> $role_id,
 				'auth_option_id'	=> $auth_option_id,
 				'auth_setting'		=> 1,
 			);
-	
+
 			$sql = 'INSERT INTO ' . ACL_ROLES_DATA_TABLE . ' ' . $db->sql_build_array('INSERT', $roles_data);
 			$db->sql_query($sql);
 		}
