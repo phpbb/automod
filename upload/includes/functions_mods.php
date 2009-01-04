@@ -26,9 +26,9 @@ define('WRITE_MANUAL', 3);
 function test_ftp_connection($method, &$test_ftp_connection, &$test_connection)
 {
 	global $phpbb_root_path, $phpEx;
-	
+
 	$transfer = new $method(request_var('host', ''), request_var('username', ''), request_var('password', ''), request_var('root_path', ''), request_var('port', ''), request_var('timeout', ''));
-	
+
 	$test_connection = $transfer->open_session();
 
 	// Make sure that the directory is correct by checking for the existence of common.php
@@ -48,7 +48,7 @@ function test_ftp_connection($method, &$test_ftp_connection, &$test_connection)
 	{
 		$test_ftp_connection = true;
 	}
-	
+
 	return;
 }
 
@@ -65,7 +65,7 @@ function core_basename($path)
 
 /**
 * Helper function for matching languages
-* This is a fairly dumb function because it ignores dialects.  But I have 
+* This is a fairly dumb function because it ignores dialects.  But I have
 * not seen any MODs that specify more than one dialect of the same language
 * @param string $user_language - ISO language code of the current user
 * @param string $xml_language - ISO language code of the MODX tag
@@ -205,7 +205,7 @@ function find_files($directory, $pattern, $max_levels = 20, $_current_level = 1)
 * @param $file_contents - The data to write
 * @param $install_time - Essentially the current time
 * @return bool true
-*/ 
+*/
 function update_database_template($filename, $template_id, $file_contents, $install_time)
 {
 	global $db;
@@ -213,8 +213,8 @@ function update_database_template($filename, $template_id, $file_contents, $inst
 	// grab filename
 	preg_match('#styles/[a-z0-9_]+/template/([a-z0-9_]+.html)#i', $filename, $match);
 
-	$sql = 'UPDATE ' . STYLES_TEMPLATE_DATA_TABLE . " 
-		SET template_data = '" . $db->sql_escape($file_contents) . "', template_mtime = " . (int) $install_time . ' 
+	$sql = 'UPDATE ' . STYLES_TEMPLATE_DATA_TABLE . "
+		SET template_data = '" . $db->sql_escape($file_contents) . "', template_mtime = " . (int) $install_time . '
 		WHERE template_id = ' . (int) $template_id . "
 		AND template_filename = '" . $db->sql_escape($match[1]) . "'";
 	$db->sql_query($sql);
@@ -280,9 +280,9 @@ function handle_ftp_details($method, $test_ftp_connection, $test_connection)
 		'S_CONNECTION_FAILED'		=> ($test_ftp_connection && $test_connection !== true) ? true : false,
 		'ERROR_MSG'					=> ($test_ftp_connection && $test_connection !== true) ? $user->lang[$test_connection] : '',
 
-		'S_FTP_UPLOAD'		=> true,
-		'UPLOAD_METHOD'		=> $method,
-		'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
+		'S_FTP_UPLOAD'			=> true,
+		'UPLOAD_METHOD'			=> $method,
+		'S_HIDDEN_FIELDS_FTP'	=> $s_hidden_fields,
 	));
 }
 
