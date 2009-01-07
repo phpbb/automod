@@ -330,7 +330,7 @@ class acp_mods
 
 		$template->assign_vars(array(
 			'S_DETAILS'	=> true,
-			'U_BACK'	=> $this->u_action
+			'U_BACK'	=> $this->u_action,
 		));
 
 		$details = $this->mod_details($mod_ident, true);
@@ -420,9 +420,14 @@ class acp_mods
 					'AUTHOR_DETAILS'	=> $author_details,
 				);
 
-				if ($find_children)
+				// This is a check for any further XML files to go with this MOD.
+				// Obviously, the files must not have been removed for this to work.
+				if ($find_children && file_exists($phpbb_root_path . $row['mod_path']))
 				{
 					$actions = array();
+					$ext = substr(strrchr($row['mod_path'], '.'), 1);
+					$this->parser = new parser($ext);
+					$this->parser->set_file($row['mod_path']);
 					$this->find_children($row['mod_path'], $actions, 'details', $mod_id);
 				}
 			}
@@ -940,8 +945,8 @@ class acp_mods
 				}
 
 				$template->assign_block_vars('new_files', array(
-					'S_SUCCESS'			=> $status,
-					'S_NO_COPY_ATTEMPT'	=> (is_null($status) ? true : false),
+					'S_SUCCESS'			=> ($status === true) ? true : false,
+					'S_NO_COPY_ATTEMPT'	=> (is_null($status)) ? true : false,
 					'SOURCE'			=> $source,
 					'TARGET'			=> $target,
 				));
@@ -1226,15 +1231,11 @@ class acp_mods
 	*/
 	function find_children($mod_path, &$actions, $action, $parent_id = 0)
 	{
-		global $db, $template, $phpbb_root_path;
+		global $db, $template, $phpbb_root_path, $config;
 
 		$elements = $children = array();
 
-		if ($action == 'details')
-		{
-			// do nothing
-		}
-		else if ($this->parser->get_modx_version() == 1.2 && $action != 'details')
+		if ($this->parser->get_modx_version() == 1.2)
 		{
 			// TODO: eww, yuck ... processing the XML again?
 			$details = $this->mod_details($mod_path, false);
@@ -1328,16 +1329,30 @@ class acp_mods
 				$template->assign_var('S_UNKNOWN_LANGUAGES', true);
 
 				// get full names from the DB
-				$sql = 'SELECT lang_english_name, lang_local_name FROM ' . LANG_TABLE . '
+				$sql = 'SELECT lang_english_name, lang_local_name, lang_iso FROM ' . LANG_TABLE . '
 					WHERE ' . $db->sql_in_set('lang_iso', $unknown_languages);
 				$result = $db->sql_query($sql);
 
 				// alert the user.
 				while ($row = $db->sql_fetchrow($result))
 				{
+					if ($parent_id)
+					{
+						// first determine which file we want to direct them to
+						foreach($children['language'] as $file)
+						{
+							if (core_basename($file) == $row['lang_iso'])
+							{
+								$xml_file = $file;
+								break;
+							}
+						}
+					}
+
 					$template->assign_block_vars('unknown_lang', array(
 						'ENGLISH_NAME'	=> $row['lang_english_name'],
 						'LOCAL_NAME'	=> $row['lang_local_name'],
+						'U_INSTALL'		=> ($parent_id) ? $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '',
 					));
 				}
 				$db->sql_freeresult($result);
@@ -1425,8 +1440,18 @@ class acp_mods
 
 				foreach ($unknown_templates as $unknown_template)
 				{
+					foreach ($children['template'] as $file)
+					{
+						if (core_basename($file) == $unknown_template)
+						{
+							$xml_file = $file;
+							break;
+						}
+					}
+
 					$template->assign_block_vars('unknown_templates', array(
 						'TEMPLATE_NAME'		=> $unknown_template,
+						'U_INSTALL'			=> ($parent_id) ? $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '',
 					));
 				}
 			}

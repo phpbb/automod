@@ -698,6 +698,8 @@ class editor_direct extends editor
 			}
 			@chmod($dest, octdec($config['am_file_perms']));
 		}
+
+		return true;
 	}
 
 	function close_file($new_filename)
@@ -829,9 +831,12 @@ class editor_ftp extends editor
 		$this->transfer = new $ftp_method($config['ftp_host'], $config['ftp_username'], request_var('password', ''), $config['ftp_root_path'], $config['ftp_port'], $config['ftp_timeout']);
 		$error = $this->transfer->open_session();
 
+		$has_chmod = @function_exists('ftp_chmod');
+
 		// Use the permissions settings specified in the AutoMOD configuration
-		$this->transfer->dir_perms = $config['am_dir_perms'];
-		$this->transfer->file_perms = $config['am_file_perms'];
+		// The $has_chmod variable codes around an incompatibility with phpBB's transfer class
+		$this->transfer->dir_perms = ($has_chmod) ? hexdec($config['am_dir_perms']) : $config['am_dir_perms'];
+		$this->transfer->file_perms = ($has_chmod) ? hexdec($config['am_file_perms']) : $config['am_file_perms'];
 
 		if (is_string($error))
 		{

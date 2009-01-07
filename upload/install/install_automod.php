@@ -39,7 +39,7 @@ class install_automod
 		set_config('automod_version',	$current_version);
 		set_config('preview_changes',	false);
 		set_config('am_file_perms',		'0644');
-		set_config('am_dir_perms',		'0777');
+		set_config('am_dir_perms',		'0755');
 	}
 
 	function perform_sql($mode, $sub)
