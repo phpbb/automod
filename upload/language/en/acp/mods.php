@@ -56,10 +56,11 @@ $lang = array_merge($lang, array(
 	'DIR_PERMS'			=> 'Directory Permissions',
 	'DIR_PERMS_EXPLAIN'	=> 'Some systems require directories to have certain permissions to work properly.  Normally the default 0755 is correct.  This setting has no impact on Windows systems.',
 	'DIY_INSTRUCTIONS'	=> 'Do It Yourself Instructions',
-	'DEPENDENCY_INSTRUCTIONS'	=>	'The MOD you are trying to install depends on another MOD.  AutoMOD cannot detect if this MOD has been installed.  Please verify that you have installed <strong><a href="%1$s">%2$s</a></strong> and press the continue button to continue installing your MOD.',
+	'DEPENDENCY_INSTRUCTIONS'	=>	'The MOD you are trying to install depends on another MOD.  AutoMOD cannot detect if this MOD has been installed.  Please verify that you have installed <strong><a href="%1$s">%2$s</a></strong> before installing your MOD.',
 	'DESCRIPTION'	=> 'Description',
 	'DETAILS'		=> 'Details',
 
+	'EDITED_ROOT_CREATE_FAIL'	=> 'AutoMOD was unable to create the directory where the edited files will be stored.',
 	'ERROR'			=> 'Error',
 
 	'FILE_EDITS'		=> 'File edits',
@@ -87,6 +88,8 @@ $lang = array_merge($lang, array(
 	'INSTALLED_MODS'	=> 'Installed MODs',
 	'INSTALLATION_SUCCESSFUL'	=> 'AutoMOD installed successfully.  You can now manage phpBB MODifications through the AutoMOD tab in the Administration Control Panel.',
 	'INVALID_MOD_INSTRUCTION'	=> 'This MOD has an invalid instruction, or an in-line find operation failed.',
+
+	'LANGUAGE_NAME'		=> 'Language Name',
 
 	'MANUAL_COPY'				=> 'Copy not attempted',
 	'MOD_CONFIG'				=> 'AutoMOD Configuration',
