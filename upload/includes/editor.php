@@ -492,7 +492,7 @@ class editor
 		$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_replace, $string_offset, $length);
 
 		// This isn't a full find, but it is the closest we can get
-		$this->build_uninstall($find, $inline_find, 'in-line-replace', $inline_replace);
+		$this->build_uninstall($this->file_contents[$array_offset], $inline_find, 'in-line-replace', $inline_replace);
 
 		return true;
 	}

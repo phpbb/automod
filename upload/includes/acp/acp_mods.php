@@ -422,13 +422,18 @@ class acp_mods
 
 				// This is a check for any further XML files to go with this MOD.
 				// Obviously, the files must not have been removed for this to work.
-				if ($find_children && file_exists($phpbb_root_path . $row['mod_path']))
+				if ($find_children && file_exists($row['mod_path']))
 				{
 					$actions = array();
 					$ext = substr(strrchr($row['mod_path'], '.'), 1);
 					$this->parser = new parser($ext);
 					$this->parser->set_file($row['mod_path']);
-					$this->find_children($row['mod_path'], $actions, 'details', $mod_id);
+
+					// Find and display the available MODX files
+					$children = $this->find_children($row['mod_path']);
+					$this->handle_contrib($children);
+					$this->handle_language_prompt($children, $elements, 'details');
+					$this->handle_template_prompt($children, $elements, 'details');
 				}
 			}
 			else
@@ -453,7 +458,11 @@ class acp_mods
 			if ($find_children)
 			{
 				$actions = array();
-				$this->find_children($mod_path, $actions, 'details');
+				$children = $this->find_children($mod_path);
+
+				$this->handle_contrib($children);
+				$this->handle_language_prompt($children, $elements, 'details');
+				$this->handle_template_prompt($children, $elements, 'details');
 			}
 		}
 
@@ -522,7 +531,12 @@ class acp_mods
 		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
 
 		// check for "child" MODX files and attempt to decide which ones we need
-		$elements = $this->find_children($mod_path, $actions, 'pre_install');
+		$children = $this->find_children($mod_path);
+		$this->handle_language_prompt($children, $elements, 'pre_install');
+		$this->handle_merge('language', $actions, $children, $elements['language']);
+		$this->handle_template_prompt($children, $elements, 'pre_install');
+		$this->handle_merge('template', $actions, $children, $elements['template']);
+
 
 		$template->assign_vars(array(
 			'S_PRE_INSTALL'	=> true,
@@ -592,7 +606,13 @@ class acp_mods
 		if (!$parent)
 		{
 			// check for "child" MODX files and attempt to decide which ones we need
-			$elements = $this->find_children($mod_path, $actions, 'install');
+			$children = $this->find_children($mod_path);
+
+			$this->handle_dependency($children);
+			$this->handle_language_prompt($children, $elements, 'install');
+			$this->handle_merge('language', $actions, $children, $elements['language']);
+			$this->handle_template_prompt($children, $elements, 'install');
+			$this->handle_merge('template', $actions, $children, $elements['template']);
 		}
 
 		$editor->create_edited_root($phpbb_root_path . $this->edited_root);
@@ -1224,16 +1244,10 @@ class acp_mods
 	* Search on the file system for other .xml files that belong to this MOD
 	* This method currently takes three parameters.
 	* @param string $mod_path - path to the "main" MODX file, relative to phpBB Root
-	* @param array &$actions - the current actions this MOD is using.
-	*  -- Run through array_merge_recursive() to produce a final array after all calls to this method
-	*  @param string $action - 'pre_install' || 'install' || 'details'
-	*  @param int $parent_id - only valid in details mode, provides install link
 	*/
-	function find_children($mod_path, &$actions, $action, $parent_id = 0)
+	function find_children($mod_path)
 	{
-		global $db, $template, $phpbb_root_path, $config;
-
-		$elements = $children = array();
+		$children = array();
 
 		if ($this->parser->get_modx_version() == 1.2)
 		{
@@ -1247,6 +1261,11 @@ class acp_mods
 			$children = $this->find_mods(dirname($mod_path), 2);
 		}
 
+		return $children;
+	}
+
+	function handle_dependency(&$children)
+	{
 		if (isset($children['dependency']) && sizeof($children['dependency']))
 		{
 			// TODO: check for the chance that the MOD has been installed by the MODs Manager
@@ -1257,7 +1276,7 @@ class acp_mods
 			}
 			else if (!isset($_REQUEST['dependency_confirm']))
 			{
-				global $user, $id, $mode;
+				global $user, $id, $mode, $action, $mod_path;
 
 				$full_url_list = array();
 				$message = '';
@@ -1275,8 +1294,13 @@ class acp_mods
 				)));
 			}
 		}
+	}
 
-		if (isset($children['contrib']) && sizeof($children['contrib']) && $action == 'details')
+	function handle_contrib(&$children)
+	{
+		global $template, $parent_id;
+
+		if (isset($children['contrib']) && sizeof($children['contrib']))
 		{
 			$template->assign_var('S_CONTRIB_AVAILABLE', true);
 
@@ -1292,6 +1316,62 @@ class acp_mods
 				$template->assign_block_vars('contrib', $child_details);
 			}
 		}
+	}
+
+	function handle_merge($type, &$actions, &$children, $process_files)
+	{
+		global $phpbb_root_path;
+
+		if (!isset($children[$type]) || !sizeof($process_files))
+		{
+			return;
+		}
+
+		// add the actions to our $actions array...give praise to array_merge_recursive
+		foreach ($process_files as $key => $void)
+		{
+			$children[$type][$key] = (is_array($children[$type][$key])) ? $children[$type][$key]['href'] : $children[$type][$key];
+
+			// Prepend the proper directory structure if it is not already there
+			if (isset($children[$type][$key]) && strpos($children[$type][$key], $phpbb_root_path . $this->mod_root) !== 0)
+			{
+				$children[$type][$key] = $phpbb_root_path . $this->mod_root . $children[$type][$key];
+			}
+
+			$actions_ary = $this->mod_actions($children[$type][$key]);
+
+			if (!isset($actions_ary['NEW_FILES']))
+			{
+				$actions = array_merge_recursive($actions, $actions_ary);
+				continue;
+			}
+
+			// perform some cleanup if the MOD author didn't specify the proper root directory
+			foreach ($actions_ary['NEW_FILES'] as $source => $destination)
+			{
+				// if the source file does not exist, and languages/ is not at the beginning
+				// this is probably only applicable with MODX 1.0.
+				if (!file_exists($phpbb_root_path . $this->mod_root . $source) && strpos("{$type}s/", $source) === false)
+				{
+					// and it does exist if we force a languages/ into the path
+					if (file_exists($phpbb_root_path . $this->mod_root . "{$type}s/" . $source))
+					{
+						// change the array key to include languages
+						unset($actions_ary['NEW_FILES'][$source]);
+						$actions_ary['NEW_FILES']["{$type}s/$source"] = $destination;
+					}
+
+					// else we let the error handling do its thing
+				}
+			}
+
+			$actions = array_merge_recursive($actions, $actions_ary);
+		}
+	}
+
+	function handle_language_prompt(&$children, &$elements, $action)
+	{
+		global $db, $template, $parent_id, $phpbb_root_path;
 
 		if (isset($children['language']) && sizeof($children['language']))
 		{
@@ -1319,11 +1399,11 @@ class acp_mods
 			$process_languages = $elements['language'] = array_intersect($available_languages, $installed_languages);
 
 			// $unknown_languages are installed on the board, but not provied for by the MOD
-			$unknown_languages = array_diff($installed_languages, $available_languages);
+			$unknown_languages = array_diff($available_languages, $installed_languages);
 
 			// there are langauges which are installed, but not provided for by the MOD
 			// Inform the user.
-			if (sizeof($unknown_languages) && ($action == 'pre_install' || $action == 'details'))
+			if (sizeof($unknown_languages) && $action == 'details')
 			{
 				// may wish to rename away from "unknown" for our details mode
 				$template->assign_var('S_UNKNOWN_LANGUAGES', true);
@@ -1339,11 +1419,11 @@ class acp_mods
 					if ($parent_id)
 					{
 						// first determine which file we want to direct them to
-						foreach($children['language'] as $file)
+						foreach ($children['language'] as $file)
 						{
 							if (core_basename($file) == $row['lang_iso'])
 							{
-								$xml_file = $file;
+								$xml_file = $phpbb_root_path . $this->mod_root . $file;
 								break;
 							}
 						}
@@ -1358,50 +1438,13 @@ class acp_mods
 				$db->sql_freeresult($result);
 			}
 
-			if (sizeof($process_languages) && ($config['preview_changes'] || $action == 'install'))
-			{
-				// add the actions to our $actions array...give praise to array_merge_recursive
-				foreach ($process_languages as $key => $void)
-				{
-					$children['language'][$key] = (is_array($children['language'][$key])) ? $children['language'][$key]['href'] : $children['language'][$key];
-
-					// Prepend the proper directory structure if it is not already there
-					if (isset($children['language'][$key]) && strpos($children['language'][$key], $phpbb_root_path . $this->mod_root) !== 0)
-					{
-						$children['language'][$key] = $phpbb_root_path . $this->mod_root . $children['language'][$key];
-					}
-
-					$actions_ary = $this->mod_actions($children['language'][$key]);
-
-					if (!isset($actions_ary['NEW_FILES']))
-					{
-						$actions = array_merge_recursive($actions, $actions_ary);
-						continue;
-					}
-
-					// perform some cleanup if the MOD author didn't specify the proper root directory
-					foreach ($actions_ary['NEW_FILES'] as $source => $destination)
-					{
-						// if the source file does not exist, and languages/ is not at the beginning
-						// this is probably only applicable with MODX 1.0.
-						if (!file_exists($phpbb_root_path . $this->mod_root . $source) && strpos('languages/', $source) === false)
-						{
-							// and it does exist if we force a languages/ into the path
-							if (file_exists($phpbb_root_path . $this->mod_root . 'languages/' . $source))
-							{
-								// change the array key to include templates/
-								unset($actions_ary['NEW_FILES'][$source]);
-								$actions_ary['NEW_FILES']['languages/' . $source] = $destination;
-							}
-
-							// else we let the error handling do its thing
-						}
-					}
-
-					$actions = array_merge_recursive($actions, $actions_ary);
-				}
-			}
+			return $process_languages;
 		}
+	}
+
+	function handle_template_prompt(&$children, &$elements, $action)
+	{
+		global $db, $template, $phpbb_root_path, $parent_id;
 
 		if (isset($children['template']) && sizeof($children['template']))
 		{
@@ -1429,7 +1472,7 @@ class acp_mods
 			// $process_templates are those that are installed on the board and provided for by the MOD
 			$process_templates = $elements['template'] = array_intersect($available_templates, $installed_templates);
 
-			// $unknown_templates are installed on the board, but not provied for by the MOD
+			// $unknown_templates are not installed on the board, but are provied for by the MOD
 			$unknown_templates = array_diff($available_templates, $installed_templates);
 
 			if (sizeof($unknown_templates) && ($action == 'pre_install' || $action == 'details'))
@@ -1444,7 +1487,7 @@ class acp_mods
 					{
 						if (core_basename($file) == $unknown_template)
 						{
-							$xml_file = $file;
+							$xml_file = $phpbb_root_path . $this->mod_root . $file;
 							break;
 						}
 					}
@@ -1455,50 +1498,7 @@ class acp_mods
 					));
 				}
 			}
-
-			if (sizeof($process_templates) && ($config['preview_changes'] || $action == 'install'))
-			{
-				// add the template actions to our $actions array...
-				foreach ($process_templates as $key => $void)
-				{
-					// Prepend the proper directory structure if it is not already there
-					if (strpos($children['template'][$key], $phpbb_root_path . $this->mod_root) !== 0)
-					{
-						$children['template'][$key] = $phpbb_root_path . $this->mod_root . $children['template'][$key];
-					}
-
-					$actions_ary = $this->mod_actions($children['template'][$key]);
-
-					if (!isset($actions_ary['NEW_FILES']))
-					{
-						$actions = array_merge_recursive($actions, $actions_ary);
-						continue;
-					}
-
-					// perform some cleanup if the MOD author didn't specify the proper root directory
-					foreach ($actions_ary['NEW_FILES'] as $source => $destination)
-					{
-						// if the source file does not exist, and templates/ is not at the beginning ...
-						if (!file_exists($phpbb_root_path . $this->mod_root . $source) && strpos('templates/', $source) === false)
-						{
-							// and it does exist if we force a templates/ into the path
-							if (file_exists($phpbb_root_path . $this->mod_root . 'templates/' . $source))
-							{
-								// change the array key to include templates/
-								unset($actions_ary['NEW_FILES'][$source]);
-								$actions_ary['NEW_FILES']['templates/' . $source] = $destination;
-							}
-
-							// else we let the error handling do its thing
-						}
-					}
-
-					$actions = array_merge_recursive($actions, $actions_ary);
-				}
-			}
 		}
-
-		return $elements;
 	}
 }
 

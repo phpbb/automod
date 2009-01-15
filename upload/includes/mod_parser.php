@@ -66,6 +66,11 @@ class parser
 
 	function get_modx_version()
 	{
+		if (!$this->parser->modx_version)
+		{
+			$this->get_details();
+		}
+
 		return $this->parser->modx_version;
 	}
 

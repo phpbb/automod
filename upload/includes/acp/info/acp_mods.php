@@ -20,8 +20,8 @@ class acp_mods_info
 			'title'		=> 'ACP_CAT_MODS',
 			'version'	=> '1.0.0',
 			'modes'		=> array(
-				'frontend'		=> array('title' => 'ACP_MOD_MANAGEMENT', 'auth' => 'acl_a_mods', 'cat' => array('ACP_MODS_GENERAL')),
-				'config'		=> array('title' => 'ACP_MOD_CONFIG', 'auth' => 'acl_a_mods', 'cat' => array('ACP_MODS_GENERAL')),
+				'frontend'		=> array('title' => 'ACP_AUTOMOD', 'auth' => 'acl_a_mods', 'cat' => array('ACP_MODS_GENERAL')),
+				'config'		=> array('title' => 'ACP_AUTOMOD_CONFIG', 'auth' => 'acl_a_mods', 'cat' => array('ACP_MODS_GENERAL')),
 			),
 		);
 	}
