@@ -343,7 +343,7 @@ class parser_xml
 		}
 
 		// history
-		$history_info = !empty($header['HISTORY'][0]['children']['ENTRY']) ? $header['HISTORY'][0]['children']['ENTRY'] : array();
+		$history_info = (!empty($header['HISTORY'][0]['children']['ENTRY'])) ? $header['HISTORY'][0]['children']['ENTRY'] : array();
 		$history_size = sizeof($history_info);
 
 		$mod_history = array();
@@ -359,11 +359,16 @@ class parser_xml
 				// Ignore changelogs in foreign languages except in the case that there is no 
 				// match for the current user's language
 				// TODO: Look at modifying localise_tags() for use here.
-				if (!match_language($user->data['user_lang'], $changelog[$j]['attrs']['LANG']) && $j != ($changelog_size - 1))
+				if (match_language($user->data['user_lang'], $changelog[$j]['attrs']['LANG']))
 				{
-					continue;
+					$changelog_id = $j;
 				}
-				$changes[] = $changelog[0]['children']['CHANGE'][$j]['data'];
+			}
+
+			$change_count = sizeof($changelog[$changelog_id]['children']);
+			for ($j = 0; $j < $change_count; $j++)
+			{
+				$changes[] = $changelog[$changelog_id]['children']['CHANGE'][$j]['data'];
 			}
 
 			switch ($this->modx_version)

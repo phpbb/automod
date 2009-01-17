@@ -135,6 +135,29 @@
 			<dd><strong>{unknown_lang.ENGLISH_NAME}</strong> &ndash; {unknown_lang.LOCAL_NAME} <!-- IF unknown_lang.U_INSTALL -->(<a href="{unknown_lang.U_INSTALL}">{L_INSTALL_MOD}</a>)<!-- ENDIF --></dd>
 		</dl>
 		<!-- END unknown_lang -->
+
+		<!-- IF .board_templates and .avail_templates -->
+		<form action="{S_FORM_ACTION}" method="post">
+		<br /><hr /><br />
+		{L_APPLY_THESE_CHANGES}
+		<select name="source">
+		<!-- BEGIN avail_templates -->
+			<option value="{avail_templates.XML_FILE}">{avail_templates.TEMPLATE_NAME}</option>
+		<!-- END avail_templates -->
+		</select>
+
+		{L_APPLY_TEMPLATESET}
+		<select name="dest">
+		<!-- BEGIN board_templates -->
+			<option value="{board_templates.TEMPLATE_NAME}">{board_templates.TEMPLATE_NAME}</option>
+		<!-- END board_templates -->
+		</select>
+		{S_FORM_TOKEN}
+		{S_HIDDEN_FIELDS}
+		<br />
+		<input type="submit" name="template_submit" class="button1" value="{L_SUBMIT}" />
+		</form>
+		<!-- ENDIF -->
 	</fieldset>
 	<!-- ENDIF -->
 

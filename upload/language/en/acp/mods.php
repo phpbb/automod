@@ -37,6 +37,8 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, array(
 	'ADDITIONAL_CHANGES'	=> 'Available Changes',
+	'APPLY_THESE_CHANGES'	=> 'Apply these changes',
+	'APPLY_TEMPLATESET'		=> 'to this template',
 	'AUTHOR_EMAIL'			=> 'Author Email',
 	'AUTHOR_INFORMATION'	=> 'Author Information',
 	'AUTHOR_NAME'			=> 'Author Name',
