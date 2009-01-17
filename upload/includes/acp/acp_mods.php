@@ -385,7 +385,7 @@ class acp_mods
 	*/
 	function mod_details($mod_ident, $find_children = true)
 	{
-		global $phpbb_root_path, $phpEx, $user;
+		global $phpbb_root_path, $phpEx, $user, $template;
 
 		if (is_int($mod_ident))
 		{
@@ -424,6 +424,8 @@ class acp_mods
 				// Obviously, the files must not have been removed for this to work.
 				if ($find_children && file_exists($row['mod_path']))
 				{
+					$parent_id = $mod_id;
+
 					$actions = array();
 					$ext = substr(strrchr($row['mod_path'], '.'), 1);
 					$this->parser = new parser($ext);
@@ -434,6 +436,58 @@ class acp_mods
 					$this->handle_contrib($children);
 					$this->handle_language_prompt($children, $elements, 'details');
 					$this->handle_template_prompt($children, $elements, 'details');
+
+					// Now offer to install additional templates
+					$found_prosilver = false;
+					if (isset($children['template']) && sizeof($children['template']))
+					{
+						// These are the instructions included with the MOD
+						foreach ($children['template'] as $template_name)
+						{
+							if (core_basename($template_name) == 'prosilver')
+							{
+								$found_prosilver = true;
+							}
+
+							$template->assign_block_vars('avail_templates', array(
+								'TEMPLATE_NAME'	=> core_basename($template_name),
+								'XML_FILE'		=> dirname($row['mod_path']) . '/' . $template_name,
+							));
+						}
+
+						if (!$found_prosilver)
+						{
+							$template->assign_block_vars('avail_templates', array(
+								'TEMPLATE_NAME'	=> 'prosilver',
+								'XML_FILE'		=> $row['mod_path'],
+							));
+						}
+
+						// now grab the templates that have not already been processed
+						$sql = 'SELECT template_id, template_name FROM ' . STYLES_TEMPLATE_TABLE . ' 
+							WHERE ' . $db->sql_in_set('template_name', explode(',', $row['mod_template']), true);
+						$result = $db->sql_query($sql);
+
+						while ($row = $db->sql_fetchrow($result))
+						{
+							$template->assign_block_vars('board_templates', array(
+								'TEMPLATE_ID'		=> $row['template_id'],
+								'TEMPLATE_NAME'		=> $row['template_name'],
+							));
+						}
+
+						$s_hidden_fields = build_hidden_fields(array(
+							'action'	=> 'install',
+							'parent'	=> $row['mod_id'],
+						));
+
+						$template->assign_vars(array(
+							'S_FORM_ACTION'		=> $this->u_action,
+							'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
+						));
+
+						add_form_key('acp_mods');
+					}
 				}
 			}
 			else
@@ -445,6 +499,8 @@ class acp_mods
 		else
 		{
 			$mod_path = $mod_ident;
+			$mod_parent = 0;
+
 			$this->mod_root = dirname($mod_ident) . '/';
 			$this->mod_root = str_replace($phpbb_root_path, '', $this->mod_root);
 
@@ -578,6 +634,22 @@ class acp_mods
 	{
 		global $phpbb_root_path, $phpEx, $db, $template, $user, $config, $cache;
 
+		// Are we forcing a template install?
+		if (isset($_POST['template_submit']))
+		{
+			if (!check_form_key('acp_mods'))
+			{
+				trigger_error($user->lang['FORM_INVALID'] . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+
+			$mod_path = request_var('source', '');
+			$dest_template = request_var('dest', '');
+
+			$source_template = preg_match('#^([a-z0-9]+)#', core_basename($mod_path), $match);
+			$src_template = $match[1];
+			unset ($match);
+		}
+
 		// mod_path empty?
 		if (empty($mod_path))
 		{
@@ -594,6 +666,8 @@ class acp_mods
 
 		$details = $this->mod_details($mod_path, false);
 
+
+
 		$write_method = 'editor_' . determine_write_method(false);
 		$editor = new $write_method();
 
@@ -602,6 +676,36 @@ class acp_mods
 		$this->edited_root = "{$this->mod_root}_edited/";
 
 		$actions = $this->mod_actions($mod_path);
+
+		if ($dest_template)
+		{
+			foreach ($actions['EDITS'] as $file => $edits)
+			{
+				if (strpos($file, 'styles/') === false)
+				{
+					unset($actions['EDITS'][$file]);
+				}
+				else
+				{
+					$file_new = str_replace($src_template, $dest_template, $file);
+					$actions['EDITS'][$file_new] = $edits;
+					unset($actions['EDITS'][$file]);
+				}
+			}
+
+			foreach ($actions['NEW_FILES'] as $src_file => $dest_file)
+			{
+				if (strpos($src_file, 'styles/') === false)
+				{
+					unset($actions['NEW_FILES']);
+				}
+				else
+				{
+					$dest_new = str_replace($src_template, $dest_template, $dest_file);
+				}
+			}
+		}
+
 		// only supporting one level of hierarchy here
 		if (!$parent)
 		{
