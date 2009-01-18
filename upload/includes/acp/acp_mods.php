@@ -385,7 +385,7 @@ class acp_mods
 	*/
 	function mod_details($mod_ident, $find_children = true)
 	{
-		global $phpbb_root_path, $phpEx, $user, $template;
+		global $phpbb_root_path, $phpEx, $user, $template, $parent_id;
 
 		if (is_int($mod_ident))
 		{
