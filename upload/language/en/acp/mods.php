@@ -45,7 +45,7 @@ $lang = array_merge($lang, array(
 	'AUTHOR_NOTES'			=> 'Author Notes',
 	'AUTHOR_URL'			=> 'Author URL',
 	'AUTOMOD'				=> 'AutoMOD',
-	'AUTOMOD_CANNOT_INSTALL_OLD_VERSION'	=> 'The version of AutoMOD you are trying to install has already been installed.  Please delete this install_automod.php file.',
+	'AUTOMOD_CANNOT_INSTALL_OLD_VERSION'	=> 'The version of AutoMOD you are trying to install has already been installed.  Please delete this install/ directory.',
 	'AUTOMOD_UNKNOWN_VERSION'	=>	'AutoMOD was not able to update because it could not determine the version currently installed.',
 
 	'CAT_INSTALL_AUTOMOD'	=> 'AutoMOD',
