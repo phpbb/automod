@@ -434,7 +434,7 @@ class acp_mods
 					// Find and display the available MODX files
 					$children = $this->find_children($row['mod_path']);
 
-					$elements = array('language' => '', 'template' => '');
+					$elements = array('language' => array(), 'template' => array());
 
 					$this->handle_contrib($children);
 					$this->handle_language_prompt($children, $elements, 'details');
@@ -519,7 +519,7 @@ class acp_mods
 				$actions = array();
 				$children = $this->find_children($mod_path);
 
-				$elements = array('language' => '', 'template' => '');
+				$elements = array('language' => array(), 'template' => array());
 
 				$this->handle_contrib($children);
 				$this->handle_language_prompt($children, $elements, 'details');
@@ -591,7 +591,7 @@ class acp_mods
 
 		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
 
-		$elements = array('language' => '', 'template' => '');
+		$elements = array('language' => array(), 'template' => array());
 
 		// check for "child" MODX files and attempt to decide which ones we need
 		$children = $this->find_children($mod_path);
@@ -718,7 +718,7 @@ class acp_mods
 			// check for "child" MODX files and attempt to decide which ones we need
 			$children = $this->find_children($mod_path);
 
-			$elements = array('language' => '', 'template' => '');
+			$elements = array('language' => array(), 'template' => array());
 
 			$this->handle_dependency($children);
 			$this->handle_language_prompt($children, $elements, 'install');
@@ -817,6 +817,16 @@ class acp_mods
 
 			$sql_ary['mod_language'] = $row['mod_language'] . ',' . implode(',', $elements['language']);
 			$sql_ary['mod_template'] = $row['mod_template'] . ',' . implode(',', $elements['template']);
+
+			if (is_null($sql_ary['mod_language']))
+			{
+				$sql_ary['mod_language'] = '';
+			}
+
+			if (is_null($sql_ary['mod_template']))
+			{
+				$sql_ary['mod_template'] = '';
+			}
 
 			$prior_mod_actions = unserialize($row['mod_actions']);
 			$sql_ary['mod_actions'] = serialize(array_merge_recursive($prior_mod_actions, $actions));
