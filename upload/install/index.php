@@ -27,12 +27,17 @@ $user->setup(array('install', 'acp/mods'));
 
 if ($user->data['user_type'] != USER_FOUNDER)
 {
+    if ($user->data['user_id'] == ANONYMOUS)
+    {
+        login_box('', 'LOGIN');
+    }
+
 	trigger_error('NOT_AUTHORISED');
 }
 
 $mode = request_var('mode', '');
 $sub = request_var('sub', 'intro');
-$current_version = '1.0.0-b1';
+$current_version = '1.0.0-b2';
 $page_title = $user->lang['AUTOMOD_INSTALLATION'];
 
 if (isset($config['automod_version']) && $sub == 'intro')
@@ -41,6 +46,25 @@ if (isset($config['automod_version']) && $sub == 'intro')
 	{
 		trigger_error('AUTOMOD_CANNOT_INSTALL_OLD_VERSION');
 	}
+
+	switch ($config['automod_version'])
+	{
+		case '1.0.0-b1':
+			set_config('preview_changes',	false);
+			set_config('am_file_perms',		'0644');
+			set_config('am_dir_perms',		'0755');
+
+		// no break
+		// case '1.0.0-b2' actions would also be done if we were updating from b1 to b3
+		break;
+
+		default:
+			trigger_error('AUTOMOD_UNKNOWN_VERSION');
+		break;
+	}
+
+	set_config('automod_version', $current_version);
+	$sub = 'final';
 }
 
 $template->set_custom_template($phpbb_root_path . 'adm/style', 'admin');
