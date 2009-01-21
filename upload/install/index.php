@@ -42,7 +42,7 @@ $page_title = $user->lang['AUTOMOD_INSTALLATION'];
 
 if (isset($config['automod_version']) && $sub == 'intro')
 {
-	if (version_compare($config['automod_version'], $current_version, '<='))
+	if (version_compare($config['automod_version'], $current_version, '>'))
 	{
 		trigger_error('AUTOMOD_CANNOT_INSTALL_OLD_VERSION');
 	}
