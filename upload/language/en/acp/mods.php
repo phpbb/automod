@@ -44,7 +44,9 @@ $lang = array_merge($lang, array(
 	'AUTHOR_NAME'			=> 'Author Name',
 	'AUTHOR_NOTES'			=> 'Author Notes',
 	'AUTHOR_URL'			=> 'Author URL',
+	'AUTOMOD'				=> 'AutoMOD',
 	'AUTOMOD_CANNOT_INSTALL_OLD_VERSION'	=> 'The version of AutoMOD you are trying to install has already been installed.  Please delete this install_automod.php file.',
+	'AUTOMOD_UNKNOWN_VERSION'	=>	'AutoMOD was not able to update because it could not determine the version currently installed.',
 
 	'CAT_INSTALL_AUTOMOD'	=> 'AutoMOD',
 	'CHANGE_DATE'	=> 'Release Date',
@@ -157,6 +159,8 @@ $lang = array_merge($lang, array(
 	'UNINSTALLED'			=> 'MOD uninstalled',
 	'UNINSTALLED_MODS'		=> 'Uninstalled MODs',
 	'UNINSTALLED_EXPLAIN'	=> 'Your MOD has been uninstalled! Here you can view some of the results from the uninstallation. Please note any errors, and seek support at <a href="http://www.phpbb.com">phpBB.com</a>.',
+	'UPDATE_AUTOMOD'		=> 'Update AutoMOD',
+	'UPDATE_AUTOMOD_CONFIRM'=> 'Please confirm you want to update AutoMOD.',
 
 	'VERSION'		=> 'Version',
 

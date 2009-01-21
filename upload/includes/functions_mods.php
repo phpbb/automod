@@ -60,7 +60,10 @@ function test_ftp_connection($method, &$test_ftp_connection, &$test_connection)
 function core_basename($path)
 {
 	$path = basename($path);
-	return substr($path, 0, strrpos($path, '.'));
+	$path = substr($path, 0, strrpos($path, '.'));
+
+	$parts = explode('-', $path);
+	return end($parts);
 }
 
 /**

@@ -433,6 +433,9 @@ class acp_mods
 
 					// Find and display the available MODX files
 					$children = $this->find_children($row['mod_path']);
+
+					$elements = array('language' => '', 'template' => '');
+
 					$this->handle_contrib($children);
 					$this->handle_language_prompt($children, $elements, 'details');
 					$this->handle_template_prompt($children, $elements, 'details');
@@ -516,6 +519,8 @@ class acp_mods
 				$actions = array();
 				$children = $this->find_children($mod_path);
 
+				$elements = array('language' => '', 'template' => '');
+
 				$this->handle_contrib($children);
 				$this->handle_language_prompt($children, $elements, 'details');
 				$this->handle_template_prompt($children, $elements, 'details');
@@ -586,6 +591,8 @@ class acp_mods
 
 		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
 
+		$elements = array('language' => '', 'template' => '');
+
 		// check for "child" MODX files and attempt to decide which ones we need
 		$children = $this->find_children($mod_path);
 		$this->handle_language_prompt($children, $elements, 'pre_install');
@@ -635,6 +642,7 @@ class acp_mods
 		global $phpbb_root_path, $phpEx, $db, $template, $user, $config, $cache;
 
 		// Are we forcing a template install?
+		$dest_template = '';
 		if (isset($_POST['template_submit']))
 		{
 			if (!check_form_key('acp_mods'))
@@ -665,8 +673,6 @@ class acp_mods
 		set_config('ftp_timeout',	request_var('timeout', 10));
 
 		$details = $this->mod_details($mod_path, false);
-
-
 
 		$write_method = 'editor_' . determine_write_method(false);
 		$editor = new $write_method();
@@ -711,6 +717,8 @@ class acp_mods
 		{
 			// check for "child" MODX files and attempt to decide which ones we need
 			$children = $this->find_children($mod_path);
+
+			$elements = array('language' => '', 'template' => '');
 
 			$this->handle_dependency($children);
 			$this->handle_language_prompt($children, $elements, 'install');
@@ -806,15 +814,9 @@ class acp_mods
 			}
 
 			$sql_ary = array();
-			// this may be an insufficient match...
-			if (strpos('language/', $mod_path) !== false)
-			{
-				$sql_ary['mod_language'] = $row['mod_language'] . ',' . core_basename($mod_path);
-			}
-			else if (strpos('template/', $mod_path) !== false)
-			{
-				$sql_ary['mod_template'] = $row['mod_template'] . ',' . core_basename($mod_path);
-			}
+
+			$sql_ary['mod_language'] = $row['mod_language'] . ',' . implode(',', $elements['language']);
+			$sql_ary['mod_template'] = $row['mod_template'] . ',' . implode(',', $elements['template']);
 
 			$prior_mod_actions = unserialize($row['mod_actions']);
 			$sql_ary['mod_actions'] = serialize(array_merge_recursive($prior_mod_actions, $actions));
@@ -1359,6 +1361,20 @@ class acp_mods
 			$details = $this->mod_details($mod_path, false);
 
 			$children = $details['CHILDREN'];
+
+			if (isset($children['template-lang']))
+			{
+				if (isset($children['template']))
+				{
+					$children['template'] = array_merge($children['template'], $children['template-lang']);
+				}
+				else
+				{
+					$children['template'] = $children['template-lang'];
+				}
+
+				unset($children['template-lang']);
+			}
 		}
 		else if ($this->parser->get_modx_version() == 1.0)
 		{
