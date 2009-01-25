@@ -1,0 +1,19 @@
+AutoMOD Changelog
+
+- Changes since 1.0.0 Beta 1
+ + [Feature] Allow users to "force" a MOD's template instructions on another template
+ + [Feature] Support MODX 1.2.2
+ + [Feature] Allow admins to select file and directory permissions with direct & ftp write methods
+ + [Feature] Move option to preview changes into admin panel
+ + [Fix] Installer works without enabling DEBUG_EXTRA
+ + [Fix] Uninstall works with the FTP write method
+ + [Fix] Fail without PHP notices when a directory cannot be created
+ + [Fix] Only show FTP settings dialogue box when FTP is chosen as write method
+ + [Fix] Automatically detect FTP method (ftp or fsock)
+ + [Fix] Display changelogs correctly in details mode
+ + [Fix] Improved handling of linked files in "details" mode
+ + [Fix] Improved handling of MODX 1.0.x packaging standards
+ + [Fix] Properly handle uninstallation of "in-line replace" and replace-with actions
+ + [Fix] Correct and add a number of language variables
+ + [Fix] Correctly copy "deep" directory structures
+ + [Fix] Improved bookkeeping on templates and languages
