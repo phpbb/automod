@@ -103,8 +103,9 @@ class install_automod
 		if (!class_exists('acp_modules'))
 		{
 			include($phpbb_root_path . 'includes/acp/acp_modules.'.$phpEx);
-			$module = new acp_modules();
 		}
+
+		$module = new acp_modules();
 
 		$sql = 'SELECT module_id FROM ' . MODULES_TABLE . "
 			WHERE module_langname = 'ACP_CAT_MODS'";
