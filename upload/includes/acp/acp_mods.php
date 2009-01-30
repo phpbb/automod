@@ -467,7 +467,7 @@ class acp_mods
 						}
 
 						// now grab the templates that have not already been processed
-						$sql = 'SELECT template_id, template_name FROM ' . STYLES_TEMPLATE_TABLE . ' 
+						$sql = 'SELECT template_id, template_name FROM ' . STYLES_TEMPLATE_TABLE . '
 							WHERE ' . $db->sql_in_set('template_name', explode(',', $row['mod_template']), true);
 						$result = $db->sql_query($sql);
 
@@ -665,7 +665,10 @@ class acp_mods
 			return false;
 		}
 
-		set_config('ftp_method',	request_var('method', ''));
+		if (!empty(request_var('method', ''))
+		{
+			set_config('ftp_method',	request_var('method', ''));
+		}
 		set_config('ftp_host',		request_var('host', ''));
 		set_config('ftp_username',	request_var('username', ''));
 		set_config('ftp_root_path', request_var('root_path', ''));
@@ -844,6 +847,11 @@ class acp_mods
 			if ($editor->write_method == WRITE_FTP)
 			{
 				$hidden_ary['method'] = $config['ftp_method'];
+
+				if (empty($config['ftp_method']))
+				{
+					trigger_erro('FTP_METHOD_ERROR');
+				}
 
 				$requested_data = call_user_func(array($config['ftp_method'], 'data'));
 
