@@ -850,7 +850,7 @@ class acp_mods
 
 				if (empty($config['ftp_method']))
 				{
-					trigger_erro('FTP_METHOD_ERROR');
+					trigger_error('FTP_METHOD_ERROR');
 				}
 
 				$requested_data = call_user_func(array($config['ftp_method'], 'data'));
