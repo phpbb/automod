@@ -353,6 +353,7 @@ class parser_xml
 			$entry		= $history_info[$i]['children'];
 			$changelog	= isset($entry['CHANGELOG']) ? $entry['CHANGELOG'] : array();
 			$changelog_size = sizeof($changelog);
+			$changelog_id = 0;
 
 			for ($j = 0; $j < $changelog_size; $j++)
 			{
@@ -365,7 +366,7 @@ class parser_xml
 				}
 			}
 
-			$change_count = sizeof($changelog[$changelog_id]['children']);
+			$change_count = isset($changelog[$changelog_id]['children']['CHANGE']) ? sizeof($changelog[$changelog_id]['children']['CHANGE']) : 0;
 			for ($j = 0; $j < $change_count; $j++)
 			{
 				$changes[] = $changelog[$changelog_id]['children']['CHANGE'][$j]['data'];

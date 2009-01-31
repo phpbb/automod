@@ -1074,29 +1074,6 @@ class acp_mods
 			));
 		}
 
-		// Move included files
-		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']) && $change)
-		{
-			$template->assign_var('S_NEW_FILES', true);
-
-			foreach ($actions['NEW_FILES'] as $source => $target)
-			{
-				$status = $editor->copy_content($this->mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target));
-
-				if ($status === false)
-				{
-					$mod_installed = false;
-				}
-
-				$template->assign_block_vars('new_files', array(
-					'S_SUCCESS'			=> ($status === true) ? true : false,
-					'S_NO_COPY_ATTEMPT'	=> (is_null($status)) ? true : false,
-					'SOURCE'			=> $source,
-					'TARGET'			=> $target,
-				));
-			}
-		}
-
 		// not all MODs will have edits (!)
 		if (isset($actions['EDITS']))
 		{
@@ -1308,6 +1285,29 @@ class acp_mods
 			}
 		} // end foreach
 
+		// Move included files
+		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']) && $change && ($mod_installed || $force_install))
+		{
+			$template->assign_var('S_NEW_FILES', true);
+
+			foreach ($actions['NEW_FILES'] as $source => $target)
+			{
+				$status = $editor->copy_content($this->mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target));
+
+				if ($status === false)
+				{
+					$mod_installed = false;
+				}
+
+				$template->assign_block_vars('new_files', array(
+					'S_SUCCESS'			=> ($status === true) ? true : false,
+					'S_NO_COPY_ATTEMPT'	=> (is_null($status)) ? true : false,
+					'SOURCE'			=> $source,
+					'TARGET'			=> $target,
+				));
+			}
+		}
+
 		// Perform SQL queries last -- Queries usually cannot be done a second
 		// time, so do them only if the edits were successful.  Still complies
 		// with the MODX spec in this location
@@ -1436,7 +1436,7 @@ class acp_mods
 
 	function handle_contrib(&$children)
 	{
-		global $template, $parent_id;
+		global $template, $parent_id, $phpbb_root_path;
 
 		if (isset($children['contrib']) && sizeof($children['contrib']))
 		{
@@ -1446,7 +1446,7 @@ class acp_mods
 			foreach ($children['contrib'] as $xml_file)
 			{
 				// Another hack for supporting both versions of MODX
-				$xml_file = (is_array($xml_file)) ? $xml_file['href'] : $xml_file;
+				$xml_file = (is_array($xml_file)) ? $phpbb_root_path . $this->mod_root . $xml_file['href'] : $phpbb_root_path . $this->mod_root . $xml_file;
 
 				$child_details = $this->mod_details($xml_file, false);
 				$child_details['U_INSTALL'] = $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file";
