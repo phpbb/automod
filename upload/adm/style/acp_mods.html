@@ -368,19 +368,19 @@
 		<legend>{L_MOD_CONFIG}</legend>
 		<dl>
 			<dt><label for="write_method">{L_WRITE_METHOD}:</label><br /><span>{L_WRITE_METHOD_EXPLAIN}</span></dt>
-			<dd><label><input type="radio" name="write_method" value="{WRITE_METHOD_DIRECT}"{WRITE_DIRECT} onclick="dE('ftp_details', -1, 'block');" /> {L_WRITE_METHOD_DIRECT}</label>
-				<label><input type="radio" name="write_method" value="{WRITE_METHOD_FTP}"{WRITE_FTP} onclick="dE('ftp_details', 1, 'block');" /> {L_WRITE_METHOD_FTP}</label>
-				<label><input type="radio" name="write_method" value="{WRITE_METHOD_MANUAL}"{WRITE_MANUAL} onclick="dE('ftp_details', -1, 'block');" /> {L_WRITE_METHOD_MANUAL}</label>
+			<dd><label><input type="radio" class="radio" name="write_method" value="{WRITE_METHOD_DIRECT}"{WRITE_DIRECT} onclick="dE('ftp_details', -1, 'block');" /> {L_WRITE_METHOD_DIRECT}</label>
+				<label><input type="radio" class="radio" name="write_method" value="{WRITE_METHOD_FTP}"{WRITE_FTP} onclick="dE('ftp_details', 1, 'block');" /> {L_WRITE_METHOD_FTP}</label>
+				<label><input type="radio" class="radio" name="write_method" value="{WRITE_METHOD_MANUAL}"{WRITE_MANUAL} onclick="dE('ftp_details', -1, 'block');" /> {L_WRITE_METHOD_MANUAL}</label>
 			</dd>
 		</dl>
 		<dl>
 			<dt><label for="compress_method">{L_FILE_TYPE}:</label><br /><span>{L_FILE_TYPE_EXPLAIN}</span></dt>
-			<dd><!-- BEGIN compress --><label><input type="radio" name="compress_method"<!-- IF compress.METHOD eq COMPRESS_METHOD --> id="method" checked="checked"<!-- ENDIF --> value="{compress.METHOD}" /> {compress.METHOD}</label><!-- END compress --></dd>
+			<dd><!-- BEGIN compress --><label><input type="radio" class="radio" name="compress_method"<!-- IF compress.METHOD eq COMPRESS_METHOD --> id="method" checked="checked"<!-- ENDIF --> value="{compress.METHOD}" /> {compress.METHOD}</label><!-- END compress --></dd>
 		</dl>
 		<dl>
 			<dt><label for="preview_changes">{L_PREVIEW_CHANGES}:</label><br /><span>{L_PREVIEW_CHANGES_EXPLAIN}</span></dt>
-			<dd><label><input type="radio" name="preview_changes" value="1"{PREVIEW_CHANGES_YES} /> {L_YES}</label>
-				<label><input type="radio" name="preview_changes" value="1"{PREVIEW_CHANGES_NO} /> {L_NO}</label>
+			<dd><label><input type="radio" class="radio" name="preview_changes" value="1"{PREVIEW_CHANGES_YES} /> {L_YES}</label>
+				<label><input type="radio" class="radio" name="preview_changes" value="1"{PREVIEW_CHANGES_NO} /> {L_NO}</label>
 			</dd>
 		</dl>
 		<dl>

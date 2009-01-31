@@ -40,7 +40,7 @@ $sub = request_var('sub', 'intro');
 $current_version = '1.0.0-b2';
 $page_title = $user->lang['AUTOMOD_INSTALLATION'];
 
-if (isset($config['automod_version']) && $sub == 'intro')
+if (!empty($config['automod_version']) && $sub == 'intro')
 {
 	if (version_compare($config['automod_version'], $current_version, '>'))
 	{
@@ -55,7 +55,8 @@ if (isset($config['automod_version']) && $sub == 'intro')
 			set_config('am_dir_perms',		'0755');
 
 		// no break
-		// case '1.0.0-b2' actions would also be done if we were updating from b1 to b3
+		case '1.0.0-b2':	
+			// no changes yet
 		break;
 
 		default:
@@ -196,7 +197,7 @@ switch ($sub)
 			'L_INDEX'		=> $user->lang['INDEX'],
 			'L_INSTALLATION_SUCCESSFUL'	=> $user->lang['INSTALLATION_SUCCESSFUL'],
 			'U_INDEX'		=> append_sid("{$phpbb_root_path}index.$phpEx"),
-			'U_ACP_INDEX'	=> append_sid("{$phpbb_root_path}adm/index.$phpEx"),
+			'U_ACP_INDEX'	=> "{$phpbb_root_path}adm/index.$phpEx?sid={$user->data['session_id']}",
 		));
 	break;
 }
