@@ -665,7 +665,7 @@ class acp_mods
 			return false;
 		}
 
-		if (!empty(request_var('method', ''))
+		if (request_var('method', ''))
 		{
 			set_config('ftp_method',	request_var('method', ''));
 		}
