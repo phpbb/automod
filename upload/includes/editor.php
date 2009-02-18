@@ -707,9 +707,9 @@ class editor_direct extends editor
 		global $phpbb_root_path, $config;
 		global $db, $user;
 
-		if (!is_dir($phpbb_root_path . $new_filename) && !file_exists($phpbb_root_path . dirname($new_filename)))
+		if (!is_dir($new_filename) && !file_exists(dirname($new_filename)))
 		{
-			if ($this->recursive_mkdir($phpbb_root_path . dirname($new_filename)) === false)
+			if ($this->recursive_mkdir(dirname($new_filename)) === false)
 			{
 				return sprintf($user->lang['MODS_MKDIR_FAILED'], dirname($new_filename));
 			}
@@ -728,9 +728,9 @@ class editor_direct extends editor
 		}
 
 		// If we are not looking at a file stored in the database, use local file functions
-		$fr = @fopen($phpbb_root_path . $new_filename, 'wb');
+		$fr = @fopen($new_filename, 'wb');
 		$length_written = @fwrite($fr, $file_contents);
-		@chmod($phpbb_root_path . $new_filename, octdec($config['am_file_perms']));
+		@chmod($new_filename, octdec($config['am_file_perms']));
 
 		// This appears to be correct even with multibyte encodings.  strlen and 
 		// fwrite both return the number of bytes written, not the number of chars
@@ -785,6 +785,7 @@ class editor_direct extends editor
 
 	function commit_changes($source, $destination)
 	{
+//print_r(func_get_args()); exit;
 		return $this->copy_content($source, $destination, $source);
 	}
 
@@ -923,9 +924,9 @@ class editor_ftp extends editor
 		global $phpbb_root_path, $edited_root;
 		global $db, $user;
 
-		if (!is_dir($phpbb_root_path . $new_filename) && !file_exists($phpbb_root_path . dirname($new_filename)))
+		if (!is_dir($new_filename) && !file_exists(dirname($new_filename)))
 		{
-			if ($this->recursive_mkdir($phpbb_root_path . dirname($new_filename)) === false)
+			if ($this->recursive_mkdir(dirname($new_filename)) === false)
 			{
 				return sprintf($user->lang['MODS_MKDIR_FAILED'], dirname($new_filename));
 			}
