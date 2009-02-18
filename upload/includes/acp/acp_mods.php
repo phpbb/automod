@@ -742,7 +742,7 @@ class acp_mods
 			$this->handle_merge('template', $actions, $children, $elements['template']);
 		}
 
-		$editor->create_edited_root($phpbb_root_path . $this->edited_root);
+		$editor->create_edited_root($this->edited_root);
 
 		// handle all edits here
 		$mod_installed = $this->process_edits($editor, $actions, $details, true, true, false);
@@ -920,7 +920,7 @@ class acp_mods
 		$editor = new $write_method();
 
 		// get mod install root && make temporary edited folder root
-		$this->edited_root = "store/mods/{$mod_id}_uninst/";
+		$this->edited_root = "{$this->mods_root}{$mod_id}_uninst/";
 
 		// get FTP information if we need it
 		// using $config instead of $editor because write_method is forced to direct
@@ -930,7 +930,7 @@ class acp_mods
 			handle_ftp_details($method, $test_ftp_connection, $test_connection);
 		}
 
-		$editor->create_edited_root($phpbb_root_path . $this->edited_root);
+		$editor->create_edited_root($this->edited_root);
 
 		$template->assign_vars(array(
 			'S_UNINSTALL'		=> $execute_edits,
