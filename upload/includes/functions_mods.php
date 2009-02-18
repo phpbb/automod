@@ -216,6 +216,11 @@ function update_database_template($filename, $template_id, $file_contents, $inst
 	// grab filename
 	preg_match('#styles/[a-z0-9_]+/template/([a-z0-9_]+.html)#i', $filename, $match);
 
+	if (empty($match[1]))
+	{
+		return false;
+	}
+
 	$sql = 'UPDATE ' . STYLES_TEMPLATE_DATA_TABLE . "
 		SET template_data = '" . $db->sql_escape($file_contents) . "', template_mtime = " . (int) $install_time . '
 		WHERE template_id = ' . (int) $template_id . "

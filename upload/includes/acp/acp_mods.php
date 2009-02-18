@@ -23,6 +23,7 @@ class acp_mods
 	var $u_action;
 	var $parser;
 	var $mod_root = '';
+	var $mods_dir = '';
 	var $edited_root = '';
 
 	function main($id, $mode)
@@ -41,14 +42,24 @@ class acp_mods
 
 		$this->tpl_name = 'acp_mods';
 		$this->page_title = 'ACP_CAT_MODS';
+		$this->mods_dir = $phpbb_root_path . 'store/mods/';
 
 
 		// get any url vars
 		$action = request_var('action', '');
 		$mod_id = request_var('mod_id', 0);
 		$mod_url = request_var('mod_url', '');
-		$mod_path = request_var('mod_path', '');
 		$parent = request_var('parent', 0);
+
+		$mod_path = request_var('mod_path', '');
+
+		if ($mod_path)
+		{
+			$mod_dir = substr($mod_path, 1, strpos($mod_path, '/', 1));
+
+			$mod_path = $this->mod_root . $mod_path;
+			$this->mod_root = $this->mods_dir . $mod_dir;
+		}
 
 		switch ($mode)
 		{
@@ -282,7 +293,7 @@ class acp_mods
 		global $phpbb_root_path, $db, $template;
 
 		// get available MOD paths
-		$available_mods = $this->find_mods("{$phpbb_root_path}store/mods", 1);
+		$available_mods = $this->find_mods($this->mods_dir, 1);
 
 		if (!sizeof($available_mods['main']))
 		{
@@ -308,13 +319,14 @@ class acp_mods
 		foreach ($available_mods as $file)
 		{
 			$details = $this->mod_details($file, false);
+			$short_path = str_replace($this->mods_dir, '', $details['MOD_PATH']);
 
 			$template->assign_block_vars('uninstalled', array(
 				'MOD_NAME'	=> $details['MOD_NAME'],
-				'MOD_PATH'	=> $details['MOD_PATH'],
+				'MOD_PATH'	=> $short_path,
 
-				'U_INSTALL'	=> $this->u_action . '&amp;action=pre_install&amp;mod_path=' . $details['MOD_PATH'],
-				'U_DETAILS'	=> $this->u_action . '&amp;action=details&amp;mod_path=' . $details['MOD_PATH'],
+				'U_INSTALL'	=> $this->u_action . "&amp;action=pre_install&amp;mod_path=$short_path",
+				'U_DETAILS'	=> $this->u_action . "&amp;action=details&amp;mod_path=$short_path",
 			));
 		}
 
@@ -501,11 +513,13 @@ class acp_mods
 		}
 		else
 		{
+			if (strpos($mod_ident, $this->mods_dir) === false)
+			{
+				$mod_ident = $this->mods_dir . $mod_ident;
+			}
+
 			$mod_path = $mod_ident;
 			$mod_parent = 0;
-
-			$this->mod_root = dirname($mod_ident) . '/';
-			$this->mod_root = str_replace($phpbb_root_path, '', $this->mod_root);
 
 			$ext = substr(strrchr($mod_path, '.'), 1);
 
@@ -559,9 +573,9 @@ class acp_mods
 		}
 		else
 		{
-			if (strpos($mod_ident, $this->mod_root) === false)
+			if (strpos($mod_ident, $this->mods_dir) === false)
 			{
-				$mod_ident = $phpbb_root_path . $this->mod_root . $mod_ident;
+				$mod_ident = $this->mods_dir . $mod_ident;
 			}
 
 			$this->parser->set_file($mod_ident);
@@ -589,8 +603,6 @@ class acp_mods
 		$details = $this->mod_details($mod_path, false);
 		$actions = $this->mod_actions($mod_path);
 
-		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
-
 		$elements = array('language' => array(), 'template' => array());
 
 		// check for "child" MODX files and attempt to decide which ones we need
@@ -604,9 +616,9 @@ class acp_mods
 		$template->assign_vars(array(
 			'S_PRE_INSTALL'	=> true,
 
-			'MOD_PATH'		=> $mod_path,
+			'MOD_PATH'		=> str_replace($this->mod_root, '', $mod_path),
 
-			'U_INSTALL'		=> $this->u_action . '&amp;action=install&amp;mod_path=' . $mod_path,
+			'U_INSTALL'		=> $this->u_action . '&amp;action=install',
 			'U_BACK'		=> $this->u_action,
 		));
 
@@ -681,7 +693,7 @@ class acp_mods
 		$editor = new $write_method();
 
 		// get mod install root && make temporary edited folder root
-		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
+//		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
 		$this->edited_root = "{$this->mod_root}_edited/";
 
 		$actions = $this->mod_actions($mod_path);
@@ -1446,7 +1458,7 @@ class acp_mods
 			foreach ($children['contrib'] as $xml_file)
 			{
 				// Another hack for supporting both versions of MODX
-				$xml_file = (is_array($xml_file)) ? $phpbb_root_path . $this->mod_root . $xml_file['href'] : $phpbb_root_path . $this->mod_root . $xml_file;
+				$xml_file = (is_array($xml_file)) ? $xml_file['href'] : $xml_file;
 
 				$child_details = $this->mod_details($xml_file, false);
 				$child_details['U_INSTALL'] = $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file";
@@ -1471,7 +1483,7 @@ class acp_mods
 			$children[$type][$key] = (is_array($children[$type][$key])) ? $children[$type][$key]['href'] : $children[$type][$key];
 
 			// Prepend the proper directory structure if it is not already there
-			if (isset($children[$type][$key]) && strpos($children[$type][$key], $phpbb_root_path . $this->mod_root) !== 0)
+			if (isset($children[$type][$key]) && strpos($children[$type][$key], $this->mod_root) !== 0)
 			{
 				$children[$type][$key] = $phpbb_root_path . $this->mod_root . $children[$type][$key];
 			}
@@ -1489,10 +1501,10 @@ class acp_mods
 			{
 				// if the source file does not exist, and languages/ is not at the beginning
 				// this is probably only applicable with MODX 1.0.
-				if (!file_exists($phpbb_root_path . $this->mod_root . $source) && strpos("{$type}s/", $source) === false)
+				if (!file_exists($this->mod_root . $source) && strpos("{$type}s/", $source) === false)
 				{
 					// and it does exist if we force a languages/ into the path
-					if (file_exists($phpbb_root_path . $this->mod_root . "{$type}s/" . $source))
+					if (file_exists($this->mod_root . "{$type}s/" . $source))
 					{
 						// change the array key to include languages
 						unset($actions_ary['NEW_FILES'][$source]);
@@ -1561,7 +1573,7 @@ class acp_mods
 						{
 							if (core_basename($file) == $row['lang_iso'])
 							{
-								$xml_file = $phpbb_root_path . $this->mod_root . $file;
+								$xml_file = $file;
 								break;
 							}
 						}
@@ -1625,7 +1637,7 @@ class acp_mods
 					{
 						if (core_basename($file) == $unknown_template)
 						{
-							$xml_file = $phpbb_root_path . $this->mod_root . $file;
+							$xml_file = $file;
 							break;
 						}
 					}
