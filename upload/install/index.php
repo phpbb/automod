@@ -60,7 +60,7 @@ if (!empty($config['automod_version']) && $sub == 'intro')
 		break;
 
 		default:
-			trigger_error('AUTOMOD_UNKNOWN_VERSION');
+			trigger_error(sprintf($user->lang['AUTOMOD_UNKNOWN_VERSION'], $config['automod_version']));
 		break;
 	}
 
@@ -147,7 +147,7 @@ switch ($sub)
 			'U_ACTION'			=> $u_action,
 		));
 
-		if (!is_writable($phpbb_root_path))
+		if (!is_writable($phpbb_root_path) && $method !== false)
 		{
 			$s_hidden_fields = build_hidden_fields(array('method' => $method));
 
