@@ -25,6 +25,7 @@ class acp_mods
 	var $mod_root = '';
 	var $mods_dir = '';
 	var $edited_root = '';
+	var $backup_root = '';
 
 	function main($id, $mode)
 	{
@@ -55,10 +56,11 @@ class acp_mods
 
 		if ($mod_path)
 		{
+			$mod_path = urldecode($mod_path);
 			$mod_dir = substr($mod_path, 1, strpos($mod_path, '/', 1));
 
-			$mod_path = $this->mod_root . $mod_path;
 			$this->mod_root = $this->mods_dir . $mod_dir;
+			$this->backup_root = $this->mod_root . '_backups/';
 		}
 
 		switch ($mode)
@@ -319,7 +321,7 @@ class acp_mods
 		foreach ($available_mods as $file)
 		{
 			$details = $this->mod_details($file, false);
-			$short_path = str_replace($this->mods_dir, '', $details['MOD_PATH']);
+			$short_path = urlencode(str_replace($this->mods_dir, '', $details['MOD_PATH']));
 
 			$template->assign_block_vars('uninstalled', array(
 				'MOD_NAME'	=> $details['MOD_NAME'],
@@ -466,7 +468,7 @@ class acp_mods
 
 							$template->assign_block_vars('avail_templates', array(
 								'TEMPLATE_NAME'	=> core_basename($template_name),
-								'XML_FILE'		=> dirname($row['mod_path']) . '/' . $template_name,
+								'XML_FILE'		=> urlencode(dirname($row['mod_path']) . '/' . $template_name),
 							));
 						}
 
@@ -474,7 +476,7 @@ class acp_mods
 						{
 							$template->assign_block_vars('avail_templates', array(
 								'TEMPLATE_NAME'	=> 'prosilver',
-								'XML_FILE'		=> $row['mod_path'],
+								'XML_FILE'		=> urlencode($row['mod_path']),
 							));
 						}
 
@@ -616,7 +618,7 @@ class acp_mods
 		$template->assign_vars(array(
 			'S_PRE_INSTALL'	=> true,
 
-			'MOD_PATH'		=> str_replace($this->mod_root, '', $mod_path),
+			'MOD_PATH'		=> urlencode(str_replace($this->mod_root, '', $mod_path)),
 
 			'U_INSTALL'		=> $this->u_action . '&amp;action=install',
 			'U_BACK'		=> $this->u_action,
@@ -1111,7 +1113,7 @@ class acp_mods
 						'FILENAME'	=> $filename,
 					));
 
-					$status = $editor->open_file($filename);
+					$status = $editor->open_file($filename, $this->backup_root);
 					if (is_string($status))
 					{
 						$template->assign_block_vars('error', array(
@@ -1440,7 +1442,7 @@ class acp_mods
 						'dependency_confirm'	=> true,
 						'mode'		=> $mode,
 						'action'	=> $action,
-						'mod_path'	=> $mod_path,
+						'mod_path'	=> urlencode($mod_path),
 				)));
 			}
 		}
@@ -1459,6 +1461,7 @@ class acp_mods
 			{
 				// Another hack for supporting both versions of MODX
 				$xml_file = (is_array($xml_file)) ? $xml_file['href'] : $xml_file;
+				$xml_file = urlencode($xml_file);
 
 				$child_details = $this->mod_details($xml_file, false);
 				$child_details['U_INSTALL'] = $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file";
@@ -1485,7 +1488,7 @@ class acp_mods
 			// Prepend the proper directory structure if it is not already there
 			if (isset($children[$type][$key]) && strpos($children[$type][$key], $this->mod_root) !== 0)
 			{
-				$children[$type][$key] = $phpbb_root_path . $this->mod_root . $children[$type][$key];
+				$children[$type][$key] = $this->mod_root . $children[$type][$key];
 			}
 
 			$actions_ary = $this->mod_actions($children[$type][$key]);
@@ -1573,7 +1576,7 @@ class acp_mods
 						{
 							if (core_basename($file) == $row['lang_iso'])
 							{
-								$xml_file = $file;
+								$xml_file = urlencode($file);
 								break;
 							}
 						}
@@ -1637,7 +1640,7 @@ class acp_mods
 					{
 						if (core_basename($file) == $unknown_template)
 						{
-							$xml_file = $file;
+							$xml_file = urlencode($file);
 							break;
 						}
 					}

@@ -87,7 +87,7 @@ class editor
 	* @param string $filename - relative path from phpBB Root to the file to open
 	* 		e.g. viewtopic.php, styles/prosilver/templates/index_body.html
 	*/
-	function open_file($filename)
+	function open_file($filename, $backup_path)
 	{
 		global $phpbb_root_path, $db, $user;
 
@@ -140,6 +140,9 @@ class editor
 
 		$this->start_index = 0;
 		$this->open_filename = $filename;
+
+		// Make a backup of this file
+		$this->backup_file($backup_path);
 	}
 
 	/**
@@ -462,7 +465,7 @@ class editor
 
 		$this->file_contents[$start_offset] = rtrim($replace) . "\n";
 
-		$this->build_uninstall(implode("\n", $full_find), NULL, 'replace-with', $replace);
+		$this->build_uninstall(implode("", $full_find), NULL, 'replace-with', $replace);
 
 		return true;
 	}
@@ -748,6 +751,14 @@ class editor_direct extends editor
 	}
 
 	/**
+	* Creates a backup of the currently open file before AutoMOD makes any changes
+	*/
+	function backup_file($backup_dir)
+	{
+		return $this->close_file($backup_dir . $this->open_filename);
+	}
+
+	/**
 	* @author Michal Nazarewicz (from the php manual)
 	* Creates all non-existant directories in a path
 	* @param $path - path to create
@@ -785,7 +796,6 @@ class editor_direct extends editor
 
 	function commit_changes($source, $destination)
 	{
-//print_r(func_get_args()); exit;
 		return $this->copy_content($source, $destination, $source);
 	}
 
@@ -948,6 +958,14 @@ class editor_ftp extends editor
 	}
 
 	/**
+	* Creates a backup of the currently open file before AutoMOD makes any changes
+	*/
+	function backup_file($backup_dir)
+	{
+		return $this->close_file($backup_dir . $this->open_filename);
+	}
+
+	/**
 	* @ignore
 	*/
 	function recursive_mkdir($path, $mode = 0777)
@@ -1025,6 +1043,14 @@ class editor_manual extends editor
 		}
 
 		return true;
+	}
+
+	/**
+	* Backup is undefined when creating a compressed file.
+	*/
+	function backup_file($backup_dir)
+	{
+		return NULL;
 	}
 
 	function recursive_mkdir($path, $mode = 0777)

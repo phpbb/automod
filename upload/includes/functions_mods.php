@@ -144,11 +144,6 @@ function localise_tags($header, $tagname, $index = false)
 */
 function find_files($directory, $pattern, $max_levels = 20, $_current_level = 1)
 {
-	if ($_current_level == $max_levels && DEBUG)
-	{
-		add_log('admin', 'MAX_LEVELS_FIND_FILES');
-	}
-
 	if ($_current_level <= 1)
 	{
 		if (strpos($directory, '\\') !== false)
