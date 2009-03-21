@@ -922,7 +922,7 @@ class acp_mods
 		$editor = new $write_method();
 
 		// get mod install root && make temporary edited folder root
-		$this->edited_root = "{$this->mods_root}{$mod_id}_uninst/";
+		$this->edited_root = "{$this->mod_root}{$mod_id}_uninst/";
 
 		// get FTP information if we need it
 		// using $config instead of $editor because write_method is forced to direct

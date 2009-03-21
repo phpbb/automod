@@ -546,7 +546,7 @@ class editor
 			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset, 0);
 		}
 
-		$this->build_uninstall($find, $inline_find, 'in-line-' . strtolower($pos) . '-add', $inline_add);
+		$this->build_uninstall($this->file_contents[$array_offset], $inline_find, 'in-line-' . strtolower($pos) . '-add', $inline_add);
 
 		return true;
 	}
