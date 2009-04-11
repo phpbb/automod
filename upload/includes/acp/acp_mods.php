@@ -88,7 +88,7 @@ class acp_mods
 					$ftp_timeout	= request_var('timeout', 10);
 					$write_method	= request_var('write_method', 0);
 					$file_perms		= request_var('file_perms', '0644');
-					$dir_perms		= request_var('dir_perms', '0777');
+					$dir_perms		= request_var('dir_perms', '0755');
 					$compress_method	= request_var('compress_method', '');
 					$preview_changes	= request_var('preview_changes', 0);
 
@@ -667,7 +667,7 @@ class acp_mods
 			$mod_path = request_var('source', '');
 			$dest_template = request_var('dest', '');
 
-			$source_template = preg_match('#^([a-z0-9]+)#', core_basename($mod_path), $match);
+			preg_match('#^([a-z0-9]+)#i', core_basename($mod_path), $match);
 			$src_template = $match[1];
 			unset ($match);
 		}
@@ -786,6 +786,8 @@ class acp_mods
 			'U_RETURN'		=> $this->u_action,
 		));
 
+		// The editor class provides more pertinent information regarding edits
+		// so we store that as the canonical version, used for uninstalling
 		$actions['EDITS'] = $editor->mod_actions;
 		$editor->clear_actions();
 
@@ -922,12 +924,12 @@ class acp_mods
 		$editor = new $write_method();
 
 		// get mod install root && make temporary edited folder root
-		$this->edited_root = "{$this->mod_root}{$mod_id}_uninst/";
+		$this->edited_root = "{$this->mods_dir}{$this->mod_root}{$mod_id}_uninst/";
 
 		// get FTP information if we need it
 		// using $config instead of $editor because write_method is forced to direct
 		// when in preview mode
-		if ($config['write_method'] == WRITE_FTP && !$execute_edits)
+		if ($config['write_method'] == WRITE_FTP)
 		{
 			handle_ftp_details($method, $test_ftp_connection, $test_connection);
 		}
@@ -980,7 +982,7 @@ class acp_mods
 
 		$template->assign_var('S_ERROR', !$mod_uninstalled);
 
-		if ($execute_edits && $mod_uninstalled)
+		if ($execute_edits && ($mod_uninstalled || $force_uninstall))
 		{
 			// Delete from DB
 			$sql = 'DELETE FROM ' . MODS_TABLE . '
@@ -989,10 +991,7 @@ class acp_mods
 
 			// Add log
 			add_log('admin', 'LOG_MOD_REMOVE', $details['MOD_NAME']);
-		}
 
-		if ($mod_uninstalled || $force_uninstall)
-		{
 			$editor->commit_changes_final('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
 		}
 	}
@@ -1380,7 +1379,6 @@ class acp_mods
 
 	/**
 	* Search on the file system for other .xml files that belong to this MOD
-	* This method currently takes three parameters.
 	* @param string $mod_path - path to the "main" MODX file, relative to phpBB Root
 	*/
 	function find_children($mod_path)
@@ -1420,7 +1418,7 @@ class acp_mods
 	{
 		if (isset($children['dependency']) && sizeof($children['dependency']))
 		{
-			// TODO: check for the chance that the MOD has been installed by the MODs Manager
+			// TODO: check for the chance that the MOD has been installed by AutoMOD
 			// previously
 			if (confirm_box(true))
 			{
@@ -1624,33 +1622,6 @@ class acp_mods
 
 			// $process_templates are those that are installed on the board and provided for by the MOD
 			$process_templates = $elements['template'] = array_intersect($available_templates, $installed_templates);
-
-			// $unknown_templates are not installed on the board, but are provied for by the MOD
-			$unknown_templates = array_diff($available_templates, $installed_templates);
-
-			if (sizeof($unknown_templates) && ($action == 'pre_install' || $action == 'details'))
-			{
-				// prompt the user
-				// consider Nuttzy-like behavior (attempt to apply another xml file to a template)
-				$template->assign_var('S_UNKNOWN_TEMPLATES', true);
-
-				foreach ($unknown_templates as $unknown_template)
-				{
-					foreach ($children['template'] as $file)
-					{
-						if (core_basename($file) == $unknown_template)
-						{
-							$xml_file = urlencode($file);
-							break;
-						}
-					}
-
-					$template->assign_block_vars('unknown_templates', array(
-						'TEMPLATE_NAME'		=> $unknown_template,
-						'U_INSTALL'			=> ($parent_id) ? $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '',
-					));
-				}
-			}
 		}
 	}
 }
