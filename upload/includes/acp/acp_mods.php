@@ -696,6 +696,18 @@ class acp_mods
 
 		$details = $this->mod_details($mod_path, false);
 
+		if (!$parent)
+		{
+			$sql = 'SELECT mod_name FROM ' . MODS_TABLE . "
+				WHERE mod_name = '" . $db->sql_escape($details['MOD_NAME']) . "'";
+			$result = $db->sql_query($sql);
+
+			if ($row = $db->sql_fetchrow($result))
+			{
+				trigger_error('AM_MOD_ALREADY_INSTALLED');
+			}
+		}
+
 		$write_method = 'editor_' . determine_write_method(false);
 		$editor = new $write_method();
 
@@ -856,7 +868,8 @@ class acp_mods
 			$sql_ary['mod_actions'] = serialize(array_merge_recursive($prior_mod_actions, $actions));
 			unset($prior_mod_actions);
 
-			$sql = 'UPDATE ' . MODS_TABLE . ' ' . $db->sql_build_array('UPDATE', $sql_ary);
+			$sql = 'UPDATE ' . MODS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
+				WHERE mod_id = $parent";
 			$db->sql_query($sql);
 
 			add_log('admin', 'LOG_MOD_CHANGE', $row['mod_name']);
