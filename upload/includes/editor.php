@@ -64,6 +64,12 @@ class editor
 	var $template_id = 0;
 
 	/**
+	* Store the  current action & most recent action to aid the uninstall building process
+	*/
+	var $last_action = array();
+	var $curr_action = array();
+
+	/**
 	* Constructor method
 	* This is not called directly in AutoMOD
 	*/
@@ -343,6 +349,7 @@ class editor
 			$this->file_contents[$start_offset] = $add . ltrim($this->file_contents[$start_offset], "\n");
 		}
 
+		$this->curr_action = func_get_args();
 		$this->build_uninstall(implode("", $full_find), NULL, strtolower($pos) . ' add', $add);
 
 		return true;
@@ -465,6 +472,7 @@ class editor
 
 		$this->file_contents[$start_offset] = rtrim($replace) . "\n";
 
+		$this->curr_action = func_get_args();
 		$this->build_uninstall(implode("", $full_find), NULL, 'replace-with', $replace);
 
 		return true;
@@ -493,6 +501,8 @@ class editor
 		}
 
 		$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_replace, $string_offset, $length);
+
+		$this->curr_action = func_get_args();
 
 		// This isn't a full find, but it is the closest we can get
 		$this->build_uninstall($this->file_contents[$array_offset], $inline_find, 'in-line-replace', $inline_replace);
@@ -546,6 +556,8 @@ class editor
 			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset, 0);
 		}
 
+		$this->curr_action = func_get_args();
+
 		$this->build_uninstall($this->file_contents[$array_offset], $inline_find, 'in-line-' . strtolower($pos) . '-add', $inline_add);
 
 		return true;
@@ -566,6 +578,33 @@ class editor
 		$find = trim($find);
 		$inline_find = trim($inline_find);
 		$action = trim($action);
+
+		/*
+		* This if statement finds out if we are in the special case where 
+		* a MOD specifies a before action and an after action on the same
+		* find.  If this is the case, the uninstaller must see a replace
+		* rather than an add
+		*/
+		if (!empty($this->last_action) && $this->last_action[0] == $this->curr_action[0] &&
+			(($this->last_action[2] == 'AFTER' && $this->curr_action[2] == 'BEFORE') 
+			|| ($this->last_action[2] == 'BEFORE' && $this->curr_action[2] == 'AFTER')))
+		{
+			$last_action_index = sizeof($this->mod_actions[$this->open_filename]) - 1;
+
+			unset($this->mod_actions[$this->open_filename][$last_action_index]);
+ 
+			$action_type = 'REPLACE';
+
+			if ($this->last_action[2] == 'AFTER')
+			{
+				$action = $this->curr_action[1] . "\n" . $this->curr_action[0] . "\n" . $this->last_action[1];
+			}
+			else // implicit if ($this->last_action[2] == 'BEFORE')
+			{
+				$action = $this->last_action[1] . "\n" . $this->curr_action[0] . "\n" . $this->curr_action[1];		
+			}
+		}
+
 
 		// Build another complex array of MOD Actions
 		// This approach is rather memory-intensive ... it might behoove us
@@ -590,6 +629,8 @@ class editor
 				),
 			);
 		}
+
+		$this->last_action = $this->curr_action;
 	}
 
 	function clear_actions()

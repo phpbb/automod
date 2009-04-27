@@ -471,40 +471,40 @@ class acp_mods
 								'XML_FILE'		=> urlencode(dirname($row['mod_path']) . '/' . $template_name),
 							));
 						}
-
-						if (!$found_prosilver)
-						{
-							$template->assign_block_vars('avail_templates', array(
-								'TEMPLATE_NAME'	=> 'prosilver',
-								'XML_FILE'		=> urlencode($row['mod_path']),
-							));
-						}
-
-						// now grab the templates that have not already been processed
-						$sql = 'SELECT template_id, template_name FROM ' . STYLES_TEMPLATE_TABLE . '
-							WHERE ' . $db->sql_in_set('template_name', explode(',', $row['mod_template']), true);
-						$result = $db->sql_query($sql);
-
-						while ($row = $db->sql_fetchrow($result))
-						{
-							$template->assign_block_vars('board_templates', array(
-								'TEMPLATE_ID'		=> $row['template_id'],
-								'TEMPLATE_NAME'		=> $row['template_name'],
-							));
-						}
-
-						$s_hidden_fields = build_hidden_fields(array(
-							'action'	=> 'install',
-							'parent'	=> $row['mod_id'],
-						));
-
-						$template->assign_vars(array(
-							'S_FORM_ACTION'		=> $this->u_action,
-							'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
-						));
-
-						add_form_key('acp_mods');
 					}
+
+					if (!$found_prosilver)
+					{
+						$template->assign_block_vars('avail_templates', array(
+							'TEMPLATE_NAME'	=> 'prosilver',
+							'XML_FILE'		=> urlencode($row['mod_path']),
+						));
+					}
+
+					// now grab the templates that have not already been processed
+					$sql = 'SELECT template_id, template_name FROM ' . STYLES_TEMPLATE_TABLE . '
+						WHERE ' . $db->sql_in_set('template_name', explode(',', $row['mod_template']), true);
+					$result = $db->sql_query($sql);
+
+					while ($row = $db->sql_fetchrow($result))
+					{
+						$template->assign_block_vars('board_templates', array(
+							'TEMPLATE_ID'		=> $row['template_id'],
+							'TEMPLATE_NAME'		=> $row['template_name'],
+						));
+					}
+
+					$s_hidden_fields = build_hidden_fields(array(
+						'action'	=> 'install',
+						'parent'	=> $row['mod_id'],
+					));
+
+					$template->assign_vars(array(
+						'S_FORM_ACTION'		=> $this->u_action,
+						'S_HIDDEN_FIELDS'	=> $s_hidden_fields,
+					));
+
+					add_form_key('acp_mods');
 				}
 			}
 			else
@@ -518,6 +518,11 @@ class acp_mods
 			if (strpos($mod_ident, $this->mods_dir) === false)
 			{
 				$mod_ident = $this->mods_dir . $mod_ident;
+			}
+
+			if (!file_exists($mod_ident))
+			{
+				$mod_ident = str_replce($this->mod_dir, $this->mod_root, $mod_ident);
 			}
 
 			$mod_path = $mod_ident;
@@ -1050,7 +1055,10 @@ class acp_mods
 						}
 						else
 						{
-							$mods['main'][] = "$dir/$file";
+							if (strpos($file, '.xml') !== false)
+							{
+								$mods['main'][] = "$dir/$file";
+							}
 						}
 					}
 				}
@@ -1307,7 +1315,7 @@ class acp_mods
 			{
 				$status = $editor->copy_content($this->mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target));
 
-				if ($status === false)
+				if ($status !== true)
 				{
 					$mod_installed = false;
 				}
@@ -1459,9 +1467,12 @@ class acp_mods
 			{
 				// Another hack for supporting both versions of MODX
 				$xml_file = (is_array($xml_file)) ? $xml_file['href'] : $xml_file;
-				$xml_file = urlencode($xml_file);
 
 				$child_details = $this->mod_details($xml_file, false);
+
+				// don't do the urlencode until after the file is looked up on the
+				// filesystem
+				$xml_file = urlencode($xml_file);
 				$child_details['U_INSTALL'] = $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file";
 
 				$template->assign_block_vars('contrib', $child_details);

@@ -448,7 +448,7 @@ class parser_xml
 	*/
 	function get_actions()
 	{
-		global $table_prefix, $db, $user;
+		global $db, $user;
 
 		$actions = array();
 
@@ -506,7 +506,7 @@ class parser_xml
 		{
 			if ($this->modx_version == 1.0)
 			{
-				$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim(str_replace('phpbb_', $table_prefix, $sql_info[$i]['data'])) : '';
+				$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim($sql_info[$i]['data']) : '';
 			}
 			else if ($this->modx_version == 1.2)
 			{
@@ -515,7 +515,7 @@ class parser_xml
 
 				if (!isset($sql_info[$i]['attrs']['DBMS']) || in_array($xml_dbms, $match_dbms))
 				{
-					$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim(str_replace('phpbb_', $table_prefix, $sql_info[$i]['data'])) : '';
+					$actions['SQL'][] = (!empty($sql_info[$i]['data'])) ? trim($sql_info[$i]['data']) : '';
 				}
 				else
 				{
