@@ -37,6 +37,9 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, array(
 	'ADDITIONAL_CHANGES'	=> 'Available Changes',
+
+	'AM_MOD_ALREADY_INSTALLED'	=> 'AutoMOD has detected this MOD is already installed and cannot proceed.',
+
 	'APPLY_THESE_CHANGES'	=> 'Apply these changes',
 	'APPLY_TEMPLATESET'		=> 'to this template',
 	'AUTHOR_EMAIL'			=> 'Author Email',
