@@ -14,7 +14,7 @@
 * @note: this file is not intended to be in releases of automod
 */
 
-//die("Please read the first lines of this script for instructions on how to enable it");
+die("Please read the first lines of this script for instructions on how to enable it");
 
 @set_time_limit(0);
 

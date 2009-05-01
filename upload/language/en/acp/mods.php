@@ -85,6 +85,7 @@ $lang = array_merge($lang, array(
 	'FTP_NOT_USABLE'  => 'The FTP function can\'t be used as this has been disabled by your hosting.',
 	'FTP_METHOD_ERROR' => 'There is no FTP method found, please check under autoMOD configuration if there is set a correct FTP method.',
 
+	'INHERIT_NO_CHANGE'	=> 'No changes can be made to this file because the template %1$s depends on %2$s.',
 	'INLINE_FIND_MISSING'=> 'The In-Line Find specified by the MOD could not be found.',
 	'INSTALL_AUTOMOD'	=> 'AutoMOD Installation',
 	'INSTALL_TIME'		=> 'Installation time',

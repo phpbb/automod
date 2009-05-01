@@ -468,7 +468,7 @@ class acp_mods
 
 							$template->assign_block_vars('avail_templates', array(
 								'TEMPLATE_NAME'	=> core_basename($template_name),
-								'XML_FILE'		=> urlencode(dirname($row['mod_path']) . '/' . $template_name),
+								'XML_FILE'		=> urlencode(str_replace($this->mods_dir, '', dirname($row['mod_path'])) . '/' . $template_name),
 							));
 						}
 					}
@@ -477,7 +477,7 @@ class acp_mods
 					{
 						$template->assign_block_vars('avail_templates', array(
 							'TEMPLATE_NAME'	=> 'prosilver',
-							'XML_FILE'		=> urlencode($row['mod_path']),
+							'XML_FILE'		=> urlencode(str_replace($this->mods_dir, '', $row['mod_path'])),
 						));
 					}
 
@@ -496,7 +496,7 @@ class acp_mods
 
 					$s_hidden_fields = build_hidden_fields(array(
 						'action'	=> 'install',
-						'parent'	=> $row['mod_id'],
+						'parent'	=> $parent_id,
 					));
 
 					$template->assign_vars(array(
@@ -522,7 +522,7 @@ class acp_mods
 
 			if (!file_exists($mod_ident))
 			{
-				$mod_ident = str_replce($this->mod_dir, $this->mod_root, $mod_ident);
+				$mod_ident = str_replace($this->mods_dir, $this->mod_root, $mod_ident);
 			}
 
 			$mod_path = $mod_ident;
@@ -658,7 +658,7 @@ class acp_mods
 	*/
 	function install($mod_path, $parent = 0)
 	{
-		global $phpbb_root_path, $phpEx, $db, $template, $user, $config, $cache;
+		global $phpbb_root_path, $phpEx, $db, $template, $user, $config, $cache, $dest_template;
 
 		// Are we forcing a template install?
 		$dest_template = '';
@@ -669,12 +669,19 @@ class acp_mods
 				trigger_error($user->lang['FORM_INVALID'] . adm_back_link($this->u_action), E_USER_WARNING);
 			}
 
-			$mod_path = request_var('source', '');
+			$mod_path = urldecode(request_var('source', ''));
 			$dest_template = request_var('dest', '');
 
-			preg_match('#^([a-z0-9]+)#i', core_basename($mod_path), $match);
-			$src_template = $match[1];
-			unset ($match);
+			if (preg_match('#.*install.*xml$#i', $mod_path))
+			{
+				$src_template = 'prosilver';
+			}
+			else
+			{
+				preg_match('#([a-z0-9]+)$#i', core_basename($mod_path), $match);
+				$src_template = $match[1];
+				unset ($match);
+			}
 		}
 
 		// mod_path empty?
@@ -719,6 +726,18 @@ class acp_mods
 
 		if ($dest_template)
 		{
+			$sql = 'SELECT template_inherit_path FROM ' . STYLES_TEMPLATE_TABLE . "
+				WHERE template_name = '" . $db->sql_escape($dest_template) . "'";
+			$result = $db->sql_query($sql);
+
+			global $dest_inherits;
+			$dest_inherits = '';
+			if ($row = $db->sql_fetchrow($result))
+			{
+				$dest_inherits = $row['template_inherit_path'];
+			}
+			$db->sql_freeresult($result);
+
 			foreach ($actions['EDITS'] as $file => $edits)
 			{
 				if (strpos($file, 'styles/') === false)
@@ -853,15 +872,20 @@ class acp_mods
 
 			$sql_ary = array();
 
-			$sql_ary['mod_language'] = $row['mod_language'] . ',' . implode(',', $elements['language']);
-			$sql_ary['mod_template'] = $row['mod_template'] . ',' . implode(',', $elements['template']);
-
-			if (is_null($sql_ary['mod_language']))
+			if (!empty($elements['language']))
 			{
-				$sql_ary['mod_language'] = '';
+				$sql_ary['mod_languages'] = $row['mod_languages'] . ',' . implode(',', $elements['language']);
+			}
+			else
+			{
+				$sql_ary['mod_languages'] = '';
 			}
 
-			if (is_null($sql_ary['mod_template']))
+			if (!empty($elements['template']))
+			{
+				$sql_ary['mod_template'] = $row['mod_template'] . ',' . implode(',', $elements['template']);
+			}
+			else
 			{
 				$sql_ary['mod_template'] = '';
 			}
@@ -1087,6 +1111,7 @@ class acp_mods
 	function process_edits($editor, $actions, $details, $change = false, $display = true, $reverse = false)
 	{
 		global $template, $user, $db, $phpbb_root_path, $force_install;
+		global $dest_inherits, $dest_template;
 
 		$mod_installed = true;
 
@@ -1120,12 +1145,15 @@ class acp_mods
 				// see if the file to be opened actually exists
 				if (!file_exists("$phpbb_root_path$filename"))
 				{
+					$is_inherit = (strpos($filename, 'styles/') !== false && !empty($dest_inherits)) ? true : false;
+
 					$template->assign_block_vars('edit_files', array(
-						'S_MISSING_FILE' => true,
-						'FILENAME'	=> $filename,
+						'S_MISSING_FILE'	=> ($is_inherit) ? false : true,
+						'INHERIT_MSG'		=> ($is_inherit) ? sprintf($user->lang['INHERIT_NO_CHANGE'], $dest_template, $dest_inherits) : '',
+						'FILENAME'			=> $filename,
 					));
 
-					$mod_installed = false;
+					$mod_installed = ($is_inherit) ? $mod_installed : false;
 
 					continue;
 				}
