@@ -754,7 +754,9 @@ class acp_mods
 
 			$elements = array('language' => array(), 'template' => array());
 
-			$this->handle_dependency($children);
+			global $mode;
+
+			$this->handle_dependency($children, $mode, $mod_path);
 			$this->handle_language_prompt($children, $elements, 'install');
 			$this->handle_merge('language', $actions, $children, $elements['language']);
 			$this->handle_template_prompt($children, $elements, 'install');
@@ -1435,7 +1437,7 @@ class acp_mods
 		return $children;
 	}
 
-	function handle_dependency(&$children)
+	function handle_dependency(&$children, $mode, $mod_path)
 	{
 		if (isset($children['dependency']) && sizeof($children['dependency']))
 		{
@@ -1445,12 +1447,13 @@ class acp_mods
 			{
 				// do nothing
 			}
-			else if (!isset($_REQUEST['dependency_confirm']))
+			else if (empty($_REQUEST['dependency_confirm']))
 			{
-				global $user, $id, $mode, $action, $mod_path;
+				global $user, $id;
 
 				$full_url_list = array();
 				$message = '';
+				$children['dependency'] = array_unique($children['dependency']);
 				foreach ($children['dependency'] as $dependency)
 				{
 					//$full_url_list[] = $dependency_url;
@@ -1460,7 +1463,7 @@ class acp_mods
 				confirm_box(false, $message, build_hidden_fields(array(
 						'dependency_confirm'	=> true,
 						'mode'		=> $mode,
-						'action'	=> $action,
+						'action'	=> 'install',
 						'mod_path'	=> urlencode($mod_path),
 				)));
 			}
