@@ -14,7 +14,7 @@
 * @note: this file is not intended to be in releases of automod
 */
 
-die("Please read the first lines of this script for instructions on how to enable it");
+//die("Please read the first lines of this script for instructions on how to enable it");
 
 @set_time_limit(0);
 
@@ -244,7 +244,7 @@ $supported_dbms = array('firebird', 'mssql', 'mysql_40', 'mysql_41', 'oracle', '
 
 foreach ($supported_dbms as $dbms)
 {
-	$fp = fopen($schema_path . '_' . $dbms . '_schema.sql', 'wt');
+	$fp = fopen($schema_path . $dbms . '_schema.sql', 'wt');
 
 	$line = '';
 
@@ -258,7 +258,6 @@ foreach ($supported_dbms as $dbms)
 
 		case 'firebird':
 			$line = "#\n# \$I" . "d: $\n#\n\n";
-			$line .= custom_data('firebird') . "\n";
 		break;
 
 		case 'sqlite':
@@ -273,13 +272,11 @@ foreach ($supported_dbms as $dbms)
 
 		case 'oracle':
 			$line = "/*\n\n \$I" . "d: $\n\n*/\n\n";
-			$line .= custom_data('oracle') . "\n";
 		break;
 
 		case 'postgres':
 			$line = "/*\n\n \$I" . "d: $\n\n*/\n\n";
 			$line .= "BEGIN;\n\n";
-			$line .= custom_data('postgres') . "\n";
 		break;
 	}
 
@@ -834,132 +831,6 @@ function get_schema_struct()
 */
 function custom_data($dbms)
 {
-	switch ($dbms)
-	{
-		case 'oracle':
-			return <<<EOF
-/*
-  This first section is optional, however its probably the best method
-  of running phpBB on Oracle. If you already have a tablespace and user created
-  for phpBB you can leave this section commented out!
-
-  The first set of statements create a phpBB tablespace and a phpBB user,
-  make sure you change the password of the phpBB user before you run this script!!
-*/
-
-/*
-CREATE TABLESPACE "PHPBB"
-	LOGGING
-	DATAFILE 'E:\ORACLE\ORADATA\LOCAL\PHPBB.ora'
-	SIZE 10M
-	AUTOEXTEND ON NEXT 10M
-	MAXSIZE 100M;
-
-CREATE USER "PHPBB"
-	PROFILE "DEFAULT"
-	IDENTIFIED BY "phpbb_password"
-	DEFAULT TABLESPACE "PHPBB"
-	QUOTA UNLIMITED ON "PHPBB"
-	ACCOUNT UNLOCK;
-
-GRANT ANALYZE ANY TO "PHPBB";
-GRANT CREATE SEQUENCE TO "PHPBB";
-GRANT CREATE SESSION TO "PHPBB";
-GRANT CREATE TABLE TO "PHPBB";
-GRANT CREATE TRIGGER TO "PHPBB";
-GRANT CREATE VIEW TO "PHPBB";
-GRANT "CONNECT" TO "PHPBB";
-
-COMMIT;
-DISCONNECT;
-
-CONNECT phpbb/phpbb_password;
-*/
-EOF;
-
-		break;
-
-		case 'postgres':
-			return <<<EOF
-/*
-	Domain definition
-*/
-CREATE DOMAIN varchar_ci AS varchar(255) NOT NULL DEFAULT ''::character varying;
-
-/*
-	Operation Functions
-*/
-CREATE FUNCTION _varchar_ci_equal(varchar_ci, varchar_ci) RETURNS boolean AS 'SELECT LOWER($1) = LOWER($2)' LANGUAGE SQL STRICT;
-CREATE FUNCTION _varchar_ci_not_equal(varchar_ci, varchar_ci) RETURNS boolean AS 'SELECT LOWER($1) != LOWER($2)' LANGUAGE SQL STRICT;
-CREATE FUNCTION _varchar_ci_less_than(varchar_ci, varchar_ci) RETURNS boolean AS 'SELECT LOWER($1) < LOWER($2)' LANGUAGE SQL STRICT;
-CREATE FUNCTION _varchar_ci_less_equal(varchar_ci, varchar_ci) RETURNS boolean AS 'SELECT LOWER($1) <= LOWER($2)' LANGUAGE SQL STRICT;
-CREATE FUNCTION _varchar_ci_greater_than(varchar_ci, varchar_ci) RETURNS boolean AS 'SELECT LOWER($1) > LOWER($2)' LANGUAGE SQL STRICT;
-CREATE FUNCTION _varchar_ci_greater_equals(varchar_ci, varchar_ci) RETURNS boolean AS 'SELECT LOWER($1) >= LOWER($2)' LANGUAGE SQL STRICT;
-
-/*
-	Operators
-*/
-CREATE OPERATOR <(
-  PROCEDURE = _varchar_ci_less_than,
-  LEFTARG = varchar_ci,
-  RIGHTARG = varchar_ci,
-  COMMUTATOR = >,
-  NEGATOR = >=,
-  RESTRICT = scalarltsel,
-  JOIN = scalarltjoinsel);
-
-CREATE OPERATOR <=(
-  PROCEDURE = _varchar_ci_less_equal,
-  LEFTARG = varchar_ci,
-  RIGHTARG = varchar_ci,
-  COMMUTATOR = >=,
-  NEGATOR = >,
-  RESTRICT = scalarltsel,
-  JOIN = scalarltjoinsel);
-
-CREATE OPERATOR >(
-  PROCEDURE = _varchar_ci_greater_than,
-  LEFTARG = varchar_ci,
-  RIGHTARG = varchar_ci,
-  COMMUTATOR = <,
-  NEGATOR = <=,
-  RESTRICT = scalargtsel,
-  JOIN = scalargtjoinsel);
-
-CREATE OPERATOR >=(
-  PROCEDURE = _varchar_ci_greater_equals,
-  LEFTARG = varchar_ci,
-  RIGHTARG = varchar_ci,
-  COMMUTATOR = <=,
-  NEGATOR = <,
-  RESTRICT = scalargtsel,
-  JOIN = scalargtjoinsel);
-
-CREATE OPERATOR <>(
-  PROCEDURE = _varchar_ci_not_equal,
-  LEFTARG = varchar_ci,
-  RIGHTARG = varchar_ci,
-  COMMUTATOR = <>,
-  NEGATOR = =,
-  RESTRICT = neqsel,
-  JOIN = neqjoinsel);
-
-CREATE OPERATOR =(
-  PROCEDURE = _varchar_ci_equal,
-  LEFTARG = varchar_ci,
-  RIGHTARG = varchar_ci,
-  COMMUTATOR = =,
-  NEGATOR = <>,
-  RESTRICT = eqsel,
-  JOIN = eqjoinsel,
-  HASHES,
-  MERGES,
-  SORT1= <);
-
-EOF;
-		break;
-	}
-
 	return '';
 }
 

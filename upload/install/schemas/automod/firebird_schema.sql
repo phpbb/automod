@@ -2,7 +2,6 @@
 # $Id$
 #
 
-
 # Table: 'phpbb_mods'
 CREATE TABLE phpbb_mods (
 	mod_id INTEGER NOT NULL,
