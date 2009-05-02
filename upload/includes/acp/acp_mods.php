@@ -1358,7 +1358,7 @@ class acp_mods
 			{
 				$status = $editor->copy_content($this->mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target));
 
-				if ($status !== true)
+				if ($status !== true && !is_null($status))
 				{
 					$mod_installed = false;
 				}

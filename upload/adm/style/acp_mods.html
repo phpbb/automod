@@ -138,7 +138,9 @@
 
 		<!-- IF .board_templates and .avail_templates -->
 		<form action="{S_FORM_ACTION}" method="post">
+		<!-- IF .unknown_templates or .unknown_lang or .contrib -->
 		<br /><hr /><br />
+		<!-- ENDIF -->
 		{L_APPLY_THESE_CHANGES}
 		<select name="source">
 		<!-- BEGIN avail_templates -->
@@ -380,18 +382,18 @@
 			<dd><!-- BEGIN compress --><label><input type="radio" class="radio" name="compress_method"<!-- IF compress.METHOD eq COMPRESS_METHOD --> id="method" checked="checked"<!-- ENDIF --> value="{compress.METHOD}" /> {compress.METHOD}</label><!-- END compress --></dd>
 		</dl>
 		<dl>
-			<dt><label for="preview_changes">{L_PREVIEW_CHANGES}:</label><br /><span>{L_PREVIEW_CHANGES_EXPLAIN}</span></dt>
-			<dd><label><input type="radio" class="radio" name="preview_changes" value="1"{PREVIEW_CHANGES_YES} /> {L_YES}</label>
-				<label><input type="radio" class="radio" name="preview_changes" value="1"{PREVIEW_CHANGES_NO} /> {L_NO}</label>
-			</dd>
-		</dl>
-		<dl>
 			<dt><label for="file_perms">{L_FILE_PERMS}:</label><br /><span>{L_FILE_PERMS_EXPLAIN}</span></dt>
 			<dd><input type="text" class="input" name="file_perms" value="{FILE_PERMS}" /></dd>
 		</dl>
 		<dl>
 			<dt><label for="file_perms">{L_DIR_PERMS}:</label><br /><span>{L_DIR_PERMS_EXPLAIN}</span></dt>
 			<dd><input type="text" class="input" name="dir_perms" value="{DIR_PERMS}" /></dd>
+		</dl>
+		<dl>
+			<dt><label for="preview_changes">{L_PREVIEW_CHANGES}:</label><br /><span>{L_PREVIEW_CHANGES_EXPLAIN}</span></dt>
+			<dd><label><input type="radio" class="radio" name="preview_changes" value="1"{PREVIEW_CHANGES_YES} /> {L_YES}</label>
+				<label><input type="radio" class="radio" name="preview_changes" value="0"{PREVIEW_CHANGES_NO} /> {L_NO}</label>
+			</dd>
 		</dl>
 	</fieldset>
 
