@@ -272,7 +272,7 @@
 		<fieldset class="submit-buttons">
 			<legend>{L_RETRY}</legend>
 			<input class="button1" type="submit" name="retry" value="{L_RETRY}" />
-			<input class="button2" type="submit" name="force" value="{L_FORCE_INSTALL}" />
+			<input class="button2" type="submit" name="force" value="{L_FORCE_INSTALL}" onclick="javascript:confirm('{L_FORCE_CONFIRM}'); return false;" />
 			{S_HIDDEN_FIELDS}
 		</fieldset>
 		</form>

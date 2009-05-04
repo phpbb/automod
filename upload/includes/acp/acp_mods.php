@@ -43,7 +43,7 @@ class acp_mods
 
 		$this->tpl_name = 'acp_mods';
 		$this->page_title = 'ACP_CAT_MODS';
-		$this->mods_dir = $phpbb_root_path . 'store/mods/';
+		$this->mods_dir = $phpbb_root_path . 'store/mods';
 
 
 		// get any url vars
@@ -59,7 +59,7 @@ class acp_mods
 			$mod_path = urldecode($mod_path);
 			$mod_dir = substr($mod_path, 1, strpos($mod_path, '/', 1));
 
-			$this->mod_root = $this->mods_dir . $mod_dir;
+			$this->mod_root = $this->mods_dir . '/' . $mod_dir;
 			$this->backup_root = $this->mod_root . '_backups/';
 		}
 
@@ -1057,6 +1057,9 @@ class acp_mods
 			static $mods = array('main' => array(), 'contrib' => array(), 'template' => array(), 'language' => array());
 		}
 
+		// ltrim shouldn't be needed, but some users had problems.  See #44305
+		$dir = ltrim($dir, '/');
+
 		$dp = opendir($dir);
 		while (($file = readdir($dp)) !== false)
 		{
@@ -1459,7 +1462,8 @@ class acp_mods
 		}
 		else if ($this->parser->get_modx_version() == 1.0)
 		{
-			$children = $this->find_mods(dirname($mod_path), 2);
+			$search_dir = (strpos($mod_path, $this->mods_dir) === 0) ? dirname($mod_path) : $this->mods_dir . dirname($mod_path);
+			$children = $this->find_mods($search_dir, 5);
 		}
 
 		return $children;

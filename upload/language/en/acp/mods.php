@@ -81,6 +81,7 @@ $lang = array_merge($lang, array(
 	'FIND'				=> 'Find',
 	'FIND_MISSING'		=> 'The Find specified by the MOD could not be found',
 	'FORCE_INSTALL'		=> 'Force Install',
+	'FORCE_CONFIRM'		=> 'The Force Install feature means the MOD is not fully installed.  You will need to make some manual fixes to your board to finish installation.  Continue?',
 	'FTP_INFORMATION'	=> 'FTP Information',
 	'FTP_NOT_USABLE'  => 'The FTP function can\'t be used as this has been disabled by your hosting.',
 	'FTP_METHOD_ERROR' => 'There is no FTP method found, please check under autoMOD configuration if there is set a correct FTP method.',
