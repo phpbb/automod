@@ -274,7 +274,7 @@ class parser_xml
 
 		if (empty($this->data))
 		{
-			$this->set_file($this->mod_file);
+			$this->set_file($this->file);
 		}
 
 		$header = array(
