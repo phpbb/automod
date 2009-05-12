@@ -1,5 +1,20 @@
 AutoMOD Changelog
 
+- Changes since 1.0.0 Beta 2
+ + [Feature] Back up all files before editing them
+ + [Feature] More stern warning prompt when using "force install" button
+ + [Change] Paths are handled without passing $phpbb_root_path around
+ + [Fix] Improved support for MODX 1.0.x 
+ + [Fix] Correct cosmetic issues under MSIE
+ + [Fix] Do not copy files when installation fails
+ + [Fix] Database changes are performed when using "force install"
+ + [Fix] Whitespace handling in uninstall
+ + [Fix] Inline action handling in uninstall
+ + [Fix] Single edit with multiple actions is now handled properly by uninstallation
+ + [Fix] Correctly build SQL query for forced style installs
+ + [Fix] Duplicate table prefix alteration occurred in some cases
+ + [Fix] CHMODs are octal, not hex
+
 - Changes since 1.0.0 Beta 1
  + [Feature] Allow users to "force" a MOD's template instructions on another template
  + [Feature] Support MODX 1.2.2
