@@ -29,7 +29,7 @@ if ($user->data['user_type'] != USER_FOUNDER)
 {
     if ($user->data['user_id'] == ANONYMOUS)
     {
-        login_box('', 'LOGIN');
+        login_box('');
     }
 
 	trigger_error('NOT_AUTHORISED');
@@ -37,7 +37,7 @@ if ($user->data['user_type'] != USER_FOUNDER)
 
 $mode = request_var('mode', '');
 $sub = request_var('sub', 'intro');
-$current_version = '1.0.0-rc1';
+$current_version = '1.0.0-RC1';
 $page_title = $user->lang['AUTOMOD_INSTALLATION'];
 
 if (!empty($config['automod_version']) && $sub == 'intro')
@@ -56,6 +56,7 @@ if (!empty($config['automod_version']) && $sub == 'intro')
 
 		// no break
 		case '1.0.0-b2':	
+		case '1.0.0-RC1':
 			// no changes
 		break;
 
