@@ -1075,7 +1075,7 @@ class acp_mods
 				{
 					// if this is an "extra" MODX file, make a record of it as such
 					// we are assuming the MOD follows MODX packaging standards here
-					if (preg_match('#(contrib|templates|languages)#i', $dir, $match))
+					if (strpos($file, '.xml') !== false && preg_match('#(contrib|templates|languages)#i', $dir, $match))
 					{
 						// Get rid of the S.  This is a side effect of understanding
 						// MODX 1.0.x and 1.2.x.
