@@ -123,7 +123,7 @@ class editor
 
 			if ($row = $db->sql_fetchrow($result))
 			{
-				$this->file_contents = $this->normalize(explode("\n", $row['template_data']));
+				$this->file_contents = explode("\n", $this->normalize($row['template_data']));
 				$this->template_id = $row['template_id'];
 			}
 			else
@@ -604,6 +604,7 @@ class editor
 				$action = $this->last_action[1] . "\n" . $this->curr_action[0] . "\n" . $this->curr_action[1];		
 			}
 		}
+
 
 
 		// Build another complex array of MOD Actions

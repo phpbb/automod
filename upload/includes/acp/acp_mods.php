@@ -439,14 +439,20 @@ class acp_mods
 				if ($find_children && file_exists($row['mod_path']))
 				{
 					$parent_id = $mod_id;
+					$mod_path = $row['mod_path'];
 
 					$actions = array();
-					$ext = substr(strrchr($row['mod_path'], '.'), 1);
+
+					$mod_dir = dirname($mod_path);
+					$this->mod_root = $mod_dir . '/';
+					$this->backup_root = $this->mod_root . '_backups/';
+
+					$ext = substr(strrchr($mod_path, '.'), 1);
 					$this->parser = new parser($ext);
-					$this->parser->set_file($row['mod_path']);
+					$this->parser->set_file($mod_path);
 
 					// Find and display the available MODX files
-					$children = $this->find_children($row['mod_path']);
+					$children = $this->find_children($mod_path);
 
 					$elements = array('language' => array(), 'template' => array());
 
@@ -515,6 +521,17 @@ class acp_mods
 		}
 		else
 		{
+			global $db;
+			// reset the class parameters to refelect the proper directory
+			$sql = 'SELECT mod_path FROM ' . MODS_TABLE . '
+				WHERE mod_id = ' . request_var('parent', 0);
+			$result = $db->sql_query($sql);
+
+			if ($row = $db->sql_fetchrow($result))
+			{
+				$this->mod_root = dirname($row['mod_path']) . '/';
+			}
+
 			if (strpos($mod_ident, $this->mods_dir) === false)
 			{
 				$mod_ident = $this->mods_dir . $mod_ident;
@@ -583,6 +600,11 @@ class acp_mods
 			if (strpos($mod_ident, $this->mods_dir) === false)
 			{
 				$mod_ident = $this->mods_dir . $mod_ident;
+			}
+
+			if (!file_exists($mod_ident))
+			{
+				$mod_ident = str_replace($this->mods_dir, $this->mod_root, $mod_ident);
 			}
 
 			$this->parser->set_file($mod_ident);
@@ -752,15 +774,18 @@ class acp_mods
 				}
 			}
 
-			foreach ($actions['NEW_FILES'] as $src_file => $dest_file)
+			if (!empty($actions['NEW_FILES']))
 			{
-				if (strpos($src_file, 'styles/') === false)
+				foreach ($actions['NEW_FILES'] as $src_file => $dest_file)
 				{
-					unset($actions['NEW_FILES']);
-				}
-				else
-				{
-					$dest_new = str_replace($src_template, $dest_template, $dest_file);
+					if (strpos($src_file, 'styles/') === false)
+					{
+						unset($actions['NEW_FILES']);
+					}
+					else
+					{
+						$dest_new = str_replace($src_template, $dest_template, $dest_file);
+					}
 				}
 			}
 		}
@@ -784,6 +809,8 @@ class acp_mods
 
 		$editor->create_edited_root($this->edited_root);
 
+		$force_install = request_var('force', false);
+
 		// handle all edits here
 		$mod_installed = $this->process_edits($editor, $actions, $details, true, true, false);
 
@@ -799,8 +826,6 @@ class acp_mods
 				));
 			}
 		}
-
-		$force_install = request_var('force', false);
 
 		if ($mod_installed || $force_install)
 		{
@@ -962,13 +987,23 @@ class acp_mods
 			return false;
 		}
 
+		// set the class parameters to refelect the proper directory
+		$sql = 'SELECT mod_path FROM ' . MODS_TABLE . '
+			WHERE mod_id = ' . $mod_id;
+		$result = $db->sql_query($sql);
+
+		if ($row = $db->sql_fetchrow($result))
+		{
+			$this->mod_root = dirname($row['mod_path']) . '/';
+		}
+
 		$execute_edits = ($action == 'pre_uninstall') ? false : true;
 
 		$write_method = 'editor_' . determine_write_method(!$execute_edits);
 		$editor = new $write_method();
 
 		// get mod install root && make temporary edited folder root
-		$this->edited_root = "{$this->mods_dir}{$this->mod_root}{$mod_id}_uninst/";
+		$this->edited_root = "$this->mod_root{$mod_id}_uninst/";
 
 		// get FTP information if we need it
 		// using $config instead of $editor because write_method is forced to direct
@@ -1459,6 +1494,21 @@ class acp_mods
 
 				unset($children['template-lang']);
 			}
+
+			$child_types = array('contrib', 'template', 'language', 'dependency');
+	
+			foreach ($child_types as $type)
+			{
+				$child_count = sizeof($children[$type]);
+				// Remove duplicate hrefs if they exist (links in multiple languages can cause this)
+				for ($i = 1; $i < $child_count; $i++)
+				{
+					if ($children[$type][$i - 1]['href'] == $children[$type][$i]['href'])
+					{
+						unset($children[$type][$i]);
+					}
+				}
+			}
 		}
 		else if ($this->parser->get_modx_version() == 1.0)
 		{
@@ -1479,7 +1529,7 @@ class acp_mods
 			{
 				// do nothing
 			}
-			else if (empty($_REQUEST['dependency_confirm']))
+			else if (empty($_REQUEST['dependency_confirm']) && empty($_REQUEST['force']))
 			{
 				global $user, $id;
 
@@ -1521,7 +1571,7 @@ class acp_mods
 				// don't do the urlencode until after the file is looked up on the
 				// filesystem
 				$xml_file = urlencode($xml_file);
-				$child_details['U_INSTALL'] = $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file";
+				$child_details['U_INSTALL'] = ($parent_id) ? $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '';
 
 				$template->assign_block_vars('contrib', $child_details);
 			}

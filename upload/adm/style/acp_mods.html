@@ -114,7 +114,7 @@
 	</fieldset>
 	<!-- ENDIF -->
 
-	<!-- IF S_CONTRIB_AVAILABLE or S_UNKNOWN_LANGUAGES or S_UNKNOWN_TEMPLATES -->
+	<!-- IF S_CONTRIB_AVAILABLE or S_UNKNOWN_LANGUAGES or S_UNKNOWN_TEMPLATES or (.board_templates and .avail_templates) -->
 	<fieldset>
 		<legend>{L_ADDITIONAL_CHANGES}</legend>
 		<!-- BEGIN contrib -->
@@ -141,7 +141,7 @@
 		<!-- IF .unknown_templates or .unknown_lang or .contrib -->
 		<br /><hr /><br />
 		<!-- ENDIF -->
-		{L_APPLY_THESE_CHANGES}
+		<div>{L_APPLY_THESE_CHANGES}
 		<select name="source">
 		<!-- BEGIN avail_templates -->
 			<option value="{avail_templates.XML_FILE}">{avail_templates.TEMPLATE_NAME}</option>
@@ -158,6 +158,7 @@
 		{S_HIDDEN_FIELDS}
 		<br />
 		<input type="submit" name="template_submit" class="button1" value="{L_SUBMIT}" />
+		</div>
 		</form>
 		<!-- ENDIF -->
 	</fieldset>
@@ -272,7 +273,7 @@
 		<fieldset class="submit-buttons">
 			<legend>{L_RETRY}</legend>
 			<input class="button1" type="submit" name="retry" value="{L_RETRY}" />
-			<input class="button2" type="submit" name="force" value="{L_FORCE_INSTALL}" onclick="javascript:confirm('{L_FORCE_CONFIRM}'); return false;" />
+			<input class="button2" type="submit" name="force" value="{L_FORCE_INSTALL}" onclick="javascript:return confirm('{L_FORCE_CONFIRM}'); " />
 			{S_HIDDEN_FIELDS}
 		</fieldset>
 		</form>
