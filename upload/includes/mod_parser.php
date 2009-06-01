@@ -260,7 +260,7 @@ class parser_xml
 		$this->data = str_replace(array("\r\n", "\r"), "\n", $this->data);
 
 		$XML = new xml_array();
-		$this->data = $XML->parse($this->data);
+		$this->data = $XML->parse($this->file, $this->data);
 
 		return;
 	}
@@ -416,7 +416,7 @@ class parser_xml
 					{
 						continue;
 					}
-	
+
 					$children[$link_group['LINK'][$i]['attrs']['TYPE']][] = array(
 						'href'	=> $link_group['LINK'][$i]['attrs']['HREF'],
 						'title'	=> localise_tags($link_group, 'LINK', $i),
@@ -667,7 +667,7 @@ class xml_array
 	var $parser;
 	var $XML;
 
-	function parse($XML)
+	function parse($file, $XML)
 	{
 		$this->parser = xml_parser_create();
 		xml_set_object($this->parser, $this);
@@ -677,8 +677,8 @@ class xml_array
 		$this->XML = xml_parse($this->parser, $XML);
 		if (!$this->XML)
 		{
-			die(sprintf("<strong>XML error</strong>: %s at line %d.  View the file in a web browser for a more detailed error message.", 
-				xml_error_string(xml_get_error_code($this->parser)), xml_get_current_line_number($this->parser)));
+			die(sprintf("<strong>XML error</strong>: %s at line %d.  View the file %s in a web browser for a more detailed error message.", 
+				xml_error_string(xml_get_error_code($this->parser)), xml_get_current_line_number($this->parser), $file));
 		}
 
 		xml_parser_free($this->parser);
