@@ -1673,9 +1673,6 @@ class acp_mods
 			// Inform the user.
 			if (sizeof($unknown_languages) && $action == 'details')
 			{
-				// may wish to rename away from "unknown" for our details mode
-				$template->assign_var('S_UNKNOWN_LANGUAGES', true);
-
 				// get full names from the DB
 				$sql = 'SELECT lang_english_name, lang_local_name, lang_iso FROM ' . LANG_TABLE . '
 					WHERE ' . $db->sql_in_set('lang_iso', $unknown_languages);
@@ -1702,6 +1699,9 @@ class acp_mods
 						'LOCAL_NAME'	=> $row['lang_local_name'],
 						'U_INSTALL'		=> ($parent_id) ? $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '',
 					));
+
+					// may wish to rename away from "unknown" for our details mode
+					$template->assign_var('S_UNKNOWN_LANGUAGES', true);
 				}
 				$db->sql_freeresult($result);
 			}
