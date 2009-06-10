@@ -124,6 +124,14 @@ class editor
 			if ($row = $db->sql_fetchrow($result))
 			{
 				$this->file_contents = explode("\n", $this->normalize($row['template_data']));
+
+				// emulate the behavior of file()
+				$lines = sizeof($this->file_contents);
+				for ($i = 0; $i < $lines; $i++)
+				{
+					$this->file_contents[$i] .= "\n";
+				}
+
 				$this->template_id = $row['template_id'];
 			}
 			else
@@ -131,7 +139,6 @@ class editor
 				$this->template_id = 0;
 			}
 		}
-
 
 		/* 
 		* If the file does not exist, or is empty, die.
@@ -337,7 +344,7 @@ class editor
 		}
 
 		// make sure our new lines are correct
-		$add = "\n\n" . $add . "\n\n";
+		$add = "\n" . trim($add, "\n") . "\n";
 
 		if ($pos == 'AFTER')
 		{
@@ -590,10 +597,17 @@ class editor
 			|| ($this->last_action[2] == 'BEFORE' && $this->curr_action[2] == 'AFTER')))
 		{
 			$last_action_index = sizeof($this->mod_actions[$this->open_filename]) - 1;
-
 			unset($this->mod_actions[$this->open_filename][$last_action_index]);
- 
+
 			$action_type = 'REPLACE';
+
+			// Remove the add from the find -- this is an effect of the way the
+			// add method works, putting the new lines in the same array element
+			// as the find
+			if (!empty($this->last_action))
+			{
+				$find = str_replace($this->last_action[1], '', $find);
+			}
 
 			if ($this->last_action[2] == 'AFTER')
 			{
@@ -601,11 +615,9 @@ class editor
 			}
 			else // implicit if ($this->last_action[2] == 'BEFORE')
 			{
-				$action = $this->last_action[1] . "\n" . $this->curr_action[0] . "\n" . $this->curr_action[1];		
+				$action = $this->last_action[1] . "\n" . $this->curr_action[0] . "\n" . $this->curr_action[1];
 			}
 		}
-
-
 
 		// Build another complex array of MOD Actions
 		// This approach is rather memory-intensive ... it might behoove us
@@ -749,7 +761,7 @@ class editor_direct extends editor
 
 	function close_file($new_filename)
 	{
-		global $phpbb_root_path, $config;
+		global $phpbb_root_path, $config, $mod_installed, $mod_uninstalled, $force_install;
 		global $db, $user;
 
 		if (!is_dir($new_filename) && !file_exists(dirname($new_filename)))
@@ -767,7 +779,7 @@ class editor_direct extends editor
 			return sprintf($user->lang['WRITE_DIRECT_FAIL'], $new_filename);
 		}
 
-		if ($this->template_id)
+		if ($this->template_id && ($mod_installed || $mod_uninstalled || $force_install))
 		{
 			update_database_template($new_filename, $this->template_id, $file_contents, $this->install_time);
 		}
@@ -973,7 +985,7 @@ class editor_ftp extends editor
 	*/
 	function close_file($new_filename)
 	{
-		global $phpbb_root_path, $edited_root;
+		global $phpbb_root_path, $edited_root, $mod_installed, $mod_uninstalled, $force_install;
 		global $db, $user;
 
 		if (!is_dir($new_filename) && !file_exists(dirname($new_filename)))
@@ -986,7 +998,7 @@ class editor_ftp extends editor
 
 		$file_contents = implode('', $this->file_contents);
 
-		if ($this->template_id)
+		if ($this->template_id && ($mod_installed || $mod_uninstalled || $force_install))
 		{
 			update_database_template($new_filename, $this->template_id, $file_contents, $this->install_time);
 		}
@@ -1065,12 +1077,12 @@ class editor_manual extends editor
 	*/
 	function close_file($new_filename)
 	{
-		global $phpbb_root_path, $edited_root;
+		global $phpbb_root_path, $edited_root, $mod_installed, $mod_uninstalled, $force_install;
 		global $db, $user;
 
 		$file_contents = implode('', $this->file_contents);
 
-		if ($this->template_id)
+		if ($this->template_id && ($mod_installed || $mod_uninstalled || $force_install))
 		{
 			update_database_template($new_filename, $this->template_id, $file_contents, $this->install_time);
 		}
