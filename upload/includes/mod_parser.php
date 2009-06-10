@@ -644,13 +644,7 @@ class parser_xml
 
 		if (!empty($xml_actions['DIY-INSTRUCTIONS']))
 		{
-			foreach ($xml_actions['DIY-INSTRUCTIONS'] as $diy_instruction_set)
-			{
-				if (match_language($user->data['user_lang'], $diy_instruction_set['attrs']['LANG']))
-				{
-					$actions['DIY_INSTRUCTIONS'][] = $diy_instruction_set['data'];
-				}
-			}
+			$actions['DIY_INSTRUCTIONS'] = localise_tags($xml_actions, 'DIY-INSTRUCTIONS');
 		}
 
 		return $actions;

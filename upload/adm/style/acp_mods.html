@@ -273,7 +273,7 @@
 		<fieldset class="submit-buttons">
 			<legend>{L_RETRY}</legend>
 			<input class="button1" type="submit" name="retry" value="{L_RETRY}" />
-			<input class="button2" type="submit" name="force" value="{L_FORCE_INSTALL}" onclick="javascript:return confirm('{L_FORCE_CONFIRM}'); " />
+			<input class="button2" type="submit" name="force" value="{L_FORCE_INSTALL}" onclick="javascript:return confirm('{LA_FORCE_CONFIRM}'); " />
 			{S_HIDDEN_FIELDS}
 		</fieldset>
 		</form>
@@ -290,7 +290,7 @@
 	</div>
 	<!-- ENDIF -->
 
-	<!-- IF S_DIY and not S_ERROR -->
+	<!-- IF S_DIY and (not S_ERROR or S_FORCE) -->
 	<fieldset>
 		<legend>{L_DIY_INSTRUCTIONS}</legend>
 		<!-- BEGIN diy_instructions -->

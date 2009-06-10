@@ -681,6 +681,7 @@ class acp_mods
 	function install($mod_path, $parent = 0)
 	{
 		global $phpbb_root_path, $phpEx, $db, $template, $user, $config, $cache, $dest_template;
+		global $force_install, $mod_installed;
 
 		// Are we forcing a template install?
 		$dest_template = '';
@@ -977,8 +978,8 @@ class acp_mods
 	*/
 	function uninstall($action, $mod_id)
 	{
-		global $phpbb_root_path, $phpEx, $db, $template, $config;
-		global $method, $test_ftp_connection, $test_connection;
+		global $phpbb_root_path, $phpEx, $db, $template, $config, $force_install;
+		global $method, $test_ftp_connection, $test_connection, $mod_uninstalled;
 
 		// mod_id blank?
 		if (!$mod_id)
@@ -1028,6 +1029,8 @@ class acp_mods
 		// grab actions and details
 		$details = $this->mod_details($mod_id, false);
 		$actions = $this->mod_actions($mod_id);
+
+		$force_install = request_var('force', false);
 
 		// process the actions
 		$mod_uninstalled = $this->process_edits($editor, $actions, $details, $execute_edits, true, true);
@@ -1148,7 +1151,7 @@ class acp_mods
 
 	function process_edits($editor, $actions, $details, $change = false, $display = true, $reverse = false)
 	{
-		global $template, $user, $db, $phpbb_root_path, $force_install;
+		global $template, $user, $db, $phpbb_root_path, $force_install, $mod_installed;
 		global $dest_inherits, $dest_template;
 
 		$mod_installed = true;
@@ -1410,6 +1413,7 @@ class acp_mods
 			}
 		}
 
+
 		// Perform SQL queries last -- Queries usually cannot be done a second
 		// time, so do them only if the edits were successful.  Still complies
 		// with the MODX spec in this location
@@ -1499,11 +1503,15 @@ class acp_mods
 	
 			foreach ($child_types as $type)
 			{
+				if (empty($children[$type]))
+				{
+					continue;
+				}
 				$child_count = sizeof($children[$type]);
 				// Remove duplicate hrefs if they exist (links in multiple languages can cause this)
 				for ($i = 1; $i < $child_count; $i++)
 				{
-					if ($children[$type][$i - 1]['href'] == $children[$type][$i]['href'])
+					if (isset($children[$type][$i - 1]) && $children[$type][$i - 1]['href'] == $children[$type][$i]['href'])
 					{
 						unset($children[$type][$i]);
 					}
