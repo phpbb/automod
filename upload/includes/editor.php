@@ -809,6 +809,11 @@ class editor_direct extends editor
 	*/
 	function backup_file($backup_dir)
 	{
+		if (!$backup_dir)
+		{
+			return;
+		}
+
 		return $this->close_file($backup_dir . $this->open_filename);
 	}
 
