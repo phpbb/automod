@@ -343,6 +343,9 @@ class editor
 			$full_find[] = $this->file_contents[$i];
 		}
 
+		$full_find[0] = ltrim($full_find[0], "\n");
+		$full_find[sizeof($full_find) - 1] = rtrim($full_find[sizeof($full_find) - 1], "\n");
+
 		// make sure our new lines are correct
 		$add = "\n" . trim($add, "\n") . "\n";
 
