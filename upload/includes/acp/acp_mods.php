@@ -472,9 +472,18 @@ class acp_mods
 								$found_prosilver = true;
 							}
 
+							if (file_exists($template_name))
+							{
+								$xml_file = $template_name;
+							}
+							else
+							{
+								$xml_file = str_replace($this->mods_dir, '', dirname($row['mod_path'])) . '/' . $template_name;
+							}
+
 							$template->assign_block_vars('avail_templates', array(
 								'TEMPLATE_NAME'	=> core_basename($template_name),
-								'XML_FILE'		=> urlencode(str_replace($this->mods_dir, '', dirname($row['mod_path'])) . '/' . $template_name),
+								'XML_FILE'		=> urlencode($xml_file),
 							));
 						}
 					}
@@ -488,7 +497,7 @@ class acp_mods
 					}
 
 					// now grab the templates that have not already been processed
-					$sql = 'SELECT template_id, template_name FROM ' . STYLES_TEMPLATE_TABLE . '
+					$sql = 'SELECT template_id, template_path FROM ' . STYLES_TEMPLATE_TABLE . '
 						WHERE ' . $db->sql_in_set('template_name', explode(',', $row['mod_template']), true);
 					$result = $db->sql_query($sql);
 
@@ -496,7 +505,7 @@ class acp_mods
 					{
 						$template->assign_block_vars('board_templates', array(
 							'TEMPLATE_ID'		=> $row['template_id'],
-							'TEMPLATE_NAME'		=> $row['template_name'],
+							'TEMPLATE_NAME'		=> $row['template_path'],
 						));
 					}
 
@@ -820,10 +829,15 @@ class acp_mods
 		{
 			$template->assign_var('S_DIY', true);
 
+			if (!is_array($actions['DIY_INSTRUCTIONS']))
+			{
+				$actions['DIY_INSTRUCTIONS'] = array($actions['DIY_INSTRUCTIONS']);
+			}
+
 			foreach ($actions['DIY_INSTRUCTIONS'] as $instruction)
 			{
 				$template->assign_block_vars('diy_instructions', array(
-					'DIY_INSTRUCTION'	=> nl2br(htmlspecialchars($instruction)),
+					'DIY_INSTRUCTION'	=> nl2br($instruction),
 				));
 			}
 		}

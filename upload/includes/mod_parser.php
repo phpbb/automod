@@ -167,13 +167,13 @@ class parser
 							// this isn't perfect, but it seems better than having
 							// finds of only a couple characters, like "/*"
 							case 'AFTER ADD':
-								$total_find = rtrim($find, "\n") . "\n\n" . trim($command, "\n");
+								$total_find = rtrim($find, "\n") . "\n" . trim($command, "\n");
 
 								$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
 							break;
 
 							case 'BEFORE ADD':
-								$total_find = rtrim($command, "\n") . "\n\n" . trim($find, "\n");
+								$total_find = rtrim($command, "\n") . "\n" . trim($find, "\n");
 
 								// replace with the find
 								$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
