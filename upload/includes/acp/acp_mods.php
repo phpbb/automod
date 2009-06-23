@@ -496,9 +496,12 @@ class acp_mods
 						));
 					}
 
+					$processed_templates = array('prosilver');
+					$processed_templates += explode(',', $row['mod_template']);
+
 					// now grab the templates that have not already been processed
 					$sql = 'SELECT template_id, template_path FROM ' . STYLES_TEMPLATE_TABLE . '
-						WHERE ' . $db->sql_in_set('template_name', explode(',', $row['mod_template']), true);
+						WHERE ' . $db->sql_in_set('template_name', $processed_templates, true);
 					$result = $db->sql_query($sql);
 
 					while ($row = $db->sql_fetchrow($result))
@@ -776,7 +779,7 @@ class acp_mods
 				{
 					unset($actions['EDITS'][$file]);
 				}
-				else
+				else if ($src_template != $dest_template)
 				{
 					$file_new = str_replace($src_template, $dest_template, $file);
 					$actions['EDITS'][$file_new] = $edits;
@@ -1586,13 +1589,13 @@ class acp_mods
 			foreach ($children['contrib'] as $xml_file)
 			{
 				// Another hack for supporting both versions of MODX
-				$xml_file = (is_array($xml_file)) ? $xml_file['href'] : $xml_file;
+				$xml_file = (is_array($xml_file)) ? $xml_file['href'] : str_replace($this->mod_root, '', $xml_file);
 
 				$child_details = $this->mod_details($xml_file, false);
 
 				// don't do the urlencode until after the file is looked up on the
 				// filesystem
-				$xml_file = urlencode($xml_file);
+				$xml_file = urlencode('/' . $xml_file);
 				$child_details['U_INSTALL'] = ($parent_id) ? $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '';
 
 				$template->assign_block_vars('contrib', $child_details);

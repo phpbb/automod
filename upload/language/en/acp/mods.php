@@ -157,6 +157,8 @@ $lang = array_merge($lang, array(
 	'TARGET'		=> 'Target',
 
 	'UNKNOWN_MOD_AUTHOR-NOTES'	=> 'No Author Notes were specified.',
+	'UNKNOWN_MOD_DESCRIPTION'	=> '',
+	'UNKNOWN_MOD_DIY-INSTRUCTIONS'=>'', // empty string hides this if not specified.
 	'UNKNOWN_MOD_COMMENT'		=> '',
 	'UNKNOWN_MOD_INLINE-COMMENT'=> '',
 	'UNKNOWN_QUERY_REVERSE' => 'Unknown reverse query',

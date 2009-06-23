@@ -77,6 +77,11 @@ class install_automod
 		// and work on building the table
 		$dbms_schema = $phpbb_root_path . 'install/schemas/automod/' . $available_dbms[$dbms]['SCHEMA'] . '_schema.sql';
 
+		if (!function_exists($remove_remarks))
+		{
+			include_once($phpbb_root_path . 'includes/functions_admin.' . $phpEx);
+		}
+
 		// How should we treat this schema?
 		$remove_remarks = $available_dbms[$dbms]['COMMENTS'];
 		$delimiter = $available_dbms[$dbms]['DELIM'];

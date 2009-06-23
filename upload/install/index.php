@@ -37,7 +37,7 @@ if ($user->data['user_type'] != USER_FOUNDER)
 
 $mode = request_var('mode', '');
 $sub = request_var('sub', 'intro');
-$current_version = '1.0.0-RC1';
+$current_version = '1.0.0-RC2';
 $page_title = $user->lang['AUTOMOD_INSTALLATION'];
 
 if (!empty($config['automod_version']) && $sub == 'intro')
@@ -57,6 +57,7 @@ if (!empty($config['automod_version']) && $sub == 'intro')
 		// no break
 		case '1.0.0-b2':	
 		case '1.0.0-RC1':
+		case '1.0.0-RC2':
 			// no changes
 		break;
 
@@ -138,7 +139,7 @@ switch ($sub)
 			}
 		}
 
-		$u_action = append_sid($phpbb_root_path . 'install/index.'.$phpEx, 'sub=' . (($can_proceed) ? 'sql' : 'intro'));
+		$u_action = append_sid($phpbb_root_path . 'install/index.'.$phpEx, 'sub=' . (($can_proceed) ? 'data' : 'intro'));
 
 		$template->assign_vars(array(
 			'S_OVERVIEW'		=> true,
@@ -182,7 +183,7 @@ switch ($sub)
 		}
 	break;
 
-	case 'sql':
+	case 'data':
 		$install->add_config($mode, $sub);
 		$install->perform_sql($mode, $sub);
 		$install->add_modules($mode, $sub);
