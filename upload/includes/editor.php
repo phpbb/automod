@@ -251,6 +251,7 @@ class editor
 	function close_edit()
 	{
 		$this->start_index++;
+		$this->last_action = array();
 	}
 
 	/**
@@ -609,7 +610,7 @@ class editor
 			// as the find
 			if (!empty($this->last_action))
 			{
-				$find = str_replace($this->last_action[1], '', $find);
+				$find = str_replace(trim($this->last_action[1]), '', $find);
 			}
 
 			if ($this->last_action[2] == 'AFTER')
