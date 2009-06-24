@@ -1143,7 +1143,7 @@ class acp_mods
 						$check = end($mods['main']);
 
 						// we take the first file alphabetically with install in the filename
-						if (dirname($check) == $dir)
+						if (!$check || dirname($check) == $dir)
 						{
 							if (preg_match('#.*install.*xml$#i', $file) && strnatcasecmp(basename($check), $file) < 0)
 							{
