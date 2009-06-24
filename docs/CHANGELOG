@@ -1,5 +1,13 @@
 AutoMOD Changelog
 
+- Changes since 1.0.0 Release Candidate 1
+ + [Change] Show the filename when an XML parsing error occurs
+ + [Fix] Uninstaller backups now work properly
+ + [Fix] Correctly localise DIY Instructions
+ + [Fix] Do not offer to install contribs until after a MOD is installed
+ + [Fix] Uninstallation when mutliple actions are in an <edit> tag
+ + [Fix] Allow AutoMOD installation to work on MSSQL
+
 - Changes since 1.0.0 Beta 2
  + [Feature] Back up all files before editing them
  + [Feature] More stern warning prompt when using "force install" button
