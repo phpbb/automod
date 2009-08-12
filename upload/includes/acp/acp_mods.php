@@ -56,7 +56,7 @@ class acp_mods
 
 		if ($mod_path)
 		{
-			$mod_path = urldecode($mod_path);
+			$mod_path = html_entity_decode($mod_path);
 			$mod_dir = substr($mod_path, 1, strpos($mod_path, '/', 1));
 
 			$this->mod_root = $this->mods_dir . '/' . $mod_dir;
@@ -176,7 +176,8 @@ class acp_mods
 					'S_CONFIG'			=> true,
 					'U_CONFIG'			=> $this->u_action . '&amp;mode=config',
 
-					'UPLOAD_METHOD'		=> $ftp_method,
+					'UPLOAD_METHOD_FTP'	=> ($config['ftp_method'] == 'ftp') ? ' checked="checked"' : '',
+					'UPLOAD_METHOD_FSOCK'=> ($config['ftp_method'] == 'ftp_fsock') ? ' checked="checked"' : '',
 					'WRITE_DIRECT'		=> ($config['write_method'] == WRITE_DIRECT) ? ' checked="checked"' : '',
 					'WRITE_FTP'			=> ($config['write_method'] == WRITE_FTP) ? ' checked="checked"' : '',
 					'WRITE_MANUAL'		=> ($config['write_method'] == WRITE_MANUAL) ? ' checked="checked"' : '',
@@ -773,17 +774,20 @@ class acp_mods
 			}
 			$db->sql_freeresult($result);
 
-			foreach ($actions['EDITS'] as $file => $edits)
+			if (!empty($actions['EDITS']))
 			{
-				if (strpos($file, 'styles/') === false)
+				foreach ($actions['EDITS'] as $file => $edits)
 				{
-					unset($actions['EDITS'][$file]);
-				}
-				else if ($src_template != $dest_template)
-				{
-					$file_new = str_replace($src_template, $dest_template, $file);
-					$actions['EDITS'][$file_new] = $edits;
-					unset($actions['EDITS'][$file]);
+					if (strpos($file, 'styles/') === false)
+					{
+						unset($actions['EDITS'][$file]);
+					}
+					else if ($src_template != $dest_template)
+					{
+						$file_new = str_replace($src_template, $dest_template, $file);
+						$actions['EDITS'][$file_new] = $edits;
+						unset($actions['EDITS'][$file]);
+					}
 				}
 			}
 
@@ -970,6 +974,11 @@ class acp_mods
 				}
 			}
 
+			if ($parent)
+			{
+				$hidden_ary['parent'] = $parent;
+			}
+
 			$template->assign_vars(array(
 				'S_ERROR'			=> true,
 				'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
@@ -1114,6 +1123,11 @@ class acp_mods
 
 		// ltrim shouldn't be needed, but some users had problems.  See #44305
 		$dir = ltrim($dir, '/');
+
+		if (!file_exists($dir))
+		{
+			return array();
+		}
 
 		$dp = opendir($dir);
 		while (($file = readdir($dp)) !== false)
