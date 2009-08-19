@@ -244,14 +244,26 @@ class acp_mods
 						$mod_ident = ($mod_id) ? $mod_id : $mod_path;
 						$this->list_details($mod_ident);
 					break;
+					
+					case 'delete':
+						$this->delete($mod_path);
+					break;
 
 					default:
-						$template->assign_vars(array(
-							'S_FRONTEND'		=> true,
-						));
+						if (!$this->upload_mod())
+						{
+							$template->assign_vars(array(
+								'S_FRONTEND'		=> true,
+								'S_MOD_UPLOAD'		=> (extension_loaded('zip') ? true : false),
+								'U_UPLOAD'			=> $this->u_action,
+								'S_FORM_ENCTYPE'	=> (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off') ? '' : ' enctype="multipart/form-data"'
+							));
+							
+							add_form_key('acp_mods_upload');
 
-						$this->list_installed();
-						$this->list_uninstalled();
+							$this->list_installed();
+							$this->list_uninstalled();
+						}
 					break;
 				}
 
@@ -329,6 +341,7 @@ class acp_mods
 				'MOD_PATH'	=> $short_path,
 
 				'U_INSTALL'	=> $this->u_action . "&amp;action=pre_install&amp;mod_path=$short_path",
+				'U_DELETE'	=> $this->u_action . "&amp;action=delete&amp;mod_path=$short_path",
 				'U_DETAILS'	=> $this->u_action . "&amp;action=details&amp;mod_path=$short_path",
 			));
 		}
@@ -1770,6 +1783,214 @@ class acp_mods
 
 			// $process_templates are those that are installed on the board and provided for by the MOD
 			$process_templates = $elements['template'] = array_intersect($available_templates, $installed_templates);
+		}
+	}
+	
+	function upload_mod()
+	{
+		global $phpbb_root_path, $phpEx, $template, $user;
+		
+		if (!isset($_POST['submit']))
+		{
+			return false;
+		}
+		
+		if (check_form_key('acp_mods_upload'))
+		{
+			$user->add_lang('posting');  //For error messages
+			include($phpbb_root_path . 'includes/functions_upload.' . $phpEx);
+			$upload = new fileupload();
+			//Only allow ZIP files
+			$upload->set_allowed_extensions(array('zip'));
+			
+			//Let's make sure the mods directory exists and if it doesn't then create it
+			if (!is_dir($this->mods_dir))
+			{
+				mkdir($this->mods_dir, octdec($config['am_file_perms']));
+			}
+			
+			$file = $upload->form_upload('modupload');
+			
+			if (empty($file->filename))
+			{
+				trigger_error($user->lang['NO_UPLOAD_FILE'] . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+			else
+			{
+				if (!$file->init_error && !sizeof($file->error))
+				{
+					$file->clean_filename('real');
+					$file->move_file(str_replace($phpbb_root_path, '', $this->mods_dir), true, true);
+					
+					$zip = zip_open(getcwd() . $file->destination_file);
+					
+					if (is_resource($zip))
+					{
+						$mod_dir = false;
+						
+						while ($zip_entry = zip_read($zip))
+						{
+							$zip_entry_name = zip_entry_name($zip_entry);
+							$zip_entry_name = explode('/', str_replace('/', '\\', $zip_entry_name));
+							if (empty($mod_dir) && isset($zip_entry_name[0]))
+							{
+								$mod_dir = $zip_entry_name[0];
+							}
+							else if (!empty($mod_dir) && strpos($zip_entry_name[0], $mod_dir) === false)
+							{
+								$mod_dir = false;
+								break;
+							}
+						}
+						
+						if (!$mod_dir)
+						{
+							$mod_dir = $this->mods_dir . '/' . str_replace('.zip', '', $file->get('realname')) . '/';
+							mkdir($mod_dir, octdec($config['am_file_perms']));
+						}
+						else
+						{
+							$mod_dir = $this->mods_dir . '/';
+						}
+						
+						//Ho hum...we need to close and reopen
+						zip_close($zip);
+						$zip = zip_open(getcwd() . $file->destination_file);
+						
+						while ($zip_entry = zip_read($zip))
+						{
+							$filename = $mod_dir . zip_entry_name($zip_entry);
+							
+							if(!file_exists($filename))
+							{
+								//Check if this is a directory
+								if (strrpos($filename, '/') == (strlen($filename) - 1))
+								{
+									mkdir($filename, octdec($config['am_file_perms']));
+								}
+								else
+								{
+									if (zip_entry_open($zip, $zip_entry, "r"))
+									{
+										if ($fr = fopen($filename, 'w+'))
+										{
+											fwrite($fr, zip_entry_read($zip_entry, zip_entry_filesize($zip_entry)));
+											fclose($fr);
+											chmod($filename, octdec($config['am_file_perms']));
+										}
+										else
+										{
+											$file->error[] = $user->lang['ZIP_UNZIP_ERROR'];
+										}
+										zip_entry_close($zip_entry);
+										if (sizeof($file->error))
+										{
+											break;
+										}
+									}
+								}
+							}
+						}
+						zip_close($zip);
+						
+						//Now we do a quick check to see if we need to move all of the files because there was no main zip file
+						
+					}
+					else
+					{
+						$file->error[] = $user->lang['ZIP_OPEN_ERROR'];
+					}
+					
+					if (!sizeof($file->error))
+					{
+						$template->assign_vars(array(
+							'S_MOD_SUCCESSBOX'	=> true,
+							'MESSAGE'			=> $user->lang['MOD_UPLOAD_SUCCESS'],
+							'U_RETURN'			=> $this->u_action
+						));
+					}
+				}
+				$file->remove();				
+				if ($file->init_error || sizeof($file->error))
+				{
+					trigger_error((sizeof($file->error) ? implode('<br />', $file->error) : $user->lang['MOD_UPLOAD_INIT_FAIL']) . adm_back_link($this->u_action), E_USER_WARNING);
+				}
+			}
+		}
+		else
+		{
+			trigger_error($user->lang['FORM_INVALID'] . adm_back_link($this->u_action), E_USER_WARNING);
+		}
+		
+		return true;
+	}
+	
+	function delete($mod_path)
+	{
+		global $template, $user;
+		
+		if (confirm_box(true))
+		{
+			$mod_path = request_var('mod_delete', '');
+
+			if ($this->directory_delete($this->mods_dir . '/' .	$mod_path))
+			{
+				$template->assign_vars(array(
+					'S_MOD_SUCCESSBOX'	=> true,
+					'MESSAGE'			=> $user->lang['DELETE_SUCCESS'],
+					'U_RETURN'			=> $this->u_action
+				));
+			}
+			else
+			{
+				trigger_error($user->lang['DELETE_ERROR'] . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+		}
+		else
+		{
+			$mod_path = explode('/', str_replace('\\', '/', $mod_path));
+			
+			confirm_box(false, $user->lang['DELETE_CONFIRM'], build_hidden_fields(array(
+					'delete_confirm'	=> true,
+					'action'	=> 'delete',
+					'mod_delete'	=> (!empty($mod_path[0]) ? $mod_path[0] : $mod_path[1]),
+			)));
+		}
+	}
+	
+	function directory_delete($dir)
+	{
+		if (!file_exists($dir))
+		{
+			return true;
+		}
+		
+		if (!is_dir($dir) && is_file($dir))
+		{
+			chmod($dir, 0777); 
+			return unlink($dir);
+		}
+		
+        foreach (scandir($dir) as $item)
+		{ 
+            if ($item == '.' || $item == '..')
+			{
+				continue;
+			}
+            if (!$this->directory_delete($dir . "/" . $item))
+			{
+                chmod($dir . "/" . $item, 0777); 
+                if (!$this->directory_delete($dir . "/" . $item))
+				{
+					return false;
+				}
+            }
+        }
+		
+		//Make sure we don't delete the MODs directory
+		if ($dir != $this->mods_dir)
+		{
+			return rmdir($dir);
 		}
 	}
 }

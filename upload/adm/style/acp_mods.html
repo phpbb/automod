@@ -45,11 +45,35 @@
 	<tr>
 		<td><strong>{uninstalled.MOD_NAME}</strong></a></td>
 		<td style="text-align: center;"><a href="{uninstalled.U_DETAILS}">{L_DETAILS}</a></td>
-		<td style="text-align: center;"><a href="{uninstalled.U_INSTALL}">{L_INSTALL}</a></td>
+		<td style="text-align: center;"><a href="{uninstalled.U_INSTALL}">{L_INSTALL}</a>&nbsp;|&nbsp;<a href="{uninstalled.U_DELETE}">{L_DELETE}</a></td>
 	</tr>
 	<!-- END uninstalled -->
 	</tbody>
 	</table>
+	
+	<!-- IF S_MOD_UPLOAD -->
+	<br />
+	
+	<form action="{U_UPLOAD}" method="post" id="mod_upload"{S_FORM_ENCTYPE}>
+	<fieldset>
+		<legend>{L_MOD_UPLOAD}</legend>
+		<dl>
+			<p>{L_MOD_UPLOAD_EXPLAIN}</p>
+			<input type="file" name="modupload" id="modupload" value="" style="width:50%" />
+			{S_FORM_TOKEN}
+			<br /><br /><input type="submit" name="submit" value="{L_UPLOAD}" id="submit" class="button1" />
+		</dl>
+	</fieldset>
+	</form>
+	<!-- ENDIF -->
+	
+<!-- ELSEIF S_MOD_SUCCESSBOX -->
+
+	<div class="successbox">
+		<p>{MESSAGE}</p>
+		<br />
+		<p><a href="{U_RETURN}">{L_RETURN_MODS}</a></p>
+	</div>
 
 <!-- ELSEIF S_DETAILS -->
 
