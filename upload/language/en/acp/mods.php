@@ -59,6 +59,10 @@ $lang = array_merge($lang, array(
 	'COMMENT'		=> 'Comment',
 	'CREATE_TABLE'	=> 'Database Alterations',
 	'CREATE_TABLE_EXPLAIN'	=> 'AutoMOD has successfully made its database alterations, including a permission which has been assigned to the “Full Administrator” role.',
+	'DELETE'			=> 'Delete',
+	'DELETE_CONFIRM'	=> 'Are you sure you want to delete this MOD?',
+	'DELETE_ERROR'		=> 'There was an error deleting the selected MOD.',
+	'DELETE_SUCCESS'	=> 'MOD has been successfully deleted.',
 
 	'DIR_PERMS'			=> 'Directory Permissions',
 	'DIR_PERMS_EXPLAIN'	=> 'Some systems require directories to have certain permissions to work properly.  Normally the default 0755 is correct.  This setting has no impact on Windows systems.',
@@ -112,6 +116,10 @@ $lang = array_merge($lang, array(
 	'MOD_MANAGER'				=> 'AutoMOD',
 	'MOD_NAME'					=> 'MOD Name',
 	'MOD_OPEN_FILE_FAIL'		=> 'AutoMOD was unable to open %s.',
+	'MOD_UPLOAD'				=> 'Upload MOD',
+	'MOD_UPLOAD_EXPLAIN'		=> 'Here you can upload a zipped MOD package containing the necessary MODX files to perform instalation.  AutoMOD will then attempt to unzip the file and have it ready for installation.',
+	'MOD_UPLOAD_INIT_FAIL'		=> 'There was an error initialising the MOD upload process.',
+	'MOD_UPLOAD_SUCCESS'		=> 'MOD uploaded and prepared for installation.',
 	'AUTOMOD_INSTALLATION'		=> 'AutoMOD Installation',
 	'AUTOMOD_INSTALLATION_EXPLAIN'	=> 'Welcome to the AutoMOD Installation.  You will need your FTP details if AutoMOD detects that is the best way to write files.  The requirements test results are below.',
 
@@ -128,7 +136,8 @@ $lang = array_merge($lang, array(
 	'NO_ATTEMPT'	=> 'Not Attempted',
 	'NO_INSTALLED_MODS'		=> 'No installed MODs detected',
 	'NO_MOD'				=> 'The selected MOD could not be found.',
-	'NO_UNINSTALLED_MODS'	=> 'No uninstalled MODs detected',	
+	'NO_UNINSTALLED_MODS'	=> 'No uninstalled MODs detected',
+	'NO_UPLOAD_FILE'		=> 'No file specified.',
 
 	'ORIGINAL'	=> 'Original',
 
@@ -173,7 +182,8 @@ $lang = array_merge($lang, array(
 	'UPDATE_AUTOMOD'		=> 'Update AutoMOD',
 	'UPDATE_AUTOMOD_CONFIRM'=> 'Please confirm you want to update AutoMOD.',
 
-	'VERSION'		=> 'Version',
+	'UPLOAD'				=> 'Upload',
+	'VERSION'				=> 'Version',
 
 	'WRITE_DIRECT_FAIL'		=> 'AutoMOD could not copy the file %s into place using the direct method.  Please use another write method and try again.',
 	'WRITE_DIRECT_TOO_SHORT'=> 'AutoMOD was unable to finish writing the file %s.  This can often be solved with the Retry button.  If this does not work, try another write method.',
@@ -183,6 +193,9 @@ $lang = array_merge($lang, array(
 	'WRITE_METHOD_EXPLAIN'	=> 'You can set a preferred method to write files.  The most compatible option is “Compressed File Download”.',
 	'WRITE_METHOD_FTP'		=> 'FTP',
 	'WRITE_METHOD_MANUAL'	=> 'Compressed File Download',
+
+	'ZIP_OPEN_ERROR'		=> 'There was an error opening the zip file for reading.',
+	'ZIP_UNZIP_ERROR'		=> 'There was an error while attempting to unzip MOD package.',
 
 	// These keys for action names are purposely lower-cased and purposely contain spaces
 	'after add'				=> 'Add After',
