@@ -1822,92 +1822,35 @@ class acp_mods
 					$file->clean_filename('real');
 					$file->move_file(str_replace($phpbb_root_path, '', $this->mods_dir), true, true);
 					
-					$zip = zip_open(getcwd() . $file->destination_file);
-					
-					if (is_resource($zip))
-					{
-						$mod_dir = false;
-						
-						while ($zip_entry = zip_read($zip))
-						{
-							$zip_entry_name = zip_entry_name($zip_entry);
-							$zip_entry_name = explode('/', str_replace('/', '\\', $zip_entry_name));
-							if (empty($mod_dir) && isset($zip_entry_name[0]))
-							{
-								$mod_dir = $zip_entry_name[0];
-							}
-							else if (!empty($mod_dir) && strpos($zip_entry_name[0], $mod_dir) === false)
-							{
-								$mod_dir = false;
-								break;
-							}
-						}
-						
-						if (!$mod_dir)
-						{
-							$mod_dir = $this->mods_dir . '/' . str_replace('.zip', '', $file->get('realname')) . '/';
-							mkdir($mod_dir, octdec($config['am_file_perms']));
-						}
-						else
-						{
-							$mod_dir = $this->mods_dir . '/';
-						}
-						
-						//Ho hum...we need to close and reopen
-						zip_close($zip);
-						$zip = zip_open(getcwd() . $file->destination_file);
-						
-						while ($zip_entry = zip_read($zip))
-						{
-							$filename = $mod_dir . zip_entry_name($zip_entry);
-							
-							if(!file_exists($filename))
-							{
-								//Check if this is a directory
-								if (strrpos($filename, '/') == (strlen($filename) - 1))
-								{
-									mkdir($filename, octdec($config['am_file_perms']));
-								}
-								else
-								{
-									if (zip_entry_open($zip, $zip_entry, "r"))
-									{
-										if ($fr = fopen($filename, 'w+'))
-										{
-											fwrite($fr, zip_entry_read($zip_entry, zip_entry_filesize($zip_entry)));
-											fclose($fr);
-											chmod($filename, octdec($config['am_file_perms']));
-										}
-										else
-										{
-											$file->error[] = $user->lang['ZIP_UNZIP_ERROR'];
-										}
-										zip_entry_close($zip_entry);
-										if (sizeof($file->error))
-										{
-											break;
-										}
-									}
-								}
-							}
-						}
-						zip_close($zip);
-						
-						//Now we do a quick check to see if we need to move all of the files because there was no main zip file
-						
-					}
-					else
-					{
-						$file->error[] = $user->lang['ZIP_OPEN_ERROR'];
-					}
-					
 					if (!sizeof($file->error))
 					{
-						$template->assign_vars(array(
-							'S_MOD_SUCCESSBOX'	=> true,
-							'MESSAGE'			=> $user->lang['MOD_UPLOAD_SUCCESS'],
-							'U_RETURN'			=> $this->u_action
-						));
+						include($phpbb_root_path . 'includes/functions_compress.' . $phpEx);
+						$mod_dir = $this->mods_dir . '/' . str_replace('.zip', '', $file->get('realname'));
+						$compress = new compress_zip('r', $file->destination_file);
+						$compress->extract($mod_dir . '_tmp/');
+						$compress->close();
+						$folder_contents = scandir($mod_dir . '_tmp/', 1);  //This ensures dir is at index 0
+						//We need to check if there's a main directory inside the temp MOD directory
+						if (sizeof($folder_contents) == 3)
+						{
+							//We need to move that directory then
+							$this->directory_move($mod_dir . '_tmp/' . $folder_contents[0], $this->mods_dir . '/' . $folder_contents[0]);
+							$this->directory_delete($mod_dir . '_tmp/');
+						}
+						else if (!is_dir($mod_dir))
+						{
+							//Change the name of the directory by removing _tmp from it
+							rename($mod_dir . '_tmp', $mod_dir);
+						}
+						
+						if (!sizeof($file->error))
+						{
+							$template->assign_vars(array(
+								'S_MOD_SUCCESSBOX'	=> true,
+								'MESSAGE'			=> $user->lang['MOD_UPLOAD_SUCCESS'],
+								'U_RETURN'			=> $this->u_action
+							));
+						}
 					}
 				}
 				$file->remove();				
@@ -1967,7 +1910,7 @@ class acp_mods
 		
 		if (!is_dir($dir) && is_file($dir))
 		{
-			chmod($dir, 0777); 
+			phpbb_chmod($dir, CHMOD_ALL);
 			return unlink($dir);
 		}
 		
@@ -1979,7 +1922,7 @@ class acp_mods
 			}
             if (!$this->directory_delete($dir . "/" . $item))
 			{
-                chmod($dir . "/" . $item, 0777); 
+				phpbb_chmod($dir . "/" . $item, CHMOD_ALL);
                 if (!$this->directory_delete($dir . "/" . $item))
 				{
 					return false;
@@ -1991,6 +1934,33 @@ class acp_mods
 		if ($dir != $this->mods_dir)
 		{
 			return rmdir($dir);
+		}
+	}
+	
+	function directory_move($src, $dest)
+	{
+		global $config;
+		
+		$src_contents = scandir($src);
+		
+		if (!is_dir($dest) && is_dir($src))
+		{
+			mkdir($dest . '/', octdec($config['am_file_perms']));
+		}
+		
+		foreach($src_contents as $src_entry)
+		{
+			if ($src_entry != '.' && $src_entry != '..')
+			{
+				if (is_dir($src . '/' . $src_entry) && !is_dir($dest . '/' . $src_entry))
+				{
+					$this->directory_move($src . '/' . $src_entry, $dest . '/' . $src_entry);
+				}
+				else if (is_file($src . '/' . $src_entry) && !is_file($dest . '/' . $src_entry))
+				{
+					copy($src . '/' . $src_entry, $dest . '/' . $src_entry);
+				}
+			}
 		}
 	}
 }
