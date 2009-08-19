@@ -194,9 +194,6 @@ $lang = array_merge($lang, array(
 	'WRITE_METHOD_FTP'		=> 'FTP',
 	'WRITE_METHOD_MANUAL'	=> 'Compressed File Download',
 
-	'ZIP_OPEN_ERROR'		=> 'There was an error opening the zip file for reading.',
-	'ZIP_UNZIP_ERROR'		=> 'There was an error while attempting to unzip MOD package.',
-
 	// These keys for action names are purposely lower-cased and purposely contain spaces
 	'after add'				=> 'Add After',
 	'before add'			=> 'Add Before',
