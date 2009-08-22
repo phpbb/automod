@@ -56,7 +56,7 @@ class acp_mods
 
 		if ($mod_path)
 		{
-			$mod_path = html_entity_decode($mod_path);
+			$mod_path = htmlspecialchars_decode($mod_path);
 			$mod_dir = substr($mod_path, 1, strpos($mod_path, '/', 1));
 
 			$this->mod_root = $this->mods_dir . '/' . $mod_dir;
@@ -718,7 +718,7 @@ class acp_mods
 				trigger_error($user->lang['FORM_INVALID'] . adm_back_link($this->u_action), E_USER_WARNING);
 			}
 
-			$mod_path = urldecode(request_var('source', ''));
+			$mod_path = request_var('source', '');
 			$dest_template = request_var('dest', '');
 
 			if (preg_match('#.*install.*xml$#i', $mod_path))
@@ -1598,7 +1598,7 @@ class acp_mods
 						'dependency_confirm'	=> true,
 						'mode'		=> $mode,
 						'action'	=> 'install',
-						'mod_path'	=> urlencode($mod_path),
+						'mod_path'	=> $mod_path,
 				)));
 			}
 		}
@@ -1797,16 +1797,16 @@ class acp_mods
 		
 		if (check_form_key('acp_mods_upload'))
 		{
-			$user->add_lang('posting');  //For error messages
+			$user->add_lang('posting');  // For error messages
 			include($phpbb_root_path . 'includes/functions_upload.' . $phpEx);
 			$upload = new fileupload();
-			//Only allow ZIP files
+			// Only allow ZIP files
 			$upload->set_allowed_extensions(array('zip'));
 			
-			//Let's make sure the mods directory exists and if it doesn't then create it
+			// Let's make sure the mods directory exists and if it doesn't then create it
 			if (!is_dir($this->mods_dir))
 			{
-				mkdir($this->mods_dir, octdec($config['am_file_perms']));
+				mkdir($this->mods_dir, octdec($config['am_dir_perms']));
 			}
 			
 			$file = $upload->form_upload('modupload');
@@ -1829,17 +1829,17 @@ class acp_mods
 						$compress = new compress_zip('r', $file->destination_file);
 						$compress->extract($mod_dir . '_tmp/');
 						$compress->close();
-						$folder_contents = scandir($mod_dir . '_tmp/', 1);  //This ensures dir is at index 0
-						//We need to check if there's a main directory inside the temp MOD directory
+						$folder_contents = scandir($mod_dir . '_tmp/', 1);  // This ensures dir is at index 0
+						// We need to check if there's a main directory inside the temp MOD directory
 						if (sizeof($folder_contents) == 3)
 						{
-							//We need to move that directory then
+							// We need to move that directory then
 							$this->directory_move($mod_dir . '_tmp/' . $folder_contents[0], $this->mods_dir . '/' . $folder_contents[0]);
 							$this->directory_delete($mod_dir . '_tmp/');
 						}
 						else if (!is_dir($mod_dir))
 						{
-							//Change the name of the directory by removing _tmp from it
+							// Change the name of the directory by removing _tmp from it
 							rename($mod_dir . '_tmp', $mod_dir);
 						}
 						
@@ -1930,7 +1930,7 @@ class acp_mods
             }
         }
 		
-		//Make sure we don't delete the MODs directory
+		// Make sure we don't delete the MODs directory
 		if ($dir != $this->mods_dir)
 		{
 			return rmdir($dir);
@@ -1945,10 +1945,10 @@ class acp_mods
 		
 		if (!is_dir($dest) && is_dir($src))
 		{
-			mkdir($dest . '/', octdec($config['am_file_perms']));
+			mkdir($dest . '/', octdec($config['am_dir_perms']));
 		}
 		
-		foreach($src_contents as $src_entry)
+		foreach ($src_contents as $src_entry)
 		{
 			if ($src_entry != '.' && $src_entry != '..')
 			{
@@ -1959,6 +1959,7 @@ class acp_mods
 				else if (is_file($src . '/' . $src_entry) && !is_file($dest . '/' . $src_entry))
 				{
 					copy($src . '/' . $src_entry, $dest . '/' . $src_entry);
+					chmod($dest . '/' . $src_entry, octdec($config['am_file_perms']));
 				}
 			}
 		}
