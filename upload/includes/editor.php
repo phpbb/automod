@@ -1066,7 +1066,58 @@ class editor_manual extends editor
 
 	function copy_content($from, $to = '', $strip = '')
 	{
-		return NULL;
+		global $phpbb_root_path, $user;
+
+		if (strpos($from, $phpbb_root_path) !== 0)
+		{
+			$from = $phpbb_root_path . $from;
+		}
+
+		if (strpos($to, $phpbb_root_path) !== 0)
+		{
+			$to = $phpbb_root_path . $to;
+		}
+
+		// Note: phpBB's compression class does support adding a whole directory at a time.
+		// However, I chose not to use that function because it would not allow AutoMOD's
+		// error handling to work the same as for FTP & Direct methods.
+		$files = array();
+		if (is_dir($from))
+		{
+			// get all of the files within the directory
+			$files = find_files($from, '.*');
+		}
+		else if (is_file($from))
+		{
+			$files = array($from);
+		}
+
+		if (empty($files))
+		{
+			return false;
+		}
+
+		foreach ($files as $file)
+		{
+			if (is_dir($to))
+			{
+				$to_file = str_replace(array($phpbb_root_path, $strip), '', $file);
+			}
+			else
+			{
+				$to_file = str_replace($phpbb_root_path, '', $to);
+			}
+
+			// filename calculation is involved here: be sure to remove "store/mods/foo"
+			// and prepend the "files" directory
+			if (!$this->compress->add_file($to_file, substr($to_file, 0, strpos($to_file, 'root/') + 5), 'files'))
+			{
+				return sprintf($user->lang['WRITE_MANUAL_FAIL'], $new_filename);
+			}
+		}
+
+		// return true since we are now taking an action - NULL implies no action
+		return true;
 	}
 
 	/**
@@ -1086,7 +1137,7 @@ class editor_manual extends editor
 
 		// don't include extra dirs in zip file
 		$strip_position = strpos($new_filename, '_edited') + 8; // want the end of the string
-		$new_filename = substr($new_filename, $strip_position);
+		$new_filename = 'files/' . substr($new_filename, $strip_position);
 
 		if (!$this->compress->add_data($file_contents, $new_filename))
 		{
@@ -1111,14 +1162,24 @@ class editor_manual extends editor
 
 	function commit_changes($source, $destination)
 	{
+		global $template, $user, $phpbb_admin_path;
+
+		$download_url = append_sid("{$phpbb_admin_path}index.php", 'i=mods&amp;mode=frontend&amp;action=download&amp;time=' . $this->install_time);
+
+		$template->assign_vars(array(
+			'S_MANUAL_INSTRUCTIONS'		=> true,
+			'L_AM_MANUAL_INSTRUCTIONS'	=> sprintf($user->lang['AM_MANUAL_INSTRUCTIONS'], '<a href="' . $download_url . '">', '</a>'),
+		));
+
+		meta_refresh(3, $download_url);
+
 		$this->compress->close();
 		return true;
 	}
 
 	function commit_changes_final($source, $destination)
 	{
-		$this->compress->download($source, $destination);
-		exit;
+		return NULL;
 	}
 
 	function create_edited_root($dir)

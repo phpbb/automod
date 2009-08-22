@@ -252,11 +252,13 @@ class acp_mods
 					default:
 						if (!$this->upload_mod())
 						{
+							$can_upload = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || !@extension_loaded('zlib')) ? false : true;
+
 							$template->assign_vars(array(
 								'S_FRONTEND'		=> true,
-								'S_MOD_UPLOAD'		=> (extension_loaded('zip') ? true : false),
+								'S_MOD_UPLOAD'		=> ($can_upload) ? true : false,
 								'U_UPLOAD'			=> $this->u_action,
-								'S_FORM_ENCTYPE'	=> (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off') ? '' : ' enctype="multipart/form-data"'
+								'S_FORM_ENCTYPE'	=> ($can_upload) ? '' : ' enctype="multipart/form-data"',
 							));
 							
 							add_form_key('acp_mods_upload');
@@ -264,6 +266,26 @@ class acp_mods
 							$this->list_installed();
 							$this->list_uninstalled();
 						}
+					break;
+
+					case 'download':
+						include ($phpbb_root_path . "includes/functions_compress.$phpEx");
+						$editor = new editor_manual();
+
+						$time = request_var('time', 0);
+
+						// if for some reason the MOD isn't found in the DB...
+						$download_name = 'mod_' . $time;
+						$sql = 'SELECT mod_name FROM ' . MODS_TABLE . '
+							WHERE mod_time = ' . $time;
+						$result = $db->sql_query($sql);
+
+						if ($row = $db->sql_fetchrow($result))
+						{
+							$download_name = str_replace(' ', '_', $row['mod_name']);
+						}
+		
+						$editor->compress->download("{$phpbb_root_path}store/mod_$time", $download_name);
 					break;
 				}
 
@@ -950,6 +972,8 @@ class acp_mods
 				$sql_ary['mod_template'] = '';
 			}
 
+			$sql_ary['mod_time'] = $editor->install_time;
+
 			$prior_mod_actions = unserialize($row['mod_actions']);
 			$sql_ary['mod_actions'] = serialize(array_merge_recursive($prior_mod_actions, $actions));
 			unset($prior_mod_actions);
@@ -1174,7 +1198,9 @@ class acp_mods
 						{
 							if (preg_match('#.*install.*xml$#i', $file) && strnatcasecmp(basename($check), $file) < 0)
 							{
-								$mods['main'][sizeof($mods['main']) - 1] = "$dir/$file";
+								$index = max(0, sizeof($mods['main']) - 1);
+								$mods['main'][$index] = "$dir/$file";
+								break;
 							}
 						}
 						else
@@ -1895,7 +1921,7 @@ class acp_mods
 			
 			confirm_box(false, $user->lang['DELETE_CONFIRM'], build_hidden_fields(array(
 					'delete_confirm'	=> true,
-					'action'	=> 'delete',
+					'action'		=> 'delete',
 					'mod_delete'	=> (!empty($mod_path[0]) ? $mod_path[0] : $mod_path[1]),
 			)));
 		}
