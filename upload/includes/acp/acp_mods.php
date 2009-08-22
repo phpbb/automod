@@ -671,7 +671,7 @@ class acp_mods
 		$template->assign_vars(array(
 			'S_PRE_INSTALL'	=> true,
 
-			'MOD_PATH'		=> urlencode(str_replace($this->mod_root, '', $mod_path)),
+			'MOD_PATH'		=> str_replace($this->mod_root, '', $mod_path),
 
 			'U_INSTALL'		=> $this->u_action . '&amp;action=install',
 			'U_BACK'		=> $this->u_action,
