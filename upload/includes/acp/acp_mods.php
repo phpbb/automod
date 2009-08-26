@@ -1821,7 +1821,7 @@ class acp_mods
 			return false;
 		}
 		
-		if (check_form_key('acp_mods_upload'))
+		if (check_form_key('acp_mods_upload') && isset($_FILES['modupload']))
 		{
 			$user->add_lang('posting');  // For error messages
 			include($phpbb_root_path . 'includes/functions_upload.' . $phpEx);
