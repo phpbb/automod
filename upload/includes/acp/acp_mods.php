@@ -258,7 +258,7 @@ class acp_mods
 								'S_FRONTEND'		=> true,
 								'S_MOD_UPLOAD'		=> ($can_upload) ? true : false,
 								'U_UPLOAD'			=> $this->u_action,
-								'S_FORM_ENCTYPE'	=> ($can_upload) ? '' : ' enctype="multipart/form-data"',
+								'S_FORM_ENCTYPE'	=> ($can_upload) ? ' enctype="multipart/form-data"' : '',
 							));
 							
 							add_form_key('acp_mods_upload');
