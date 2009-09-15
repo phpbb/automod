@@ -836,7 +836,7 @@ class acp_mods
 					}
 					else
 					{
-						$dest_new = str_replace($src_template, $dest_template, $dest_file);
+						$actions['NEW_FILES'] = str_replace($src_template, $dest_template, $dest_file);
 					}
 				}
 			}
@@ -952,7 +952,9 @@ class acp_mods
 				trigger_error($user->lang['NO_MOD'] . adm_back_link($this->u_action));
 			}
 
-			$sql_ary = array();
+			$sql_ary = array(
+				'mod_version'	=> $details['MOD_VERSION'],
+			);
 
 			if (!empty($elements['language']))
 			{
@@ -1161,19 +1163,28 @@ class acp_mods
 		// ltrim shouldn't be needed, but some users had problems.  See #44305
 		$dir = ltrim($dir, '/');
 
+//echo "<h3>Entering $dir</h3><br /<br />";
+
 		if (!file_exists($dir))
 		{
 			return array();
 		}
 
+
 		$dp = opendir($dir);
 		while (($file = readdir($dp)) !== false)
 		{
+//echo $file;
+//echo "<br />";
 			if ($file[0] != '.' && strpos("$dir/$file", '_edited') === false)
 			{
+//echo "\$recurse = $recurse";
+//echo "for $dir/$file/ <br />";
+//var_dump(!is_file("$dir/$file"));
 				// recurse - we don't want anything within the MODX "root" though
-				if ($recurse && is_dir("$dir/$file") && strpos("$dir/$file", 'root') === false)
+				if ($recurse && !is_file("$dir/$file") && strpos("$dir/$file", 'root') === false)
 				{
+//echo "recursing now";
 					$mods = array_merge($mods, $this->find_mods("$dir/$file", $recurse - 1));
 				}
 				// this might be better as an str function, especially being in a loop
