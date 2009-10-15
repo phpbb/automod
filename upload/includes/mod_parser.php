@@ -418,8 +418,9 @@ class parser_xml
 					}
 
 					$children[$link_group['LINK'][$i]['attrs']['TYPE']][] = array(
-						'href'	=> $link_group['LINK'][$i]['attrs']['HREF'],
-						'title'	=> localise_tags($link_group, 'LINK', $i),
+						'href'		=> $link_group['LINK'][$i]['attrs']['HREF'],
+						'realname'	=> isset($link_group['LINK'][$i]['attrs']['REALNAME']) ? $link_group['LINK'][$i]['attrs']['REALNAME'] : core_basename($link_group['LINK'][$i]['attrs']['HREF']),
+						'title'		=> localise_tags($link_group, 'LINK', $i),
 					);
 				}
 			}
