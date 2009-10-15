@@ -348,9 +348,16 @@ class acp_mods
 		}
 		$db->sql_freeresult($result);
 
+		$mod_paths = array();
+		foreach ($available_mods['main'] as $mod_info)
+		{
+			$mod_paths[] = $mod_info['href'];
+		}
+
 		// we don't care about any xml files not in the main directory
-		$available_mods = array_diff($available_mods['main'], $installed_paths);
+		$available_mods = array_diff($mod_paths, $installed_paths);
 		unset($installed_paths);
+		unset($mod_paths);
 
 		// show only available MODs that paths aren't in the DB
 		foreach ($available_mods as $file)
@@ -503,7 +510,7 @@ class acp_mods
 						// These are the instructions included with the MOD
 						foreach ($children['template'] as $template_name)
 						{
-							if (core_basename($template_name) == 'prosilver')
+							if ($template_name == 'prosilver')
 							{
 								$found_prosilver = true;
 							}
@@ -518,7 +525,7 @@ class acp_mods
 							}
 
 							$template->assign_block_vars('avail_templates', array(
-								'TEMPLATE_NAME'	=> core_basename($template_name),
+								'TEMPLATE_NAME'	=> $template_name,
 								'XML_FILE'		=> urlencode($xml_file),
 							));
 						}
@@ -1189,11 +1196,16 @@ class acp_mods
 						// MODX 1.0.x and 1.2.x.
 						$match[1] = rtrim($match[1], 's');
 
-						$mods[$match[1]][] = "$dir/$file";
+						$mods[$match[1]][] = array(
+									'href'		=> "$dir/$file",
+									'realname'	=> core_basename($file),
+									'title'		=> core_basename($file),
+								);
 					}
 					else
 					{
 						$check = end($mods['main']);
+						$check = $check['href'];
 
 						// we take the first file alphabetically with install in the filename
 						if (!$check || dirname($check) == $dir)
@@ -1201,7 +1213,12 @@ class acp_mods
 							if (preg_match('#.*install.*xml$#i', $file) && strnatcasecmp(basename($check), $file) < 0)
 							{
 								$index = max(0, sizeof($mods['main']) - 1);
-								$mods['main'][$index] = "$dir/$file";
+								$mods['main'][$index] = array(
+									'href'		=> "$dir/$file",
+									'realname'	=> core_basename($file),
+									'title'		=> core_basename($file),
+								);
+
 								break;
 							}
 						}
@@ -1209,7 +1226,11 @@ class acp_mods
 						{
 							if (strpos($file, '.xml') !== false)
 							{
-								$mods['main'][] = "$dir/$file";
+								$mods['main'][] = array(
+									'href'		=> "$dir/$file",
+									'realname'	=> core_basename($file),
+									'title'		=> core_basename($file),
+								);
 							}
 						}
 					}
@@ -1660,25 +1681,24 @@ class acp_mods
 
 	function handle_merge($type, &$actions, &$children, $process_files)
 	{
-		global $phpbb_root_path;
-
 		if (!isset($children[$type]) || !sizeof($process_files))
 		{
 			return;
 		}
 
 		// add the actions to our $actions array...give praise to array_merge_recursive
-		foreach ($process_files as $key => $void)
+		foreach ($process_files as $key => $name)
 		{
-			$children[$type][$key] = (is_array($children[$type][$key])) ? $children[$type][$key]['href'] : $children[$type][$key];
-
-			// Prepend the proper directory structure if it is not already there
-			if (isset($children[$type][$key]) && strpos($children[$type][$key], $this->mod_root) !== 0)
+			foreach ($children[$type] as $child_key => $child_data)
 			{
-				$children[$type][$key] = $this->mod_root . $children[$type][$key];
+				if ($child_data['realname'] == $name)
+				{
+					$child_filename = $this->mod_root . ltrim($child_data['href'], './');
+					break;
+				}
 			}
 
-			$actions_ary = $this->mod_actions($children[$type][$key]);
+			$actions_ary = $this->mod_actions($child_filename);
 
 			if (!isset($actions_ary['NEW_FILES']))
 			{
@@ -1729,13 +1749,10 @@ class acp_mods
 			foreach ($children['language'] as $key => $tag)
 			{
 				// remove useless title from MODX 1.2.0 tags
-				$children['language'][$key] = is_array($tag) ? $tag['href'] : $tag;
+				$children['language'][$tag['realname']] = is_array($tag) ? $tag['href'] : $tag;
 			}
-			$children['language'] = array_unique($children['language']);
 
-			// We _must_ have language xml files that are named "nl.xml" or "en-US.xml" for this to work
-			// it appears that the MODX packaging standards call for this anyway
-			$available_languages = array_map('core_basename', $children['language']);
+			$available_languages = array_keys($children['language']);
 			$process_languages = $elements['language'] = array_intersect($available_languages, $installed_languages);
 
 			// $unknown_languages are installed on the board, but not provied for by the MOD
@@ -1758,9 +1775,9 @@ class acp_mods
 						// first determine which file we want to direct them to
 						foreach ($children['language'] as $file)
 						{
-							if (core_basename($file) == $row['lang_iso'])
+							if ($file['realname'] == $row['lang_iso'])
 							{
-								$xml_file = urlencode($file);
+								$xml_file = urlencode($file['href']);
 								break;
 							}
 						}
@@ -1769,7 +1786,7 @@ class acp_mods
 					$template->assign_block_vars('unknown_lang', array(
 						'ENGLISH_NAME'	=> $row['lang_english_name'],
 						'LOCAL_NAME'	=> $row['lang_local_name'],
-						'U_INSTALL'		=> ($parent_id) ? $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '',
+						'U_INSTALL'		=> (!empty($xml_file)) ? $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '',
 					));
 
 					// may wish to rename away from "unknown" for our details mode
@@ -1802,12 +1819,10 @@ class acp_mods
 			foreach ($children['template'] as $key => $tag)
 			{
 				// remove useless title from MODX 1.2.0 tags
-				$children['template'][$key] = is_array($tag) ? $tag['href'] : $tag;
+				$children['template'][$tag['realname']] = is_array($tag) ? $tag['href'] : $tag;
 			}
-			$children['template'] = array_unique($children['template']);
 
-			// We _must_ have language xml files that are named like "subsilver2.xml" for this to work
-			$available_templates = array_map('core_basename', $children['template']);
+			$available_templates = array_keys($children['template']);
 
 			// $process_templates are those that are installed on the board and provided for by the MOD
 			$process_templates = $elements['template'] = array_intersect($available_templates, $installed_templates);
