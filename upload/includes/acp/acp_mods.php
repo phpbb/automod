@@ -510,22 +510,22 @@ class acp_mods
 						// These are the instructions included with the MOD
 						foreach ($children['template'] as $template_name)
 						{
-							if ($template_name == 'prosilver')
+							if ($template_name['realname'] == 'prosilver')
 							{
 								$found_prosilver = true;
 							}
 
-							if (file_exists($template_name))
+							if (file_exists($template_name['href']))
 							{
-								$xml_file = $template_name;
+								$xml_file = $template_name['href'];
 							}
 							else
 							{
-								$xml_file = str_replace($this->mods_dir, '', dirname($row['mod_path'])) . '/' . $template_name;
+								$xml_file = str_replace($this->mods_dir, '', dirname($row['mod_path'])) . '/' . $template_name['href'];
 							}
 
 							$template->assign_block_vars('avail_templates', array(
-								'TEMPLATE_NAME'	=> $template_name,
+								'TEMPLATE_NAME'	=> $template_name['realname'],
 								'XML_FILE'		=> urlencode($xml_file),
 							));
 						}
@@ -533,9 +533,13 @@ class acp_mods
 
 					if (!$found_prosilver)
 					{
+//print_r($row['mod_path']);
+//echo "<br />";
+//echo $this->mods_dir;
 						$template->assign_block_vars('avail_templates', array(
 							'TEMPLATE_NAME'	=> 'prosilver',
-							'XML_FILE'		=> urlencode(str_replace($this->mods_dir, '', $row['mod_path'])),
+//							'XML_FILE'		=> urlencode(str_replace($this->mods_dir, '', $row['mod_path'])),
+							'XML_FILE'		=> basename($row['mod_path']),
 						));
 					}
 
@@ -1390,7 +1394,7 @@ class acp_mods
 												if (!$line)
 												{
 													// find failed
-													$status = false;
+													$status = $mod_installed = false;
 													continue 2;
 												}
 
