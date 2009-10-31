@@ -533,12 +533,8 @@ class acp_mods
 
 					if (!$found_prosilver)
 					{
-//print_r($row['mod_path']);
-//echo "<br />";
-//echo $this->mods_dir;
 						$template->assign_block_vars('avail_templates', array(
 							'TEMPLATE_NAME'	=> 'prosilver',
-//							'XML_FILE'		=> urlencode(str_replace($this->mods_dir, '', $row['mod_path'])),
 							'XML_FILE'		=> basename($row['mod_path']),
 						));
 					}
