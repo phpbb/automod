@@ -805,7 +805,7 @@ class acp_mods
 		if ($dest_template)
 		{
 			$sql = 'SELECT template_inherit_path FROM ' . STYLES_TEMPLATE_TABLE . "
-				WHERE template_name = '" . $db->sql_escape($dest_template) . "'";
+				WHERE template_path = '" . $db->sql_escape($dest_template) . "'";
 			$result = $db->sql_query($sql);
 
 			global $dest_inherits;
@@ -898,7 +898,7 @@ class acp_mods
 
 			if (is_string($status))
 			{
-				$mod_uninstalled = false;
+				$mod_installed = false;
 
 				$template->assign_block_vars('error', array(
 					'ERROR'	=> $status,
