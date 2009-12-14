@@ -1440,16 +1440,24 @@ class acp_mods
 													break;
 												}
 
-												if ($status)
-												{
-													$inline_template_ary[] = array(
+												$inline_template_ary[] = array(
+													'FIND'		=>	array(
+
+														'S_SUCCESS'	=> $status,
+					
+														'NAME'		=> $user->lang[$type],
+														'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
+													),
+
+													'ACTION'	=> array(
+
 														'S_SUCCESS'	=> $status,
 
 														'NAME'		=> $user->lang[$inline_action],
 														'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
 														'COMMENT'	=> $inline_comment,
-													);
-												}
+													),
+												);
 											}
 										}
 									break;
@@ -1459,26 +1467,22 @@ class acp_mods
 									break;
 								}
 
-								$template->assign_block_vars('edit_files.finds.actions', array(
-									'S_SUCCESS'	=> $status,
-
-									'NAME'		=> $user->lang[$type],
-									'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
-								));
-
 								if (!$status)
 								{
 									$mod_installed = false;
 								}
 
-								// these vars must be assigned after the parent block or else things break
 								if (sizeof($inline_template_ary))
 								{
 									foreach ($inline_template_ary as $inline_template)
 									{
-										$template->assign_block_vars('edit_files.finds.actions.inline', $inline_template);
+										// We must assign the vars for the FIND first
+										$template->assign_block_vars('edit_files.finds.actions', $inline_template['FIND']);
+
+										// And now the vars for the ACTION
+										$template->assign_block_vars('edit_files.finds.actions.inline', $inline_template['ACTION']);
+										$inline_template_ary = array();
 									}
-									$inline_template_ary = array();
 								}
 							}
 						}

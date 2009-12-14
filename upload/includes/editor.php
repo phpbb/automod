@@ -53,6 +53,11 @@ class editor
 	*/
 	var $start_index = 0;
 
+	/*
+	* Keeps inline find sequential
+	*/
+	var $last_string_offset = 0;
+
 	/**
 	* Time when MOD was installed
 	*/
@@ -252,6 +257,7 @@ class editor
 	{
 		$this->start_index++;
 		$this->last_action = array();
+		$this->last_string_offset = 0;
 	}
 
 	/**
@@ -291,9 +297,45 @@ class editor
 		// similar method to find().  Just much more limited scope
 		for ($i = $start_offset; $i <= $end_offset; $i++)
 		{
-			$string_offset = strpos($this->file_contents[$i], $inline_find);
+			if ($this->last_string_offset > 0)
+			{
+				$string_offset = strpos(substr($this->file_contents[$i], $this->last_string_offset), $inline_find) + $this->last_string_offset;
+			}
+			else
+			{
+				$string_offset = strpos($this->file_contents[$i], $inline_find);
+			}
+
 			if ($string_offset !== false)
 			{
+				$this->last_string_offset = $string_offset;
+
+				// if we find something, return the line number, string offset, and find length
+				return array(
+					'array_offset'	=> $i,
+					'string_offset'	=> $string_offset,
+					'find_length'	=> strlen($inline_find),
+				);
+			}
+		}
+
+		// if the previous failed, trim() the find and try again
+		for ($i = $start_offset; $i <= $end_offset; $i++)
+		{
+			$inline_find = trim($inline_find);
+			if ($this->last_string_offset > 0)
+			{
+				$string_offset = strpos(substr($this->file_contents[$i], $this->last_string_offset), $inline_find) + $this->last_string_offset;
+			}
+			else
+			{
+				$string_offset = strpos($this->file_contents[$i], $inline_find);
+			}
+
+			if ($string_offset !== false)
+			{
+				$this->last_string_offset = $string_offset;
+
 				// if we find something, return the line number, string offset, and find length
 				return array(
 					'array_offset'	=> $i,
@@ -513,6 +555,8 @@ class editor
 
 		$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_replace, $string_offset, $length);
 
+		$this->last_string_offset += (strlen($inline_replace) - $length);
+
 		$this->curr_action = func_get_args();
 
 		// This isn't a full find, but it is the closest we can get
@@ -561,10 +605,12 @@ class editor
 		if ($pos == 'AFTER')
 		{
 			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset + $length, 0);
+			$this->last_string_offset += strlen($inline_add) + $length;
 		}
 		else if ($pos == 'BEFORE')
 		{
 			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset, 0);
+			$this->last_string_offset += $length;
 		}
 
 		$this->curr_action = func_get_args();
@@ -602,6 +648,9 @@ class editor
 		{
 			$last_action_index = sizeof($this->mod_actions[$this->open_filename]) - 1;
 			unset($this->mod_actions[$this->open_filename][$last_action_index]);
+
+			// Re-index the array to start at zero and go sequentially
+			$this->mod_actions[$this->open_filename] = array_merge($this->mod_actions[$this->open_filename]);
 
 			$action_type = 'REPLACE';
 
