@@ -607,7 +607,7 @@ class parser_xml
 							if ($k < ($find_count - 1))
 							{
 								// NULL has special meaning for an action ... no action to be taken; advance pointer 
-								$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])] = NULL;
+								$actions['EDITS'][$current_file][$j][$action_info['FIND'][$k]['data']] = NULL;
 							}
 						}
 					}
@@ -636,7 +636,7 @@ class parser_xml
 							//
 							// inline actions must be trimmed in case the MOD author
 							// inserts a new line by mistake
-							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'])]['in-line-edit'][trim($inline_find)]['in-line-' . $type][] = trim($inline_actions[$l]['data'], "\n");
+							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'])]['in-line-edit'][$inline_find]['in-line-' . $type][] = trim($inline_actions[$l]['data'], "\n");
 						}
 					}
 				}
