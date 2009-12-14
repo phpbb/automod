@@ -510,12 +510,17 @@ class acp_mods
 						// These are the instructions included with the MOD
 						foreach ($children['template'] as $template_name)
 						{
+							if (!is_array($template_name))
+							{
+								continue;
+							}
+
 							if ($template_name['realname'] == 'prosilver')
 							{
 								$found_prosilver = true;
 							}
 
-							if (file_exists($template_name['href']))
+							if (file_exists($this->mod_root . $template_name['href']))
 							{
 								$xml_file = $template_name['href'];
 							}
@@ -1092,6 +1097,8 @@ class acp_mods
 			'S_UNINSTALL'		=> $execute_edits,
 			'S_PRE_UNINSTALL'	=> !$execute_edits,
 
+			'L_FORCE_INSTALL'	=> $user->lang['FORCE_UNINSTALL'],
+
 			'MOD_ID'		=> $mod_id,
 
 			'U_UNINSTALL'	=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
@@ -1178,7 +1185,7 @@ class acp_mods
 		$dp = opendir($dir);
 		while (($file = readdir($dp)) !== false)
 		{
-			if ($file[0] != '.' && strpos("$dir/$file", '_edited') === false)
+			if ($file[0] != '.' && strpos("$dir/$file", '_edited') === false && strpos("$dir/$file", '_backups') === false)
 			{
 				// recurse - we don't want anything within the MODX "root" though
 				if ($recurse && !is_file("$dir/$file") && strpos("$dir/$file", 'root') === false)
@@ -1210,7 +1217,19 @@ class acp_mods
 						// we take the first file alphabetically with install in the filename
 						if (!$check || dirname($check) == $dir)
 						{
-							if (preg_match('#.*install.*xml$#i', $file) && strnatcasecmp(basename($check), $file) < 0)
+							if (preg_match('#.*install.*xml$#i', $file) && preg_match('#.*install.*xml$#i', $check) && strnatcasecmp(basename($check), $file) > 0)
+							{
+
+								$index = max(0, sizeof($mods['main']) - 1);
+								$mods['main'][$index] = array(
+									'href'		=> "$dir/$file",
+									'realname'	=> core_basename($file),
+									'title'		=> core_basename($file),
+								);
+
+								break;
+							}
+							else if (preg_match('#.*install.*xml$#i', $file) && !preg_match('#.*install.*xml$#i', $check))
 							{
 								$index = max(0, sizeof($mods['main']) - 1);
 								$mods['main'][$index] = array(
