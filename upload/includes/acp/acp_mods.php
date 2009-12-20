@@ -1390,74 +1390,90 @@ class acp_mods
 									case 'IN-LINE-EDIT':
 										// these aren't quite as straight forward.  Still have multi-level arrays to sort through
 										$inline_comment = '';
-										foreach ($contents as $inline_find => $inline_commands)
+										foreach ($contents as $inline_edit_id => $inline_edit)
 										{
-											if ($inline_find == 'inline-comment')
+											if ($inline_edit_id === 'inline-comment')
 											{
 												// This is a special case for tucking comments in the array
-												if ($inline_commands != $user->lang['UNKNOWN_MOD_INLINE-COMMENT'])
+												if ($inline_edit != $user->lang['UNKNOWN_MOD_INLINE-COMMENT'])
 												{
-													$inline_comment = $inline_commands;
+													$inline_comment = $inline_edit;
 												}
 												continue;
 											}
-
-											foreach ($inline_commands as $inline_action => $inline_contents)
+										
+											foreach ($inline_edit as $inline_find => $inline_commands)
 											{
-												// inline finds are pretty contancerous, so so them in the loop
-												$line = $editor->inline_find($find, $inline_find, $offset_ary['start'], $offset_ary['end']);
-												if (!$line)
+												foreach ($inline_commands as $inline_action => $inline_contents)
 												{
-													// find failed
-													$status = $mod_installed = false;
-													continue 2;
+													// inline finds are pretty contancerous, so so them in the loop
+													$line = $editor->inline_find($find, $inline_find, $offset_ary['start'], $offset_ary['end']);
+													if (!$line)
+													{
+														// find failed
+														$status = $mod_installed = false;
+														continue 2;
+													}
+	
+													$inline_contents = $inline_contents[0];
+													$contents_orig = $inline_find;
+	
+													switch (strtoupper($inline_action))
+													{
+														case 'IN-LINE-':
+															$editor->last_string_offset = $line['string_offset'] + $line['find_length'] - 1;
+															$status = true;
+															continue;
+														break;
+	
+														case 'IN-LINE-BEFORE-ADD':
+															$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
+														break;
+	
+														case 'IN-LINE-AFTER-ADD':
+															$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
+														break;
+	
+														case 'IN-LINE-REPLACE':
+														case 'IN-LINE-REPLACE-WITH':
+															$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
+														break;
+	
+														case 'IN-LINE-OPERATION':
+															$status = $editor->inc_string($find, $inline_find, $inline_contents);
+														break;
+	
+														default:
+															trigger_error("Error, unrecognised command $inline_action"); // ERROR!
+														break;
+													}
+	
+													$inline_template_ary[] = array(
+														'FIND'		=>	array(
+	
+															'S_SUCCESS'	=> $status,
+						
+															'NAME'		=> $user->lang[$type],
+															'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
+														),
+	
+														'ACTION'	=> array(
+	
+															'S_SUCCESS'	=> $status,
+	
+															'NAME'		=> $user->lang[$inline_action],
+															'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
+											//				'COMMENT'	=> $inline_comment, (inline comments aren't actually part of the MODX spec)
+														),
+													);
 												}
 
-												$inline_contents = $inline_contents[0];
-												$contents_orig = $inline_find;
-
-												switch (strtoupper($inline_action))
+												if (!$status)
 												{
-													case 'IN-LINE-BEFORE-ADD':
-														$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
-													break;
-
-													case 'IN-LINE-AFTER-ADD':
-														$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
-													break;
-
-													case 'IN-LINE-REPLACE':
-													case 'IN-LINE-REPLACE-WITH':
-														$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
-													break;
-
-													case 'IN-LINE-OPERATION':
-														$status = $editor->inc_string($find, $inline_find, $inline_contents);
-													break;
-
-													default:
-														trigger_error("Error, unrecognised command $inline_action"); // ERROR!
-													break;
+													$mod_installed = false;
 												}
 
-												$inline_template_ary[] = array(
-													'FIND'		=>	array(
-
-														'S_SUCCESS'	=> $status,
-					
-														'NAME'		=> $user->lang[$type],
-														'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
-													),
-
-													'ACTION'	=> array(
-
-														'S_SUCCESS'	=> $status,
-
-														'NAME'		=> $user->lang[$inline_action],
-														'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
-														'COMMENT'	=> $inline_comment,
-													),
-												);
+												$editor->close_inline_edit();
 											}
 										}
 									break;
@@ -1481,11 +1497,20 @@ class acp_mods
 
 										// And now the vars for the ACTION
 										$template->assign_block_vars('edit_files.finds.actions.inline', $inline_template['ACTION']);
-										$inline_template_ary = array();
+
 									}
+									$inline_template_ary = array();
 								}
 							}
 						}
+
+
+						$template->assign_block_vars('edit_files.finds.actions', array(
+							'S_SUCCESS'	=> $status,
+
+							'NAME'		=> $user->lang[$type],
+							'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
+						));
 
 						$editor->close_edit();
 					}
