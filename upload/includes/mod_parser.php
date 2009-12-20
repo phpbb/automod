@@ -575,7 +575,7 @@ class parser_xml
 						if ($k < ($find_count - 1))
 						{
 							// NULL has special meaning for an action ... no action to be taken; advance pointer 
-							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])] = NULL;
+							$actions['EDITS'][$current_file][$j][$action_info['FIND'][$k]['data']] = NULL;
 						}
 						else
 						{
@@ -584,7 +584,7 @@ class parser_xml
 							for ($l = 0; $l < $action_count; $l++)
 							{
 								$type = str_replace('-', ' ', $action_info['ACTION'][$l]['attrs']['TYPE']);
-								$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'])][$type] = (isset($action_info['ACTION'][$l]['data'])) ? preg_replace("#^(\s)+\n#", '', rtrim(trim($action_info['ACTION'][$l]['data'], "\n"))) : '';
+								$actions['EDITS'][$current_file][$j][$action_info['FIND'][$k]['data']][$type] = (isset($action_info['ACTION'][$l]['data'])) ? preg_replace("#^(\s)+\n#", '', rtrim(trim($action_info['ACTION'][$l]['data'], "\n"))) : '';
 							}
 						}
 					}
@@ -619,24 +619,42 @@ class parser_xml
 					*/
 					for ($k = 0; $k < sizeof($inline_info); $k++)
 					{
-						$inline_actions = (!empty($inline_info[$k]['children'])) ? $inline_info[$k]['children'] : array();
+						$inline_data = (!empty($inline_info[$k]['children'])) ? $inline_info[$k]['children'] : array();
 
-						$inline_find = $inline_actions['INLINE-FIND'][0]['data'];
+						$inline_find_count = sizeof($inline_data['INLINE-FIND']);
 
-						$inline_comment = localise_tags($inline_actions, 'INLINE-COMMENT');
-						$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'])]['in-line-edit']['inline-comment'] = $inline_comment;
+						$inline_comment = localise_tags($inline_data, 'INLINE-COMMENT');
+						$actions['EDITS'][$current_file][$j][$action_info['FIND'][$find_count - 1]['data']]['in-line-edit']['inline-comment'] = $inline_comment;
 
-						$inline_actions = (!empty($inline_actions['INLINE-ACTION'])) ? $inline_actions['INLINE-ACTION'] : array();
-						for ($l = 0; $l < sizeof($inline_actions); $l++)
+						$inline_actions = (!empty($inline_data['INLINE-ACTION'])) ? $inline_data['INLINE-ACTION'] : array();
+						for ($l = 0; $l < $inline_find_count; $l++)
 						{
-							$type = str_replace(',', '-', str_replace(' ', '', $inline_actions[$l]['attrs']['TYPE']));
+							$inline_find = $inline_data['INLINE-FIND'][$l]['data'];
 
 							// trying to reduce the levels of arrays without impairing features.
 							// need to keep the "full" edit intact.
 							//
 							// inline actions must be trimmed in case the MOD author
 							// inserts a new line by mistake
-							$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'])]['in-line-edit'][$inline_find]['in-line-' . $type][] = trim($inline_actions[$l]['data'], "\n");
+							if ($l < ($inline_find_count - 1))
+							{
+								$actions['EDITS'][$current_file][$j][$action_info['FIND'][$find_count - 1]['data']]['in-line-edit'][$k][$inline_find]['in-line-'][] = null;
+							}
+							else
+							{
+								for ($m = 0; $m < sizeof($inline_actions); $m++)
+								{
+									$type = str_replace(',', '-', str_replace(' ', '', $inline_actions[$m]['attrs']['TYPE']));
+									if (!empty($inline_actions[$m]['data']))
+									{
+										$actions['EDITS'][$current_file][$j][$action_info['FIND'][$find_count - 1]['data']]['in-line-edit'][$k][$inline_find]['in-line-' . $type][] = trim($inline_actions[$m]['data'], "\n");
+									}
+									else
+									{
+										$actions['EDITS'][$current_file][$j][$action_info['FIND'][$find_count - 1]['data']]['in-line-edit'][$k][$inline_find]['in-line-' . $type][] = '';
+									}
+								}
+							}
 						}
 					}
 				}

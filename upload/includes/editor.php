@@ -180,68 +180,76 @@ class editor
 		$total_lines = sizeof($this->file_contents);
 		$find_lines = sizeof($find_ary);
 
-		// we process the file sequentially ... so we keep track of indices
-		for ($i = $this->start_index; $i < $total_lines; $i++)
+		$mode = array('', 'trim');
+
+		foreach ($mode as $function)
 		{
-			for ($j = 0; $j < $find_lines; $j++)
+			// we process the file sequentially ... so we keep track of indices
+			for ($i = $this->start_index; $i < $total_lines; $i++)
 			{
-				$find_ary[$j] = trim($find_ary[$j]);
-
-				// if we've reached the EOF, the find failed.
-				if (!isset($this->file_contents[$i + $j]))
+				for ($j = 0; $j < $find_lines; $j++)
 				{
-					return false;
-				}
-
-				if (!trim($find_ary[$j]))
-				{
-					// line is blank.  Assume we can find a blank line, and continue on
-					$find_success += 1;
-				}
-				// using $this->file_contents[$i + $j] to keep the array pointer where I want it
-				// if the first line of the find (index 0) is being looked at, $i + $j = $i.
-				// if $j is > 0, we look at the next line of the file being inspected
-				// hopefully, this is a decent performer.
-				else if (strpos($this->file_contents[$i + $j], $find_ary[$j]) !== false)
-				{
-					// we found this part of the find
-					$find_success += 1;
-				}
-				// we might have an increment operator, which requires a regular expression match
-				else if (strpos($find_ary[$j], '{%:') !== false)
-				{
-					$regex = preg_replace('#{%:(\d+)}#', '(\d+)', $find_ary[$j]);
-
-					if (preg_match('#' . $regex . '#is', $this->file_contents[$i + $j]))
+					if ($function)
 					{
+						$find_ary[$j] = $function($find_ary[$j]);
+					}
+	
+					// if we've reached the EOF, the find failed.
+					if (!isset($this->file_contents[$i + $j]))
+					{
+						return false;
+					}
+	
+					if (!trim($find_ary[$j]))
+					{
+						// line is blank.  Assume we can find a blank line, and continue on
 						$find_success += 1;
+					}
+					// using $this->file_contents[$i + $j] to keep the array pointer where I want it
+					// if the first line of the find (index 0) is being looked at, $i + $j = $i.
+					// if $j is > 0, we look at the next line of the file being inspected
+					// hopefully, this is a decent performer.
+					else if (strpos($this->file_contents[$i + $j], $find_ary[$j]) !== false)
+					{
+						// we found this part of the find
+						$find_success += 1;
+					}
+					// we might have an increment operator, which requires a regular expression match
+					else if (strpos($find_ary[$j], '{%:') !== false)
+					{
+						$regex = preg_replace('#{%:(\d+)}#', '(\d+)', $find_ary[$j]);
+	
+						if (preg_match('#' . $regex . '#is', $this->file_contents[$i + $j]))
+						{
+							$find_success += 1;
+						}
+						else
+						{
+							$find_success = 0;
+						}
 					}
 					else
 					{
+						// the find failed.  Reset $find_success
 						$find_success = 0;
+	
+						// skip to next iteration of outer loop, that is, skip to the next line
+						break;
 					}
+	
+					if ($find_success == $find_lines)
+					{
+						// we found the proper number of lines
+						$this->start_index = $i;
+	
+						// return our array offsets
+						return array(
+							'start' => $i,
+							'end' => $i + $j,
+						);
+					}
+	
 				}
-				else
-				{
-					// the find failed.  Reset $find_success
-					$find_success = 0;
-
-					// skip to next iteration of outer loop, that is, skip to the next line
-					break;
-				}
-
-				if ($find_success == $find_lines)
-				{
-					// we found the proper number of lines
-					$this->start_index = $i;
-
-					// return our array offsets
-					return array(
-						'start' => $i,
-						'end' => $i + $j,
-					);
-				}
-
 			}
 		}
 
@@ -258,6 +266,15 @@ class editor
 		$this->start_index++;
 		$this->last_action = array();
 		$this->last_string_offset = 0;
+	}
+
+	/*
+	* In-line analog to close_edit(), above.
+	* Advance the pointer one character
+	*/
+	function close_inline_edit()
+	{
+		$this->last_string_offset++;
 	}
 
 	/**
@@ -555,7 +572,7 @@ class editor
 
 		$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_replace, $string_offset, $length);
 
-		$this->last_string_offset += (strlen($inline_replace) - $length);
+		$this->last_string_offset += strlen($inline_replace) - 1;
 
 		$this->curr_action = func_get_args();
 
@@ -605,7 +622,7 @@ class editor
 		if ($pos == 'AFTER')
 		{
 			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset + $length, 0);
-			$this->last_string_offset += strlen($inline_add) + $length;
+			$this->last_string_offset += strlen($inline_add) + $length - 1;
 		}
 		else if ($pos == 'BEFORE')
 		{
