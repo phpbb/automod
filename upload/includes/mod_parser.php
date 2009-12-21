@@ -584,7 +584,7 @@ class parser_xml
 							for ($l = 0; $l < $action_count; $l++)
 							{
 								$type = str_replace('-', ' ', $action_info['ACTION'][$l]['attrs']['TYPE']);
-								$actions['EDITS'][$current_file][$j][$action_info['FIND'][$k]['data']][$type] = (isset($action_info['ACTION'][$l]['data'])) ? preg_replace("#^(\s)+\n#", '', rtrim(trim($action_info['ACTION'][$l]['data'], "\n"))) : '';
+								$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'], "\n\r")][$type] = (isset($action_info['ACTION'][$l]['data'])) ? preg_replace("#^(\s)+\n#", '', rtrim(trim($action_info['ACTION'][$l]['data'], "\n"))) : '';
 							}
 						}
 					}
@@ -607,7 +607,7 @@ class parser_xml
 							if ($k < ($find_count - 1))
 							{
 								// NULL has special meaning for an action ... no action to be taken; advance pointer 
-								$actions['EDITS'][$current_file][$j][$action_info['FIND'][$k]['data']] = NULL;
+								$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'], "\r\n")] = NULL;
 							}
 						}
 					}
@@ -624,7 +624,7 @@ class parser_xml
 						$inline_find_count = sizeof($inline_data['INLINE-FIND']);
 
 						$inline_comment = localise_tags($inline_data, 'INLINE-COMMENT');
-						$actions['EDITS'][$current_file][$j][$action_info['FIND'][$find_count - 1]['data']]['in-line-edit']['inline-comment'] = $inline_comment;
+						$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'], "\r\n")]['in-line-edit']['inline-comment'] = $inline_comment;
 
 						$inline_actions = (!empty($inline_data['INLINE-ACTION'])) ? $inline_data['INLINE-ACTION'] : array();
 						for ($l = 0; $l < $inline_find_count; $l++)
@@ -638,7 +638,7 @@ class parser_xml
 							// inserts a new line by mistake
 							if ($l < ($inline_find_count - 1))
 							{
-								$actions['EDITS'][$current_file][$j][$action_info['FIND'][$find_count - 1]['data']]['in-line-edit'][$k][$inline_find]['in-line-'][] = null;
+								$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'], "\r\n")]['in-line-edit'][$k][$inline_find]['in-line-'][] = null;
 							}
 							else
 							{
@@ -647,11 +647,11 @@ class parser_xml
 									$type = str_replace(',', '-', str_replace(' ', '', $inline_actions[$m]['attrs']['TYPE']));
 									if (!empty($inline_actions[$m]['data']))
 									{
-										$actions['EDITS'][$current_file][$j][$action_info['FIND'][$find_count - 1]['data']]['in-line-edit'][$k][$inline_find]['in-line-' . $type][] = trim($inline_actions[$m]['data'], "\n");
+										$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'], "\r\n")]['in-line-edit'][$k][$inline_find]['in-line-' . $type][] = trim($inline_actions[$m]['data'], "\n");
 									}
 									else
 									{
-										$actions['EDITS'][$current_file][$j][$action_info['FIND'][$find_count - 1]['data']]['in-line-edit'][$k][$inline_find]['in-line-' . $type][] = '';
+										$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'], "\r\n")]['in-line-edit'][$k][$inline_find]['in-line-' . $type][] = '';
 									}
 								}
 							}
