@@ -752,7 +752,7 @@ class acp_mods
 				trigger_error($user->lang['FORM_INVALID'] . adm_back_link($this->u_action), E_USER_WARNING);
 			}
 
-			$mod_path = request_var('source', '');
+			$mod_path = urldecode(request_var('source', ''));
 			$dest_template = request_var('dest', '');
 
 			if (preg_match('#.*install.*xml$#i', $mod_path))
@@ -848,7 +848,7 @@ class acp_mods
 					}
 					else
 					{
-						$actions['NEW_FILES'] = str_replace($src_template, $dest_template, $dest_file);
+						$actions['NEW_FILES'][$src_file] = str_replace($src_template, $dest_template, $dest_file);
 					}
 				}
 			}
@@ -1501,16 +1501,15 @@ class acp_mods
 									}
 									$inline_template_ary = array();
 								}
+
+								$template->assign_block_vars('edit_files.finds.actions', array(
+									'S_SUCCESS'	=> $status,
+		
+									'NAME'		=> $user->lang[$type],
+									'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
+								));
 							}
 						}
-
-
-						$template->assign_block_vars('edit_files.finds.actions', array(
-							'S_SUCCESS'	=> $status,
-
-							'NAME'		=> $user->lang[$type],
-							'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
-						));
 
 						$editor->close_edit();
 					}
