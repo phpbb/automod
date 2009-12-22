@@ -1925,13 +1925,14 @@ class acp_mods
 						{
 							// We need to move that directory then
 							$this->directory_move($mod_dir . '_tmp/' . $folder_contents[0], $this->mods_dir . '/' . $folder_contents[0]);
-							$this->directory_delete($mod_dir . '_tmp/');
 						}
 						else if (!is_dir($mod_dir))
 						{
-							// Change the name of the directory by removing _tmp from it
-							rename($mod_dir . '_tmp', $mod_dir);
+							// Change the name of the directory by moving to directory without _tmp in it
+							$this->directory_move($mod_dir . '_tmp/', $mod_dir);
 						}
+						
+						$this->directory_delete($mod_dir . '_tmp/');
 						
 						if (!sizeof($file->error))
 						{
