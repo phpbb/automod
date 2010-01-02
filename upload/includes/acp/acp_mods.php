@@ -45,7 +45,6 @@ class acp_mods
 		$this->page_title = 'ACP_CAT_MODS';
 		$this->mods_dir = $phpbb_root_path . 'store/mods';
 
-
 		// get any url vars
 		$action = request_var('action', '');
 		$mod_id = request_var('mod_id', 0);
@@ -1417,7 +1416,7 @@ class acp_mods
 	
 													$inline_contents = $inline_contents[0];
 													$contents_orig = $inline_find;
-	
+
 													switch (strtoupper($inline_action))
 													{
 														case 'IN-LINE-':
@@ -1501,13 +1500,15 @@ class acp_mods
 									}
 									$inline_template_ary = array();
 								}
-
-								$template->assign_block_vars('edit_files.finds.actions', array(
-									'S_SUCCESS'	=> $status,
-		
-									'NAME'		=> $user->lang[$type],
-									'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
-								));
+								else if (!is_array($contents_orig))
+								{
+									$template->assign_block_vars('edit_files.finds.actions', array(
+										'S_SUCCESS'	=> $status,
+			
+										'NAME'		=> $user->lang[$type],
+										'COMMAND'	=> htmlspecialchars($contents_orig),
+									));
+								}
 							}
 						}
 
