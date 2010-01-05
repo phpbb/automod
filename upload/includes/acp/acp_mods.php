@@ -796,6 +796,20 @@ class acp_mods
 				trigger_error('AM_MOD_ALREADY_INSTALLED');
 			}
 		}
+		else if ($dest_template)
+		{
+			// Has this template already been processed?
+			$sql = 'SELECT mod_name FROM ' . MODS_TABLE . "
+				WHERE mod_template " . $db->sql_like_expression($db->any_char . $dest_template . $db->any_char);
+			$result = $db->sql_query($sql);
+
+			if ($row = $db->sql_fetchrow($result))
+			{
+				trigger_error('AM_MOD_ALREADY_INSTALLED');
+			}
+		}
+		// NB: There could and should be cases to check for duplicated MODs and contribs
+		// However, there is not appropriate book-keeping in place for those in 1.0.x
 
 		$write_method = 'editor_' . determine_write_method(false);
 		$editor = new $write_method();
@@ -914,7 +928,7 @@ class acp_mods
 		$template->assign_vars(array(
 			'S_INSTALL'		=> true,
 
-			'U_RETURN'		=> $this->u_action,
+			'U_BACK'		=> $this->u_action,
 		));
 
 		// The editor class provides more pertinent information regarding edits
@@ -995,7 +1009,7 @@ class acp_mods
 				WHERE mod_id = $parent";
 			$db->sql_query($sql);
 
-			add_log('admin', 'LOG_MOD_CHANGE', $row['mod_name']);
+			add_log('admin', 'LOG_MOD_CHANGE', html_entity_decode($row['mod_name']));
 		}
 		// there was an error we need to tell the user about
 		else
@@ -1054,7 +1068,7 @@ class acp_mods
 	*/
 	function uninstall($action, $mod_id)
 	{
-		global $phpbb_root_path, $phpEx, $db, $template, $config, $force_install;
+		global $phpbb_root_path, $phpEx, $db, $template, $user, $config, $force_install;
 		global $method, $test_ftp_connection, $test_connection, $mod_uninstalled;
 
 		// mod_id blank?
@@ -1101,7 +1115,7 @@ class acp_mods
 			'MOD_ID'		=> $mod_id,
 
 			'U_UNINSTALL'	=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
-			'U_RETURN'		=> $this->u_action,
+			'U_BACK'		=> $this->u_action,
 		));
 
 		// grab actions and details
@@ -1411,9 +1425,20 @@ class acp_mods
 													{
 														// find failed
 														$status = $mod_installed = false;
+
+														$inline_template_ary[] = array(
+															'FIND'		=>	array(
+		
+																'S_SUCCESS'	=> $status,
+							
+																'NAME'		=> $user->lang[$type],
+																'COMMAND'	=> htmlspecialchars($inline_find),
+															),
+															'ACTION'	=> array());
+
 														continue 2;
 													}
-	
+
 													$inline_contents = $inline_contents[0];
 													$contents_orig = $inline_find;
 
@@ -1940,7 +1965,7 @@ class acp_mods
 							$template->assign_vars(array(
 								'S_MOD_SUCCESSBOX'	=> true,
 								'MESSAGE'			=> $user->lang['MOD_UPLOAD_SUCCESS'],
-								'U_RETURN'			=> $this->u_action
+								'U_BACK'			=> $this->u_action
 							));
 						}
 					}
@@ -1973,7 +1998,7 @@ class acp_mods
 				$template->assign_vars(array(
 					'S_MOD_SUCCESSBOX'	=> true,
 					'MESSAGE'			=> $user->lang['DELETE_SUCCESS'],
-					'U_RETURN'			=> $this->u_action
+					'U_BACK'			=> $this->u_action
 				));
 			}
 			else
