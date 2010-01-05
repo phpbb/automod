@@ -289,4 +289,33 @@ function handle_ftp_details($method, $test_ftp_connection, $test_connection)
 	));
 }
 
+/**
+* PHP 5 Wrapper - simulate scandir, but only those features that we actually need
+* NB: The third parameter of PHP5 native scandir is _not_ present in this wrapper
+*/
+if (!function_exists('scandir'))
+{
+	function scandir($directory, $sorting_order = false)
+	{
+		$files = array();
+
+		$dp = opendir($directory);
+		while (($filename = readdir($dp)) !== false)
+		{
+			$files[] = $filename;
+		}
+
+		if ($sorting_order)
+		{
+			rsort($files);
+		}
+		else
+		{
+			sort($files);
+		}
+
+		return $files;
+	}
+}
+
 ?>
