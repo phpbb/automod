@@ -1,5 +1,18 @@
 AutoMOD Changelog
 
+- Changes since 1.0.0 Release Candidate 2
+ + [Feature] Allow MOD uploads directly in AutoMOD
+ + [Feature] MODX 1.2.3 support
+ + [Change] MODs installed by Compressed File Download can be downloaded multiple times
+ + [Change] Now using a UMIL-based installer
+ + [Fix] Better support for complex combinations of in-line actions
+ + [Fix] Allow user to choose FTP method due to reported difficulties with PHP FTP extension
+ + [Fix] Friendlier error-handling in spots
+ + [Fix] Special characters in file names are properly handled
+ + [Fix] Force Install feature was broken when processing child MODX files
+ + [Fix] Correct file selection when MOD has multiple MODX files in its directory
+ + [Fix] Inherited styles now properly handled by AutoMOD 
+
 - Changes since 1.0.0 Release Candidate 1
  + [Change] Show the filename when an XML parsing error occurs
  + [Fix] Uninstaller backups now work properly
