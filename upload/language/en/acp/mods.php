@@ -98,6 +98,7 @@ $lang = array_merge($lang, array(
 	'INHERIT_NO_CHANGE'	=> 'No changes can be made to this file because the template %1$s depends on %2$s.',
 	'INLINE_FIND_MISSING'=> 'The In-Line Find specified by the MOD could not be found.',
 	'INSTALL_AUTOMOD'	=> 'AutoMOD Installation',
+	'INSTALL_AUTOMOD_CONFIRM'	=> 'Are you sure you want to install AutoMOD?',
 	'INSTALL_TIME'		=> 'Installation time',
 	'INSTALL_MOD'		=> 'Install this MOD',
 	'INSTALL_ERROR'		=> 'One or more install actions failed. Please review the actions below, make any adjustments and retry. You may continue with the installation even though some of the actions failed. <strong>This is not recommended and may cause your board to not function correctly.</strong>',
@@ -127,7 +128,7 @@ $lang = array_merge($lang, array(
 
 	'MODS_CONFIG_EXPLAIN'		=> 'You can select how AutoMOD adjusts your files here.  The most basic method is Compressed File Download.  The others require additional permissions on the server.',
 	'MODS_COPY_FAILURE'			=> 'The file %s could not be copied into place.  Please check your permissions or use an alternate write method.',
-	'MODS_EXPLAIN'				=> 'Here you can manage the available MODs on your board. MODs allow you to customize your board by automatically installing modifications produced by the phpBB community. For further information on MODs and AutoMOD please visit the <a href="http://www.phpbb.com/mods">phpBB website</a>.  To add a MOD to this list, unzip it and upload the files to the /store/mods/ directory on your server.',
+	'MODS_EXPLAIN'				=> 'Here you can manage the available MODs on your board. AutoMODs allows you to customize your board by automatically installing modifications produced by the phpBB community. For further information on MODs and AutoMOD please visit the <a href="http://www.phpbb.com/mods">phpBB website</a>.  To add a MOD to this list, use the form at the bottom of this page.  Alternatively, you may unzip it and upload the files to the /store/mods/ directory on your server.',
 	'MODS_FTP_FAILURE'			=> 'AutoMOD could not FTP the file %s into place',
 	'MODS_FTP_CONNECT_FAILURE'	=> 'AutoMOD was unable to connect to your FTP server.  The error was %s',
 	'MODS_MKDIR_FAILED'			=> 'The directory %s could not be created',
@@ -178,6 +179,8 @@ $lang = array_merge($lang, array(
 	'UNKNOWN_QUERY_REVERSE' => 'Unknown reverse query',
 
 	'UNINSTALL'				=> 'Uninstall',
+	'UNINSTALL_AUTOMOD'		=> 'AutoMOD Uninstallation',
+	'UNINSTALL_AUTOMOD_CONFIRM' => 'Are you sure you wish to uninstall AutoMOD?  This will NOT remove any MODs which have been installed with AutoMOD.',
 	'UNINSTALLED'			=> 'MOD uninstalled',
 	'UNINSTALLED_MODS'		=> 'Uninstalled MODs',
 	'UNINSTALLED_EXPLAIN'	=> 'Your MOD has been uninstalled! Here you can view some of the results from the uninstallation. Please note any errors, and seek support at <a href="http://www.phpbb.com">phpBB.com</a>.',
