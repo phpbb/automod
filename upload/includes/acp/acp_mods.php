@@ -223,6 +223,10 @@ class acp_mods
 						}
 					}
 				}
+				else if ($config['write_method'] == WRITE_MANUAL && !is_writable($phpbb_root_path . 'store/'))
+				{
+					$template->assign_var('S_WRITABLE_WARN', true);
+				}
 
 				switch ($action)
 				{
@@ -796,11 +800,12 @@ class acp_mods
 				trigger_error('AM_MOD_ALREADY_INSTALLED');
 			}
 		}
-		else if ($dest_template)
+		else if ($dest_template) // implicit && $parent
 		{
 			// Has this template already been processed?
 			$sql = 'SELECT mod_name FROM ' . MODS_TABLE . "
-				WHERE mod_template " . $db->sql_like_expression($db->any_char . $dest_template . $db->any_char);
+				WHERE mod_id = $parent 
+					AND mod_template " . $db->sql_like_expression($db->any_char . $dest_template . $db->any_char);
 			$result = $db->sql_query($sql);
 
 			if ($row = $db->sql_fetchrow($result))
@@ -1009,7 +1014,7 @@ class acp_mods
 				WHERE mod_id = $parent";
 			$db->sql_query($sql);
 
-			add_log('admin', 'LOG_MOD_CHANGE', html_entity_decode($row['mod_name']));
+			add_log('admin', 'LOG_MOD_CHANGE', htmlspecialchars_decode($row['mod_name']));
 		}
 		// there was an error we need to tell the user about
 		else
