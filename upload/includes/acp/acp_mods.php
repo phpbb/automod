@@ -65,7 +65,7 @@ class acp_mods
 		switch ($mode)
 		{
 			case 'config':
-				$ftp_method		= request_var('ftp_method', '');
+				$ftp_method		= request_var('ftp_method', $config['ftp_method']);
 				if (!$ftp_method || !class_exists($ftp_method))
 				{
 					$ftp_method = 'ftp';
@@ -185,6 +185,7 @@ class acp_mods
 					'WRITE_METHOD_FTP'		=> WRITE_FTP,
 					'WRITE_METHOD_MANUAL'	=> WRITE_MANUAL,
 
+					'AUTOMOD_VERSION'		=> $config['automod_version'],
 					'COMPRESS_METHOD'		=> $config['compress_method'],
 					'DIR_PERMS'				=> $config['am_dir_perms'],
 					'FILE_PERMS'			=> $config['am_file_perms'],
@@ -197,7 +198,7 @@ class acp_mods
 			case 'frontend':
 				if ($config['write_method'] == WRITE_FTP)
 				{
-					$method = basename(request_var('method', ''));
+					$method = basename(request_var('method', $config['ftp_method']));
 					if (!$method || !class_exists($method))
 					{
 						$method = 'ftp';
