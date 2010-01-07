@@ -25,6 +25,8 @@ if (!file_exists($phpbb_root_path . 'umil/umil_auto.' . $phpEx))
 	trigger_error('Please download the latest UMIL (Unified MOD Install Library) from: <a href="http://www.phpbb.com/mods/umil/">phpBB.com/mods/umil</a>', E_USER_ERROR);
 }
 
+include($phpbb_root_path . 'includes/functions_mods.'.$phpEx);
+
 // The name of the mod to be displayed during installation.
 $mod_name = 'AUTOMOD';
 
@@ -139,10 +141,21 @@ $versions = array(
 		'table_add'		=> array(
 			array('phpbb_mods', $schema_data),
 		),
+
+		'config_add'	=> array(
+	         array('ftp_method', 0),
+	         array('ftp_host', ''),
+	         array('ftp_username', ''),
+	         array('ftp_root_path', ''),
+	         array('ftp_port', '21'),
+	         array('ftp_timeout', '60'),
+	         array('write_method', WRITE_DIRECT),
+	         array('compress_method', '.zip'),
+		),
 	),
 
 	'1.0.0-b2'	=> array(
-		'add_config'	=> array(
+		'config_add'	=> array(
 			array('preview_changes', false),
 			array('am_file_perms', '0644'),
 			array('am_dir_perms', '0755'),
