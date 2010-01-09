@@ -712,7 +712,7 @@ class acp_mods
 			'MOD_PATH'		=> str_replace($this->mod_root, '', $mod_path),
 
 			'U_INSTALL'		=> $this->u_action . '&amp;action=install',
-			'U_BACK'		=> $this->u_action,
+			'U_RETURN'		=> $this->u_action,
 		));
 
 		$s_hidden_fields = '';
@@ -934,6 +934,7 @@ class acp_mods
 		$template->assign_vars(array(
 			'S_INSTALL'		=> true,
 
+			'U_RETURN'		=> $this->u_action,
 			'U_BACK'		=> $this->u_action,
 		));
 
@@ -1121,6 +1122,7 @@ class acp_mods
 			'MOD_ID'		=> $mod_id,
 
 			'U_UNINSTALL'	=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
+			'U_RETURN'		=> $this->u_action,
 			'U_BACK'		=> $this->u_action,
 		));
 
@@ -1971,7 +1973,7 @@ class acp_mods
 							$template->assign_vars(array(
 								'S_MOD_SUCCESSBOX'	=> true,
 								'MESSAGE'			=> $user->lang['MOD_UPLOAD_SUCCESS'],
-								'U_BACK'			=> $this->u_action
+								'U_RETURN'			=> $this->u_action,
 							));
 						}
 					}
@@ -2004,7 +2006,7 @@ class acp_mods
 				$template->assign_vars(array(
 					'S_MOD_SUCCESSBOX'	=> true,
 					'MESSAGE'			=> $user->lang['DELETE_SUCCESS'],
-					'U_BACK'			=> $this->u_action
+					'U_RETURN'			=> $this->u_action
 				));
 			}
 			else
