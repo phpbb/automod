@@ -1427,7 +1427,7 @@ class acp_mods
 											{
 												foreach ($inline_commands as $inline_action => $inline_contents)
 												{
-													// inline finds are pretty contancerous, so so them in the loop
+													// inline finds are pretty contankerous, so so them in the loop
 													$line = $editor->inline_find($find, $inline_find, $offset_ary['start'], $offset_ary['end']);
 													if (!$line)
 													{
@@ -1455,7 +1455,7 @@ class acp_mods
 														case 'IN-LINE-':
 															$editor->last_string_offset = $line['string_offset'] + $line['find_length'] - 1;
 															$status = true;
-															continue;
+															continue 2;
 														break;
 	
 														case 'IN-LINE-BEFORE-ADD':

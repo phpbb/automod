@@ -58,6 +58,11 @@ class editor
 	*/
 	var $last_string_offset = 0;
 
+	/*
+	* Only apply string offset to the line to which it belongs
+	*/
+	var $last_inline_ary_offset = 0;
+
 	/**
 	* Time when MOD was installed
 	*/
@@ -314,9 +319,14 @@ class editor
 		// similar method to find().  Just much more limited scope
 		for ($i = $start_offset; $i <= $end_offset; $i++)
 		{
-			if ($this->last_string_offset > 0)
+			if ($this->last_string_offset > 0 && ($this->last_inline_ary_offset == 0 || $this->last_inline_ary_offset == $i))
 			{
-				$string_offset = strpos(substr($this->file_contents[$i], $this->last_string_offset), $inline_find) + $this->last_string_offset;
+				$string_offset = strpos(substr($this->file_contents[$i], $this->last_string_offset), $inline_find);
+
+				if ($string_offset !== false)
+				{
+					$string_offset += $this->last_string_offset;
+				}
 			}
 			else
 			{
@@ -326,6 +336,7 @@ class editor
 			if ($string_offset !== false)
 			{
 				$this->last_string_offset = $string_offset;
+				$this->last_inline_ary_offset = $i;
 
 				// if we find something, return the line number, string offset, and find length
 				return array(
@@ -340,9 +351,14 @@ class editor
 		for ($i = $start_offset; $i <= $end_offset; $i++)
 		{
 			$inline_find = trim($inline_find);
-			if ($this->last_string_offset > 0)
+			if ($this->last_string_offset > 0 && ($this->last_inline_ary_offset == 0 || $this->last_inline_ary_offset == $i))
 			{
-				$string_offset = strpos(substr($this->file_contents[$i], $this->last_string_offset), $inline_find) + $this->last_string_offset;
+				$string_offset = strpos(substr($this->file_contents[$i], $this->last_string_offset), $inline_find);
+
+				if ($string_offset !== false)
+				{
+					$string_offset += $this->last_string_offset;
+				}
 			}
 			else
 			{
