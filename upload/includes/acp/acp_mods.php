@@ -889,6 +889,17 @@ class acp_mods
 			$this->handle_template_prompt($children, $elements, 'install');
 			$this->handle_merge('template', $actions, $children, $elements['template']);
 		}
+		else
+		{
+			if ($dest_template)
+			{
+				$elements['template'] = $dest_template;
+			}
+			else
+			{
+				$elements['language'] = core_basename($mod_path);
+			}
+		}
 
 		$editor->create_edited_root($this->edited_root);
 
@@ -994,7 +1005,7 @@ class acp_mods
 			}
 			else
 			{
-				$sql_ary['mod_languages'] = '';
+				$sql_ary['mod_languages'] = $row['mod_languages'];
 			}
 
 			if (!empty($elements['template']))
@@ -1003,7 +1014,7 @@ class acp_mods
 			}
 			else
 			{
-				$sql_ary['mod_template'] = '';
+				$sql_ary['mod_template'] = $row['mod_template'];
 			}
 
 			$sql_ary['mod_time'] = $editor->install_time;
