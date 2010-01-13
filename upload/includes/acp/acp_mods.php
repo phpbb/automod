@@ -251,7 +251,6 @@ class acp_mods
 					
 					case 'delete':
 						$this->delete($mod_path);
-					break;
 
 					default:
 						if (!$this->upload_mod())
