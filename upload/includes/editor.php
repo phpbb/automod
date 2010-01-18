@@ -1176,21 +1176,20 @@ class editor_manual extends editor
 		{
 			if (is_dir($to))
 			{
-				$to_file = str_replace(array($phpbb_root_path, $strip), '', $file);
+				$to_file = str_replace(array($phpbb_root_path, $strip), '', $to);
+				$to_file .= substr($file, strpos($file, $to_file) + strlen($to_file));
 			}
 			else
 			{
 				$to_file = str_replace($phpbb_root_path, '', $to);
 			}
-			$file = str_replace($phpbb_root_path, '', $file);
 
 			// filename calculation is involved here: be sure to remove "store/mods/foo"
 			// and prepend the "files" directory
-			if (!$this->compress->add_file($file, substr($file, 0, strpos($file, 'root/') + 5), 'files/'))
+			if (!$this->compress->add_custom_file($file, 'files/' . $to_file))
 			{
 				return sprintf($user->lang['WRITE_MANUAL_FAIL'], $to_file);
 			}
-
 		}
 
 		// return true since we are now taking an action - NULL implies no action
