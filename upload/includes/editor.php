@@ -1037,14 +1037,7 @@ class editor_ftp extends editor
 		// ftp
 		foreach ($files as $file)
 		{
-			if (is_dir($to))
-			{
-				$to_file = str_replace(array($phpbb_root_path, $strip), '', $file);
-			}
-			else
-			{
-				$to_file = str_replace($phpbb_root_path, '', $to);
-			}
+			$to_file = str_replace($strip, '', $file);
 
 			$this->recursive_mkdir(dirname($to_file));
 
@@ -1189,13 +1182,15 @@ class editor_manual extends editor
 			{
 				$to_file = str_replace($phpbb_root_path, '', $to);
 			}
+			$file = str_replace($phpbb_root_path, '', $file);
 
 			// filename calculation is involved here: be sure to remove "store/mods/foo"
 			// and prepend the "files" directory
-			if (!$this->compress->add_file($to_file, substr($to_file, 0, strpos($to_file, 'root/') + 5), 'files'))
+			if (!$this->compress->add_file($file, substr($file, 0, strpos($file, 'root/') + 5), 'files/'))
 			{
-				return sprintf($user->lang['WRITE_MANUAL_FAIL'], $new_filename);
+				return sprintf($user->lang['WRITE_MANUAL_FAIL'], $to_file);
 			}
+
 		}
 
 		// return true since we are now taking an action - NULL implies no action
