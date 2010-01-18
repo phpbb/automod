@@ -715,7 +715,7 @@ class acp_mods
 			'MOD_PATH'		=> str_replace($this->mod_root, '', $mod_path),
 
 			'U_INSTALL'		=> $this->u_action . '&amp;action=install',
-			'U_RETURN'		=> $this->u_action,
+			'U_BACK'		=> $this->u_action,
 		));
 
 		$s_hidden_fields = '';
@@ -896,11 +896,11 @@ class acp_mods
 		{
 			if ($dest_template)
 			{
-				$elements['template'] = $dest_template;
+				$elements['template'] = array($dest_template);
 			}
 			else
 			{
-				$elements['language'] = core_basename($mod_path);
+				$elements['language'] = array(core_basename($mod_path));
 			}
 		}
 
