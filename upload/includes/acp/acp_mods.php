@@ -289,6 +289,7 @@ class acp_mods
 						}
 		
 						$editor->compress->download("{$phpbb_root_path}store/mod_$time", $download_name);
+						exit;
 					break;
 				}
 

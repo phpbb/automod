@@ -1176,7 +1176,9 @@ class editor_manual extends editor
 		{
 			if (is_dir($to))
 			{
+				// this would find the directory part specified in MODX
 				$to_file = str_replace(array($phpbb_root_path, $strip), '', $to);
+				// and this fetches any subdirectories and the filename of the destination file
 				$to_file .= substr($file, strpos($file, $to_file) + strlen($to_file));
 			}
 			else
@@ -1184,7 +1186,7 @@ class editor_manual extends editor
 				$to_file = str_replace($phpbb_root_path, '', $to);
 			}
 
-			// filename calculation is involved here: be sure to remove "store/mods/foo"
+			// filename calculation is involved here:
 			// and prepend the "files" directory
 			if (!$this->compress->add_custom_file($file, 'files/' . $to_file))
 			{
@@ -1213,7 +1215,7 @@ class editor_manual extends editor
 
 		// don't include extra dirs in zip file
 		$strip_position = strpos($new_filename, '_edited') + 8; // want the end of the string
-		if (!$strip_position)
+		if ($strip_position == 8)
 		{
 			$strip_position = strpos($new_filename, '_uninst') + 7;
 		}
