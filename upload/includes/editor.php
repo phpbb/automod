@@ -643,7 +643,7 @@ class editor
 		else if ($pos == 'BEFORE')
 		{
 			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset, 0);
-			$this->last_string_offset += $length;
+			$this->last_string_offset += (strlen($inline_add) - 1);
 		}
 
 		$this->curr_action = func_get_args();

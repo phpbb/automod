@@ -2,7 +2,7 @@
 /**
 *
 * @package automod
-* @version $Id: functions_admin.php,v 1.254 2007/11/17 12:14:27 acydburn Exp $
+* @version $Id$
 * @copyright (c) 2008 phpBB Group
 * @license http://opensource.org/licenses/gpl-2.0.php GNU Public License
 *
