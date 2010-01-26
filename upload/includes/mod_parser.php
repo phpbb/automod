@@ -216,10 +216,6 @@ class parser
 								}
 							break;
 
-							case 'SQL':
-								$reverse_edits['SQL'][] = $this->reverse_query($command);
-							break;
-
 							default:
 								// again, increment
 							break;
@@ -227,6 +223,21 @@ class parser
 					}
 				}
 			}
+		}
+
+		if (empty($actions['SQL']))
+		{
+			return $reverse_edits;
+		}
+
+		if (sizeof($actions['SQL']) == 1)
+		{
+			$actions['SQL'] = explode("\n", $actions['SQL'][0]);
+		}
+
+		foreach ($actions['SQL'] as $query)
+		{
+			$reverse_edits['SQL'][] = $this->parser->reverse_query($query);
 		}
 
 		return $reverse_edits;
