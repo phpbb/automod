@@ -1065,6 +1065,12 @@ class acp_mods
 				$hidden_ary['parent'] = $parent;
 			}
 
+			if ($dest_template)
+			{
+				$hidden_ary['dest'] = $dest_template;
+				$hidden_ary['source'] = $mod_path;
+			}
+
 			$template->assign_vars(array(
 				'S_ERROR'			=> true,
 				'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
@@ -1437,7 +1443,7 @@ class acp_mods
 												}
 												continue;
 											}
-										
+
 											foreach ($inline_edit as $inline_find => $inline_commands)
 											{
 												foreach ($inline_commands as $inline_action => $inline_contents)

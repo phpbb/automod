@@ -665,9 +665,9 @@ class editor
 	*/
 	function build_uninstall($find, $inline_find, $action_type, $action)
 	{
-		$find = trim($find);
-		$inline_find = trim($inline_find);
-		$action = trim($action);
+		$find = trim($find, "\n");
+		$inline_find = trim($inline_find, "\n");
+		$action = trim($action, "\n");
 
 		/*
 		* This if statement finds out if we are in the special case where 
