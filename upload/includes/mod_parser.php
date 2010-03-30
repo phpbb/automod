@@ -240,7 +240,7 @@ class parser
 
 		foreach ($actions['SQL'] as $query)
 		{
-			$reverse_edits['SQL'][] = $this->parser->reverse_query($query);
+			$reverse_edits['SQL'][] = self::reverse_query($query);
 		}
 
 		return $reverse_edits;
