@@ -1127,8 +1127,32 @@ class acp_mods
 		// get FTP information if we need it
 		// using $config instead of $editor because write_method is forced to direct
 		// when in preview mode
+		$hidden_ary = array();
 		if ($config['write_method'] == WRITE_FTP)
 		{
+			if($execute_edits && isset($_POST['password']))
+			{
+				$hidden_ary['method'] = $config['ftp_method'];
+
+				if (empty($config['ftp_method']))
+				{
+					trigger_error('FTP_METHOD_ERROR');
+				}
+
+				$requested_data = call_user_func(array($config['ftp_method'], 'data'));
+
+				foreach ($requested_data as $data => $default)
+				{
+					if ($data == 'password')
+					{
+						$config['ftp_password'] = request_var('password', '');
+					}
+					$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+
+					$hidden_ary[$data] = $default;
+				}
+			}
+
 			handle_ftp_details($method, $test_ftp_connection, $test_connection);
 		}
 
@@ -1137,6 +1161,7 @@ class acp_mods
 		$template->assign_vars(array(
 			'S_UNINSTALL'		=> $execute_edits,
 			'S_PRE_UNINSTALL'	=> !$execute_edits,
+			'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
 
 			'L_FORCE_INSTALL'	=> $user->lang['FORCE_UNINSTALL'],
 
