@@ -6,14 +6,13 @@
  * @author Nathan Guse (EXreaction) http://lithiumstudios.org
  * @author David Lewis (Highway of Life) highwayoflife@gmail.com
  * @package umil
- * @version $Id: umil.php 149 2009-06-16 00:58:51Z exreaction $
+ * @version $Id: umil.php 212 2010-03-28 18:57:18Z exreaction $
  * @copyright (c) 2008 phpBB Group
  * @license http://opensource.org/licenses/gpl-license.php GNU Public License
  *
  * Deutsche Übersetzung durch die Übersetzer-Gruppe von phpBB.de:
- * (http://www.phpbb.de/go/3/uebersetzer)
- * Frank Doerr, Ingo Köhler, Fabian Koglin, Philipp Kordowich, Ingo Migliarina, Martin Rauscher
- * Ehemalige Mitglieder: Dirk Gaffke
+ * siehe docs/AUTHORS und http://www.phpbb.de/go/ubersetzerteam
+ *
  */
 
 /**
@@ -90,12 +89,16 @@ $lang = array_merge($lang, array(
 	'PERMISSION_ALREADY_EXISTS'		=> 'FEHLER: Berechtigungsoption %s existiert bereits.',
 	'PERMISSION_NOT_EXIST'			=> 'FEHLER: Berechtigungsoption %s existiert nicht.',
 	'PERMISSION_REMOVE'				=> 'Entferne Berechtigungsoption: %s',
+	'PERMISSION_ROLE_ADD'			=> 'Füge neue Berechtigungs-Rolle hinzu: %s',
+	'PERMISSION_ROLE_UPDATE'		=> 'Aktualisiere Berechtiguns-Rolle: %s',
+	'PERMISSION_ROLE_REMOVE'		=> 'Entferne Berechtiguns-Rolle: %s',
 	'PERMISSION_SET_GROUP'			=> 'Setze Berechtigungen für die %s-Gruppe.',
 	'PERMISSION_SET_ROLE'			=> 'Setze Berechtigungen für die %s-Rolle.',
 	'PERMISSION_UNSET_GROUP'		=> 'Entferne Berechtigung für die %s-Gruppe.',
 	'PERMISSION_UNSET_ROLE'			=> 'Entferne Berechtigung für die %s-Rolle.',
 
-	'ROLE_NOT_EXIST'				=> 'Rolle existiert nicht',
+	'ROLE_ALREADY_EXISTS'			=> 'Berechtigungs-Rolle existiert bereits.',
+	'ROLE_NOT_EXIST'				=> 'Berechtigungs-Rolle exisitert nicht.',
 
 	'SUCCESS'						=> 'Erfolgreich',
 

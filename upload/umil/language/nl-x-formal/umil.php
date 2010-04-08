@@ -1,14 +1,12 @@
 <?php
-/** 
+/**
  *
  * @author Nathan Guse (EXreaction) http://lithiumstudios.org
  * @author David Lewis (Highway of Life) highwayoflife@gmail.com
  * @package umil
- * @version $Id: umil.php 157 2009-07-03 18:43:48Z exreaction $
- * @copyright (c) 2008 phpBB Group
+ * @version $Id: umil.php 210 2010-03-24 00:59:20Z exreaction $
+ * @copyright (c) 2008 phpBB Group, phpBBservice.nl
  * @license http://opensource.org/licenses/gpl-license.php GNU Public License
- *
- * Translation By: Raimon
  *
  */
 
@@ -44,87 +42,91 @@ if (empty($lang) || !is_array($lang))
 $lang = array_merge($lang, array(
 	'ACTION'						=> 'Actie',
 	'ADVANCED'						=> 'Uitgebreid',
-	'AUTH_CACHE_PURGE'				=> 'De auth-cache legen',
+	'AUTH_CACHE_PURGE'				=> 'Legen van de auth-cache.',
 
-	'CACHE_PURGE'					=> 'De forum-cache legen',
-	'CONFIGURE'						=> 'Configuren',
-	'CONFIG_ADD'					=> 'Bezig met toevoegen van nieuwe config variable: %s',
+	'CACHE_PURGE'					=> 'Legen van uw forum-cache.',
+	'CONFIGURE'						=> 'Configureren',
+	'CONFIG_ADD'					=> 'Toevoegen van nieuwe config-variable: %s.',
 	'CONFIG_ALREADY_EXISTS'			=> 'FOUT: Config-variable %s bestaat al.',
 	'CONFIG_NOT_EXIST'				=> 'FOUT: Config-variable %s bestaat niet.',
-	'CONFIG_REMOVE'					=> 'Bezig met verwijderen van config-variable: %s',
-	'CONFIG_UPDATE'					=> 'Bezig met bijwerken van config-variable: %s',
+	'CONFIG_REMOVE'					=> 'Verwijderen van config-variable: %s.',
+	'CONFIG_UPDATE'					=> 'Bijwerken van config-variable: %s.',
 
 	'DISPLAY_RESULTS'				=> 'Volledige resultaten weergeven',
-	'DISPLAY_RESULTS_EXPLAIN'		=> 'Selecteer ja om alle acties en resultaten tijdens de aangevraagde actie te laten weergeven.',
+	'DISPLAY_RESULTS_EXPLAIN'		=> 'Kies ja als u alle acties en resultaten wilt laten weergeven tijdens de opgevraagde actie.',
 
-	'ERROR_NOTICE'					=> 'Eén of meer fouten zijn er opgetreden tijdens de aangevraagde actie. Download <a href="%1$s">dit bestand</a> en plaats alle fouten die zijn weergeven erin en vraag de MOD auteur voor verdere ondersteuning.<br /><br />Als uw enige problemen hebt met het downloaden van dat bestand, dan mag uw het direct benaderen met een FTP-browser op de volgende locatie: %2$s',
-	'ERROR_NOTICE_NO_FILE'			=> 'Eén of meer fouten zijn er opgetreden tijdens de aangevraagde actie. Sla alle fouten goed op en vraag de MOD-auteur voor verdere ondersteuning.',
+	'ERROR_NOTICE'					=> 'Eén of meer fouten zijn er opgetreden tijdens de opgevraagde actie. Om een lijst met alle fouten te bekijken kunt u <a href="%1$s">dit bestand</a> downloaden en vraag de MOD-auteur voor assistentie.<br /><br />Als u problemen hebt met het downloaden van het bestand, dan mag u het downloaden met een FTP-browser op de volgende locatie: %2$s',
+	'ERROR_NOTICE_NO_FILE'			=> 'Eén of meer fouten zijn er opgetreden tijdens de opgevraagde actie. Sla alle fouten op en vraag en vraag aan de MOD-auteur assistentie.',
 
 	'FAIL'							=> 'Mislukt',
-	'FILE_COULD_NOT_READ'			=> 'FOUT: Kon het volgende bestand %s niet openen voor te lezen.',
-	'FOUNDERS_ONLY'					=> 'U moet oprichterrechten hebben om deze pagina te kunnen betreden.',
+	'FILE_COULD_NOT_READ'			=> 'FOUT: Kon het bestand %s niet openen voor te lezen.',
+	'FOUNDERS_ONLY'					=> 'U moet forumoprichter status hebben om toegang te hebben tot deze pagina.',
 
-	'GROUP_NOT_EXIST'				=> 'Groep bestaat niet',
+	'GROUP_NOT_EXIST'				=> 'Groep bestaat niet.',
 
 	'IGNORE'						=> 'Negeren',
-	'IMAGESET_CACHE_PURGE'			=> 'Bezig met vernieuwen van de %s afbeeldingenset',
+	'IMAGESET_CACHE_PURGE'			=> 'Vernieuwen van de %s afbeeldingset.',
 	'INSTALL'						=> 'Installeren',
-	'INSTALL_MOD'					=> 'Installeren %s',
-	'INSTALL_MOD_CONFIRM'			=> 'Bent uw klaar om %s te installeren?',
+	'INSTALL_MOD'					=> '%s installeren',
+	'INSTALL_MOD_CONFIRM'			=> 'Bent u klaar om %s te installeren?',
 
-	'MODULE_ADD'					=> 'Bezig met toevoegen %1$s module: %2$s',
+	'MODULE_ADD'					=> 'Adding %1$s module: %2$s',
 	'MODULE_ALREADY_EXIST'			=> 'FOUT: Module bestaat al.',
 	'MODULE_NOT_EXIST'				=> 'FOUT: Module bestaat niet.',
-	'MODULE_REMOVE'					=> 'Bezig met verwijderen %1$s module: %2$s',
+	'MODULE_REMOVE'					=> 'Removing %1$s module: %2$s',
 
 	'NONE'							=> 'Geen',
-	'NO_TABLE_DATA'					=> 'FOUT: Er is geen tabel-data opgegeven',
+	'NO_TABLE_DATA'					=> 'FOUT: Er was geen tabel data opgegeven.',
 
-	'PARENT_NOT_EXIST'				=> 'FOUT: De hoofdcategorie die is opgegeven voor deze module bestaat niet.',
-	'PERMISSIONS_WARNING'			=> 'Nieuwe permissieinstellingen zijn toegevoegd. Wees er zeker van om uw permissieinstellingen te controleren en te kijken of ze zo goed staan zoals uw ze wilt hebben.',
-	'PERMISSION_ADD'				=> 'Bezig met toevoegen van nieuwe permissie optie: %s',
-	'PERMISSION_ALREADY_EXISTS'		=> 'FOUT: Permissie optie %s bestaat al.',
-	'PERMISSION_NOT_EXIST'			=> 'FOUT: Permissie optie %s bestaat niet.',
-	'PERMISSION_REMOVE'				=> 'Bezig met verwijderen van permissie optie: %s',
-	'PERMISSION_SET_GROUP'			=> 'Bezig met instellen van permissies voor de %s groep.',
-	'PERMISSION_SET_ROLE'			=> 'Bezig met instellen van permissies voor de %s rol.',
-	'PERMISSION_UNSET_GROUP'		=> 'Bezig met permissieinstellingen terug draaien van de %s groep.',
-	'PERMISSION_UNSET_ROLE'			=> 'Bezig met permissieinstellingen terug draaien van de %s rol.',
+	'PARENT_NOT_EXIST'				=> 'FOUT: De hoofdcategorie die opgegeven is voor deze module bestaat niet.',
+	'PERMISSIONS_WARNING'			=> 'Er zijn nieuwe permissieinstellingen toegevoegd. Vergeet niet om de permissieinstellingen te controleren en te kijken of ze zo zijn ingestelt naar wens.',
+	'PERMISSION_ADD'				=> 'Toevoegen van nieuwe permissie waarde: %s.',
+	'PERMISSION_ALREADY_EXISTS'		=> 'FOUT: Permissie waarde %s bestaat al.',
+	'PERMISSION_NOT_EXIST'			=> 'FOUT: Permissie waarde %s bestaat niet.',
+	'PERMISSION_REMOVE'				=> 'Verwijderen van permissie waarde: %s.',
+	'PERMISSION_ROLE_ADD'			=> 'Toevoegen van nieuwe permissierol: %s.',
+	'PERMISSION_ROLE_UPDATE'		=> 'Bijwerken van permissierol: %s.',
+	'PERMISSION_ROLE_REMOVE'		=> 'Verwijderen van permissierol: %s.',
+	'PERMISSION_SET_GROUP'			=> 'Instellen van permissies voor de %s groep.',
+	'PERMISSION_SET_ROLE'			=> 'Instellen van permissies voor de %s rol.',
+	'PERMISSION_UNSET_GROUP'		=> 'Verwijderen van permissieinstellingen van de %s groep.',
+	'PERMISSION_UNSET_ROLE'			=> 'Verwijderen van permissieinstellingen van de %s rol.',
 
-	'ROLE_NOT_EXIST'				=> 'Rol bestaat niet.',
+	'ROLE_ALREADY_EXISTS'			=> 'Permissierol bestaat al.',
+	'ROLE_NOT_EXIST'				=> 'Permissierol bestaat niet.',
 
-	'SUCCESS'						=> 'Voltooid',
+	'SUCCESS'						=> 'Gelukt',
 
-	'TABLE_ADD'						=> 'Bezig met toevoegen van nieuwe database-tabel: %s',
+	'TABLE_ADD'						=> 'Toevoegen van nieuwe database-tabel: %s.',
 	'TABLE_ALREADY_EXISTS'			=> 'FOUT: Database-tabel %s bestaat al.',
-	'TABLE_COLUMN_ADD'				=> 'Bezig met toevoegen van nieuwe kolom %2$s naar tabel %1$s',
-	'TABLE_COLUMN_ALREADY_EXISTS'	=> 'FOUT: De kolom %2$s bestaat al op tabel %1$s.',
-	'TABLE_COLUMN_NOT_EXIST'		=> 'FOUT: De kolom %2$s bestaat niet op tabel %1$s.',
-	'TABLE_COLUMN_REMOVE'			=> 'Bezig met verwijderen van de kolom %2$s van tabel %1$s',
-	'TABLE_COLUMN_UPDATE'			=> 'Bezig met bijwerken van kolom %2$s van tabel %1$s',
-	'TABLE_KEY_ADD'					=> 'Bezig met toevoegen van sleutel %2$s naar tabel %1$s',
-	'TABLE_KEY_ALREADY_EXIST'		=> 'FOUT: De index %2$s bestaat al op tabel %1$s.',
-	'TABLE_KEY_NOT_EXIST'			=> 'FOUT: De index %2$s bestaat niet op tabel %1$s.',
-	'TABLE_KEY_REMOVE'				=> 'Bezig met verwijderen van de sleutel %2$s van tabel %1$s',
+	'TABLE_COLUMN_ADD'				=> 'Toevoegen van nieuw veld genaamd %2$s aan de tabel %1$s.',
+	'TABLE_COLUMN_ALREADY_EXISTS'	=> 'FOUT: Het veld %2$s bestaat al op de tabel %1$s.',
+	'TABLE_COLUMN_NOT_EXIST'		=> 'FOUT: Het veld %2$s bestaat niet op de tabel %1$s.',
+	'TABLE_COLUMN_REMOVE'			=> 'Verwijderen van het veld genaamd %2$s van de tabel %1$s.',
+	'TABLE_COLUMN_UPDATE'			=> 'Bijwerken van een veld genaamd %2$s van de tabel %1$s.',
+	'TABLE_KEY_ADD'					=> 'Toevoegen van een sleutel genaamd %2$s aan de tabel %1$s.',
+	'TABLE_KEY_ALREADY_EXIST'		=> 'FOUT: De index %2$s bestaat al op de tabel %1$s.',
+	'TABLE_KEY_NOT_EXIST'			=> 'FOUT: De index %2$s bestaat niet op de tabel %1$s.',
+	'TABLE_KEY_REMOVE'				=> 'Verwijderen van een sleutel genaamd %2$s van de tabel %1$s.',
 	'TABLE_NOT_EXIST'				=> 'FOUT: Database-tabel %s bestaat niet.',
-	'TABLE_REMOVE'					=> 'Bezig met verwijderen van de database-tabel: %s',
-	'TABLE_ROW_INSERT_DATA'			=> 'Bezig met data toevoegen in de %s database-tabel.',
-	'TABLE_ROW_REMOVE_DATA'			=> 'Bezig met verwijderen van een row van de %s database-tabel',
-	'TABLE_ROW_UPDATE_DATA'			=> 'Bezig met bijwerken van een row in de $s database-tabel.',
-	'TEMPLATE_CACHE_PURGE'			=> 'Bezig met vernieuwen van de %s template',
-	'THEME_CACHE_PURGE'				=> 'Bezig met vernieuwen van de %s thema',
+	'TABLE_REMOVE'					=> 'Verwijderen van database-tabel: %s.',
+	'TABLE_ROW_INSERT_DATA'			=> 'Toevoegen van data in de database-tabel %s.',
+	'TABLE_ROW_REMOVE_DATA'			=> 'Verwijderen van een rij van de database-tabel %s.',
+	'TABLE_ROW_UPDATE_DATA'			=> 'Bijwerken van een rij in de database-tabel %s.',
+	'TEMPLATE_CACHE_PURGE'			=> 'Vernieuwen van de %s template.',
+	'THEME_CACHE_PURGE'				=> 'Vernieuwen van het %s thema.',
 
-	'UNINSTALL'						=> 'Deïnstalleren',
-	'UNINSTALL_MOD'					=> 'Deïnstalleren %s',
-	'UNINSTALL_MOD_CONFIRM'			=> 'Weet u zeker dat u %s wilt deïnstalleren? Alle instellingen en data die zijn opgeslagen door deze MOD zullen worden verwijderd.!',
+	'UNINSTALL'						=> 'Verwijderen',
+	'UNINSTALL_MOD'					=> '%s verwijderen',
+	'UNINSTALL_MOD_CONFIRM'			=> 'Bent u klaar om %s te verwijderen? Alle instellingen en data die zijn opgeslagen door deze MOD zullen worden verwijderd!',
 	'UNKNOWN'						=> 'Onbekend',
-	'UPDATE_MOD'					=> 'Bijwerken %s',
-	'UPDATE_MOD_CONFIRM'			=> 'Weet u zeker dat u %s wilt bijwerken?',
-	'UPDATE_UMIL'					=> 'Deze versie van UMIL is niet up-to-date.<br /><br />Download de laatste UMIL (Unified MOD Install Library) van: <a href="%1$s">%1$s</a>',
+	'UPDATE_MOD'					=> 'Update %s',
+	'UPDATE_MOD_CONFIRM'			=> 'Bent u klaar om %s bij te werken?',
+	'UPDATE_UMIL'					=> 'Deze versie van UMIL is niet up-to-date.<br /><br />Download de laatste UMIL (Unified MOD Install Library) op: <a href="%1$s">%1$s</a>',
 
-	'VERSIONS'						=> 'MOD-versie: <strong>%1$s</strong><br />Momenteel geïnstalleerd: <strong>%2$s</strong>',
+	'VERSIONS'						=> 'MOD-versie: <strong>%1$s</strong><br />Huidige versie geïnstalleerd: <strong>%2$s</strong>',
 	'VERSION_SELECT'				=> 'Versie selecteren',
-	'VERSION_SELECT_EXPLAIN'		=> 'Verander niet “negeren” tenzei u weet wat u aan het doen bent, of als u verteld werd om dit te doen.',
+	'VERSION_SELECT_EXPLAIN'		=> 'Wijzig niet de “Negeren”-methode tenzei u weet wat u aan het doen bent of als u gevraagd werdt om dit te doen.',
 ));
 
 ?>
