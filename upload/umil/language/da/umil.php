@@ -4,11 +4,11 @@
  * @author Nathan Guse (EXreaction) http://lithiumstudios.org
  * @author David Lewis (Highway of Life) highwayoflife@gmail.com
  * @package umil
- * @version $Id: umil.php 149 2009-06-16 00:58:51Z exreaction $
+ * @phpBB source Id: umil.php 202 2010-03-11 02:19:30Z exreaction $
+ * @version $Id: umil.php 207 2010-03-14 16:27:00Z exreaction $
  * @copyright (c) 2008 phpBB Group
  * @license http://opensource.org/licenses/gpl-license.php GNU Public License
- *
- * Translated By: jask ( http://phpbb4.dk)
+ * @translated by Olympus DK Team
  *
  */
 
@@ -58,7 +58,7 @@ $lang = array_merge($lang, array(
 	'DISPLAY_RESULTS_EXPLAIN'		=> 'Vælg ja, for at få vist alle udførte handlinger og disses resultater.',
 
 	'ERROR_NOTICE'					=> 'Der opstod en eller flere fejl under udførsel af handlingerne. Download venligst <a href="%1$s">denne  fil</a> indeholdende fejlene og kontakt MOD-udvikleren for yderligere hjælp.<br /><br />Er der problemer med at downloade filen, kan den hentes direkte med en FTP-klient på denne placering: %2$s',
-	'ERROR_NOTICE_NO_FILE'			=> 'Der opstod en eller flere fejl under udførsel af handlingerne. Notér alle fejlene og kontakt MOD-udvikleren for yderligere hjælp.',
+	'ERROR_NOTICE_NO_FILE'			=> 'Der opstod en eller flere fejl under udførsel af handlingerne. Noter alle fejlene og kontakt MOD-udvikleren for yderligere hjælp.',
 
 	'FAIL'							=> 'Fejl',
 	'FILE_COULD_NOT_READ'			=> 'FEJL: Kunne ikke åbne og læse filen %s.',
@@ -66,9 +66,9 @@ $lang = array_merge($lang, array(
 
 	'GROUP_NOT_EXIST'				=> 'Gruppe eksisterer ikke',
 
-	'IGNORE'						=> 'Ignorér',
-	'IMAGESET_CACHE_PURGE'			=> 'Genopfrisker billedpakken %s',
-	'INSTALL'						=> 'Installér',
+	'IGNORE'						=> 'Ignorer',
+	'IMAGESET_CACHE_PURGE'			=> 'Genopfrisker grafikpakken %s',
+	'INSTALL'						=> 'Installer',
 	'INSTALL_MOD'					=> 'Installerer %s',
 	'INSTALL_MOD_CONFIRM'			=> 'Er du klar til at installere %s?',
 
@@ -81,26 +81,30 @@ $lang = array_merge($lang, array(
 	'NO_TABLE_DATA'					=> 'FEJL: Ingen datatabel specificeret',
 
 	'PARENT_NOT_EXIST'				=> 'FEJL: Kategorien specificeret til dette modul eksisterer ikke.',
-	'PERMISSIONS_WARNING'			=> 'Nye tilladelseindstillinger er tilføjet. Kontrollér venligst at indstillingerne er som du ønsker.',
+	'PERMISSIONS_WARNING'			=> 'Nye tilladelseindstillinger er tilføjet. Kontroller venligst at indstillingerne er som du ønsker.',
 	'PERMISSION_ADD'				=> 'Tilføjer ny tilladelsemulighed: %s',
-	'PERMISSION_ALREADY_EXISTS'		=> 'FEJL: Tilladelsemuligheden %s eksisterer allerede.',
-	'PERMISSION_NOT_EXIST'			=> 'FEJL: Tilladelsemuligheden %s eksisterer ikke.',
-	'PERMISSION_REMOVE'				=> 'Sletter tilladelsemuligheden: %s',
+	'PERMISSION_ALREADY_EXISTS'		=> 'FEJL: Tilladelsen %s eksisterer allerede.',
+	'PERMISSION_NOT_EXIST'			=> 'FEJL: Tilladelsen %s eksisterer ikke.',
+	'PERMISSION_REMOVE'				=> 'Sletter tilladelsen: %s',
+	'PERMISSION_ROLE_ADD'			=> 'Tilføjer ny tilladelserolle: %s',
+	'PERMISSION_ROLE_UPDATE'	=> 'Opdaterer tilladelserolle: %s',
+	'PERMISSION_ROLE_REMOVE'	=> 'Sletter tilladelserolle: %s',
 	'PERMISSION_SET_GROUP'			=> 'Indstiller tilladelser for gruppen %s.',
 	'PERMISSION_SET_ROLE'			=> 'Indstiller tilladelser for rollen %s.',
 	'PERMISSION_UNSET_GROUP'		=> 'Fjerner tilladelser for gruppen %s.',
 	'PERMISSION_UNSET_ROLE'			=> 'Fjerner tilladelser for rollen %s.',
 
-	'ROLE_NOT_EXIST'				=> 'Rolle eksisterer ikke',
+	'ROLE_ALREADY_EXISTS' => 'Tilladelserolle eksisterer allerede.'
+	'ROLE_NOT_EXIST'				=> 'Tilladelserolle eksisterer ikke.',
 
 	'SUCCESS'						=> 'Udført',
 
 	'TABLE_ADD'						=> 'Tilføjer ny databasetabel: %s',
-	'TABLE_ALREADY_EXISTS'			=> 'FEJL: Databasetabelen %s eksisterer allerede.',
+	'TABLE_ALREADY_EXISTS'			=> 'FEJL: Databasetabellen %s eksisterer allerede.',
 	'TABLE_COLUMN_ADD'				=> 'Tilføjer en ny kolonne med navnet %2$s i tabellen %1$s',
 	'TABLE_COLUMN_ALREADY_EXISTS'	=> 'FEJL: Kolonnen %2$s eksisterer allerede i tabellen %1$s.',
 	'TABLE_COLUMN_NOT_EXIST'		=> 'FEJL: Kolonnen %2$s eksisterer ikke i tabellen %1$s.',
-	'TABLE_COLUMN_REMOVE'			=> 'Sletter kollonnen %2$s i tabellen %1$s',
+	'TABLE_COLUMN_REMOVE'			=> 'Sletter kolonnen %2$s i tabellen %1$s',
 	'TABLE_COLUMN_UPDATE'			=> 'Opdaterer kolonnen %2$s i tabellen %1$s',
 	'TABLE_KEY_ADD'					=> 'Tilføjer nøglen %2$s i tabellen %1$s',
 	'TABLE_KEY_ALREADY_EXIST'		=> 'FEJL: Indekset %2$s eksisterer allerede i tabellen %1$s.',
@@ -114,7 +118,7 @@ $lang = array_merge($lang, array(
 	'TEMPLATE_CACHE_PURGE'			=> 'Genopfrisker skabelonen %s',
 	'THEME_CACHE_PURGE'				=> 'Genopfrisker temaet %s',
 
-	'UNINSTALL'						=> 'Afinstallér',
+	'UNINSTALL'						=> 'Afinstaller',
 	'UNINSTALL_MOD'					=> 'Afinstallerer %s',
 	'UNINSTALL_MOD_CONFIRM'			=> 'Er du klar til at afinstallere %s? Alle indstillinger og data gemt af dette MOD bliver slettet!',
 	'UNKNOWN'						=> 'Ukendt',
@@ -124,7 +128,7 @@ $lang = array_merge($lang, array(
 
 	'VERSIONS'						=> 'MOD-version: <strong>%1$s</strong><br />I øjeblikket er version <strong>%2$s</strong> installeret',
 	'VERSION_SELECT'				=> 'Valg af version',
-	'VERSION_SELECT_EXPLAIN'		=> 'Fasthold "Ignorér", medmindre du ved hvad det betyder, eller du er blevet bedt om det.',
+	'VERSION_SELECT_EXPLAIN'		=> 'Fasthold "Ignorer", medmindre du ved hvad det betyder, eller du er blevet bedt om det.',
 ));
 
 ?>

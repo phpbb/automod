@@ -4,8 +4,8 @@
  * @author Nathan Guse (EXreaction) http://lithiumstudios.org
  * @author David Lewis (Highway of Life) highwayoflife@gmail.com
  * @package umil
- * @version $Id: umil.php 149 2009-06-16 00:58:51Z exreaction $
-* @copyright (c) 2009 phpBB-TW (心靈捕手) http://phpbb-tw.net/phpbb/
+ * @version $Id: umil.php 208 2010-03-15 02:03:13Z exreaction $
+ * @copyright (c) 2009 phpBB-TW (心靈捕手) http://phpbb-tw.net/phpbb/
  * @license http://opensource.org/licenses/gpl-license.php GNU Public License
  *
  */
@@ -84,12 +84,16 @@ $lang = array_merge($lang, array(
 	'PERMISSION_ALREADY_EXISTS'		=> '錯誤：權限選項 %s 已經存在。',
 	'PERMISSION_NOT_EXIST'			=> '錯誤：權限選項 %s 不存在。',
 	'PERMISSION_REMOVE'				=> '正在移除權限選項：%s',
+	'PERMISSION_ROLE_ADD'			=> '正在增加新的權限角色：%s',
+	'PERMISSION_ROLE_UPDATE'		=> '正在更新權限角色：%s',
+	'PERMISSION_ROLE_REMOVE'		=> '正在移除權限角色：%s',
 	'PERMISSION_SET_GROUP'			=> '正在設定 %s 群組的權限。',
 	'PERMISSION_SET_ROLE'			=> '正在設定 %s 角色的權限。',
 	'PERMISSION_UNSET_GROUP'		=> '正在移除設定 %s 群組的權限。',
 	'PERMISSION_UNSET_ROLE'			=> '正在移除設定 %s 角色的權限。',
 
-	'ROLE_NOT_EXIST'				=> '角色不存在',
+	'ROLE_ALREADY_EXISTS'			=> '權限角色已存在。',
+	'ROLE_NOT_EXIST'				=> '權限角色不存在',
 
 	'SUCCESS'						=> '成功',
 
