@@ -444,7 +444,7 @@ class acp_mods
 	/**
 	* Returns array of mod information
 	*/
-	function mod_details($mod_ident, $find_children = true)
+	function mod_details($mod_ident, $find_children = true, $uninstall = false)
 	{
 		global $phpbb_root_path, $phpEx, $user, $template, $parent_id;
 
@@ -483,7 +483,7 @@ class acp_mods
 
 				// This is a check for any further XML files to go with this MOD.
 				// Obviously, the files must not have been removed for this to work.
-				if ($find_children && file_exists($row['mod_path']))
+				if (($find_children || $uninstall) && file_exists($row['mod_path']))
 				{
 					$parent_id = $mod_id;
 					$mod_path = $row['mod_path'];
@@ -502,41 +502,55 @@ class acp_mods
 					$children = $this->find_children($mod_path);
 
 					$elements = array('language' => array(), 'template' => array());
+                    $found_prosilver = false;
 
-					$this->handle_contrib($children);
-					$this->handle_language_prompt($children, $elements, 'details');
-					$this->handle_template_prompt($children, $elements, 'details');
-
-					// Now offer to install additional templates
-					$found_prosilver = false;
-					if (isset($children['template']) && sizeof($children['template']))
+					if (!$uninstall)
 					{
-						// These are the instructions included with the MOD
-						foreach ($children['template'] as $template_name)
+						$this->handle_contrib($children);
+						$this->handle_language_prompt($children, $elements, 'details');
+						$this->handle_template_prompt($children, $elements, 'details');
+
+						// Now offer to install additional templates
+						if (isset($children['template']) && sizeof($children['template']))
 						{
-							if (!is_array($template_name))
+							// These are the instructions included with the MOD
+							foreach ($children['template'] as $template_name)
 							{
-								continue;
-							}
+								if (!is_array($template_name))
+								{
+									continue;
+								}
 
-							if ($template_name['realname'] == 'prosilver')
-							{
-								$found_prosilver = true;
-							}
+								if ($template_name['realname'] == 'prosilver')
+								{
+									$found_prosilver = true;
+								}
 
-							if (file_exists($this->mod_root . $template_name['href']))
-							{
-								$xml_file = $template_name['href'];
-							}
-							else
-							{
-								$xml_file = str_replace($this->mods_dir, '', dirname($row['mod_path'])) . '/' . $template_name['href'];
-							}
+								if (file_exists($this->mod_root . $template_name['href']))
+								{
+									$xml_file = $template_name['href'];
+								}
+								else
+								{
+									$xml_file = str_replace($this->mods_dir, '', dirname($row['mod_path'])) . '/' . $template_name['href'];
+								}
 
-							$template->assign_block_vars('avail_templates', array(
-								'TEMPLATE_NAME'	=> $template_name['realname'],
-								'XML_FILE'		=> urlencode($xml_file),
-							));
+								$template->assign_block_vars('avail_templates', array(
+									'TEMPLATE_NAME'	=> $template_name['realname'],
+									'XML_FILE'		=> urlencode($xml_file),
+								));
+							}
+						}
+					}
+					else
+					{
+						if (isset($children['uninstall']) && sizeof($children['uninstall']))
+						{
+							// Override already exising actions with the ones
+							global $rev_actions;
+                            $xml_file = dirname($row['mod_path']) . '/' . ltrim($children['uninstall'][0]['href'], './');
+							$this->parser->set_file($xml_file);
+							$rev_actions = $this->parser->get_actions();
 						}
 					}
 
@@ -1173,7 +1187,7 @@ class acp_mods
 		));
 
 		// grab actions and details
-		$details = $this->mod_details($mod_id, false);
+		$details = $this->mod_details($mod_id, false, true);
 		$actions = $this->mod_actions($mod_id);
 
 		$force_install = request_var('force', false);
@@ -1331,14 +1345,24 @@ class acp_mods
 	function process_edits($editor, $actions, $details, $change = false, $display = true, $reverse = false)
 	{
 		global $template, $user, $db, $phpbb_root_path, $force_install, $mod_installed;
-		global $dest_inherits, $dest_template;
+		global $dest_inherits, $dest_template, $children;
 
 		$mod_installed = true;
 
 		if ($reverse)
 		{
-			// maybe should allow for potential extensions here
-			$actions = parser::reverse_edits($actions);
+			global $rev_actions;
+
+			if (empty($rev_actions))
+			{
+				// maybe should allow for potential extensions here
+				$actions = parser::reverse_edits($actions);
+			}
+			else
+			{
+				$actions = $rev_actions;
+				unset($rev_actions);
+			}
 		}
 
 		$template->assign_vars(array(
@@ -1633,6 +1657,32 @@ class acp_mods
 			}
 		}
 
+		if (!empty($actions['DELETE_FILES']) && $change && ($mod_installed || $force_install))
+		{
+			foreach ($actions['DELETE_FILES'] as $file)
+			{
+				// purposely do not use !== false here, because we don't expect wildcards in position 0
+				if (strpos($file, '*.*'))
+				{
+					$file = str_replace('*.*', '', $file);
+					if (is_dir($phpbb_root_path . $file))
+					{
+						// recursively delete
+						recursive_unlink($phpbb_root_path . $file);
+					}
+					else
+					{
+						unlink($phpbb_root_path . $file);
+					}
+				}
+				else
+				{
+					// if there's no wildcard, we assume it is a single file
+					unlink($phpbb_root_path . $file);
+				}
+			}
+		}
+
 
 		// Perform SQL queries last -- Queries usually cannot be done a second
 		// time, so do them only if the edits were successful.  Still complies
@@ -1719,7 +1769,7 @@ class acp_mods
 				unset($children['template-lang']);
 			}
 
-			$child_types = array('contrib', 'template', 'language', 'dependency');
+			$child_types = array('contrib', 'template', 'language', 'dependency', 'uninstall');
 	
 			foreach ($child_types as $type)
 			{
