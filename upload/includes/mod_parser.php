@@ -742,6 +742,11 @@ class parser_xml
 			}
 		}
 
+		if (!empty($xml_actions['PHP-INSTALLER']))
+		{
+			$actions['PHP_INSTALLER'] = $xml_actions['PHP-INSTALLER'][0]['data'];
+		}
+
 		if (!empty($xml_actions['DIY-INSTRUCTIONS']))
 		{
 			$actions['DIY_INSTRUCTIONS'] = localise_tags($xml_actions, 'DIY-INSTRUCTIONS');

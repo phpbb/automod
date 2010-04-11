@@ -944,6 +944,13 @@ class acp_mods
 			}
 		}
 
+		if (!empty($actions['PHP_INSTALLER']))
+		{
+			$template->assign_vars(array(
+				'U_PHP_INSTALLER'   => $phpbb_root_path . $actions['PHP_INSTALLER'],
+			));
+		}
+
 		if ($mod_installed || $force_install)
 		{
 			// Move edited files back
