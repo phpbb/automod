@@ -96,6 +96,8 @@ $lang = array_merge($lang, array(
 	'FTP_METHOD_FTP'	=> 'FTP',
 	'FTP_METHOD_FSOCK'	=> 'Simple Socket',
 
+	'GO_PHP_INSTALLER'  => 'The MOD requires an external installer to finish installation.  Click here to continue to that step.',
+
 	'INHERIT_NO_CHANGE'	=> 'No changes can be made to this file because the template %1$s depends on %2$s.',
 	'INLINE_FIND_MISSING'=> 'The In-Line Find specified by the MOD could not be found.',
 	'INSTALL_AUTOMOD'	=> 'AutoMOD Installation',
