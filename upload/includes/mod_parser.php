@@ -431,6 +431,11 @@ class parser_xml
 						continue;
 					}
 
+                    if ($link_group['LINK'][$i]['attrs']['TYPE'] == 'text')
+					{
+						continue;
+					}
+
 					$children[$link_group['LINK'][$i]['attrs']['TYPE']][] = array(
 						'href'		=> $link_group['LINK'][$i]['attrs']['HREF'],
 						'realname'	=> isset($link_group['LINK'][$i]['attrs']['REALNAME']) ? $link_group['LINK'][$i]['attrs']['REALNAME'] : core_basename($link_group['LINK'][$i]['attrs']['HREF']),
@@ -553,6 +558,17 @@ class parser_xml
 			}
 		}
 
+		$delete_files_info = (!empty($xml_actions['DELETE'])) ? $xml_actions['DELETE'] : array();
+		for ($i = 0; $i < sizeof($delete_files_info); $i++)
+		{
+			$delete_files = $delete_files_info[$i]['children']['FILE'];
+			for ($j = 0; $j < sizeof($delete_files); $j++)
+			{
+				$name = str_replace('\\', '/', $delete_files[$j]['attrs']['NAME']);
+				$actions['DELETE_FILES'][] = $name;
+			}
+		}
+
 		// open
 		$open_info = (!empty($xml_actions['OPEN'])) ? $xml_actions['OPEN'] : array();
 		for ($i = 0; $i < sizeof($open_info); $i++)
@@ -567,7 +583,7 @@ class parser_xml
 				$action_info = (!empty($edit_info[$j]['children'])) ? $edit_info[$j]['children'] : array();
 
 				// store some array information to help decide what kind of operation we're doing
-				$action_count = $total_action_count = 0;
+				$action_count = $total_action_count = $remove_count = $find_count = 0;
 				if (isset($action_info['ACTION']))
 				{
 					$action_count += sizeof($action_info['ACTION']);
@@ -578,7 +594,45 @@ class parser_xml
 					$total_action_count += sizeof($action_info['INLINE-EDIT']);
 				}
 
-				$find_count = sizeof($action_info['FIND']);
+				if (isset($action_info['REMOVE']))
+				{
+					$remove_count = sizeof($action_info['REMOVE']); // should be an integer bounded between zero and one
+				}
+
+				if (isset($action_info['FIND']))
+				{
+					$find_count = sizeof($action_info['FIND']);
+				}
+
+				// the basic idea is to transform a "remove" tag into a replace-with action
+				if ($remove_count && !$find_count)
+				{
+					// but we still support it if $remove_count is > 1
+					for ($k = 0; $k < $remove_count; $k++)
+					{
+						// if there is no find tag associated, handle it directly
+						$actions['EDITS'][$current_file][$j][trim($action_info['REMOVE'][$k]['data'], "\n\r")]['replace with'] = '';
+					}
+				}
+				else if ($remove_count && $find_count)
+				{
+					// if there is a find and a remove, transform into a replace-with
+					// action, and let the logic below sort out the relationships.
+                    for ($k = 0; $k < $remove_count; $k++)
+					{
+						$insert_index = (isset($action_info['ACTION'])) ? sizeof($action_info['ACTION']) : 0;
+
+						$action_info['ACTION'][$insert_index] = array(
+							'data' => '',
+							'attrs' => array('TYPE'	=> 'replace with'),
+						);
+					}
+				}
+				else if (!$find_count)
+				{
+					trigger_error(sprintf($user->lang['INVALID_MOD_NO_FIND'], $action_info['ACTION'][0]['data']));
+				}
+
 				// first we try all the possibilities for a FIND/ACTION combo, then look at inline possibilities.
 
 				if (isset($action_info['ACTION']))
@@ -612,6 +666,19 @@ class parser_xml
 				{
 					$inline_info = (!empty($action_info['INLINE-EDIT'])) ? $action_info['INLINE-EDIT'] : array();
 
+					if (isset($inline_info[0]['children']['INLINE-REMOVE']) && sizeof($inline_info[0]['children']['INLINE-REMOVE']))
+					{
+						// overwrite the existing array with the new one
+						$inline_info[0]['children'] = array(
+							'INLINE-FIND'   => $inline_info[0]['children']['INLINE-REMOVE'],
+							'INLINE-ACTION' => array(
+								0 => array(
+									'attrs'	=> array('TYPE'	=> 'replace-with'),
+									'data'	=> '',
+								),
+							),
+						);
+					}
 					if ($find_count > $total_action_count)
 					{
 						// Yeah, $k is used more than once for different information
@@ -635,7 +702,7 @@ class parser_xml
 					{
 						$inline_data = (!empty($inline_info[$k]['children'])) ? $inline_info[$k]['children'] : array();
 
-						$inline_find_count = sizeof($inline_data['INLINE-FIND']);
+						$inline_find_count = (isset($inline_data['INLINE-FIND'])) ? sizeof($inline_data['INLINE-FIND']) : 0;
 
 						$inline_comment = localise_tags($inline_data, 'INLINE-COMMENT');
 						$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'], "\r\n")]['in-line-edit']['inline-comment'] = $inline_comment;
