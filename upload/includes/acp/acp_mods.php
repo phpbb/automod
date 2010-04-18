@@ -1490,7 +1490,11 @@ class acp_mods
 										$inline_comment = '';
 										foreach ($contents as $inline_edit_id => $inline_edit)
 										{
-											if ($inline_edit_id === 'inline-comment')
+											if(empty($inline_edit))
+											{
+												trigger_error("Error, an inline edit in the MODX install file is missing all the required elements", E_USER_WARNING);
+											}
+											else if ($inline_edit_id === 'inline-comment')
 											{
 												// This is a special case for tucking comments in the array
 												if ($inline_edit != $user->lang['UNKNOWN_MOD_INLINE-COMMENT'])
@@ -1588,7 +1592,7 @@ class acp_mods
 									break;
 
 									default:
-										trigger_error("Error, unrecognised command $type"); // ERROR!
+										trigger_error("Error, unrecognised command $type", E_USER_WARNING); // ERROR!
 									break;
 								}
 
