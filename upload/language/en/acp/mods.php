@@ -100,6 +100,7 @@ $lang = array_merge($lang, array(
 
 	'INHERIT_NO_CHANGE'	=> 'No changes can be made to this file because the template %1$s depends on %2$s.',
 	'INLINE_FIND_MISSING'=> 'The In-Line Find specified by the MOD could not be found.',
+	'INLINE_EDIT_ERROR'	=> 'Error, an inline edit in the MODX install file is missing all the required elements',
 	'INSTALL_AUTOMOD'	=> 'AutoMOD Installation',
 	'INSTALL_AUTOMOD_CONFIRM'	=> 'Are you sure you want to install AutoMOD?',
 	'INSTALL_TIME'		=> 'Installation time',
@@ -188,6 +189,7 @@ $lang = array_merge($lang, array(
 	'UNINSTALLED'			=> 'MOD uninstalled',
 	'UNINSTALLED_MODS'		=> 'Uninstalled MODs',
 	'UNINSTALLED_EXPLAIN'	=> 'Your MOD has been uninstalled! Here you can view some of the results from the uninstallation. Please note any errors, and seek support at <a href="http://www.phpbb.com">phpBB.com</a>.',
+	'UNRECOGNISED_COMMAND'	=> 'Error, unrecognised command %s',
 	'UPDATE_AUTOMOD'		=> 'Update AutoMOD',
 	'UPDATE_AUTOMOD_CONFIRM'=> 'Please confirm you want to update AutoMOD.',
 
