@@ -113,6 +113,7 @@ $lang = array_merge($lang, array(
 	'INSTALLATION_SUCCESSFUL'	=> 'AutoMOD installed successfully.  You can now manage phpBB MODifications through the AutoMOD tab in the Administration Control Panel.',
 	'INVALID_MOD_INSTRUCTION'	=> 'This MOD has an invalid instruction, or an in-line find operation failed.',
 	'INVALID_MOD_NO_FIND'       => 'The MOD is missing a find matching the action %s',
+	'INVALID_MOD_NO_ACTION'     => 'The MOD is missing an action matching the find %s',
 
 	'LANGUAGE_NAME'		=> 'Language Name',
 

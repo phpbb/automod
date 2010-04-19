@@ -630,7 +630,7 @@ class parser_xml
 				}
 				else if (!$find_count)
 				{
-					trigger_error(sprintf($user->lang['INVALID_MOD_NO_FIND'], $action_info['ACTION'][0]['data']));
+					trigger_error(sprintf($user->lang['INVALID_MOD_NO_FIND'], $action_info['ACTION'][0]['data']), E_USER_WARNING);
 				}
 
 				// first we try all the possibilities for a FIND/ACTION combo, then look at inline possibilities.
@@ -655,6 +655,13 @@ class parser_xml
 								$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'], "\n\r")][$type] = (isset($action_info['ACTION'][$l]['data'])) ? preg_replace("#^(\s)+\n#", '', rtrim(trim($action_info['ACTION'][$l]['data'], "\n"))) : '';
 							}
 						}
+					}
+				}
+				else
+				{
+					if (!$remove_count && !$total_action_count)
+					{
+						trigger_error(sprintf($user->lang['INVALID_MOD_NO_ACTION'], $action_info['FIND'][0]['data']), E_USER_WARNING);
 					}
 				}
 
@@ -708,6 +715,16 @@ class parser_xml
 						$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$find_count - 1]['data'], "\r\n")]['in-line-edit']['inline-comment'] = $inline_comment;
 
 						$inline_actions = (!empty($inline_data['INLINE-ACTION'])) ? $inline_data['INLINE-ACTION'] : array();
+
+						if (empty($inline_actions))
+						{
+							trigger_error(sprintf($user->lang['INVALID_MOD_NO_ACTION'], $inline_data['INLINE-FIND'][0]['data']), E_USER_WARNING);
+						}
+						if (empty($inline_find_count))
+						{
+							trigger_error(sprintf($user->lang['INVALID_MOD_NO_FIND'], $inline_actions[0]['data']), E_USER_WARNING);
+						}
+
 						for ($l = 0; $l < $inline_find_count; $l++)
 						{
 							$inline_find = $inline_data['INLINE-FIND'][$l]['data'];
