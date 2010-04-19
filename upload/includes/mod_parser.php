@@ -630,7 +630,7 @@ class parser_xml
 				}
 				else if (!$find_count)
 				{
-					trigger_error(sprintf($user->lang['INVALID_MOD_NO_FIND'], $action_info['ACTION'][0]['data']), E_USER_WARNING);
+					trigger_error(sprintf($user->lang['INVALID_MOD_NO_FIND'], htmlspecialchars($action_info['ACTION'][0]['data'])), E_USER_WARNING);
 				}
 
 				// first we try all the possibilities for a FIND/ACTION combo, then look at inline possibilities.
@@ -661,7 +661,7 @@ class parser_xml
 				{
 					if (!$remove_count && !$total_action_count)
 					{
-						trigger_error(sprintf($user->lang['INVALID_MOD_NO_ACTION'], $action_info['FIND'][0]['data']), E_USER_WARNING);
+						trigger_error(sprintf($user->lang['INVALID_MOD_NO_ACTION'], htmlspecialchars($action_info['FIND'][0]['data'])), E_USER_WARNING);
 					}
 				}
 
@@ -718,11 +718,11 @@ class parser_xml
 
 						if (empty($inline_actions))
 						{
-							trigger_error(sprintf($user->lang['INVALID_MOD_NO_ACTION'], $inline_data['INLINE-FIND'][0]['data']), E_USER_WARNING);
+							trigger_error(sprintf($user->lang['INVALID_MOD_NO_ACTION'], htmlspecialchars($inline_data['INLINE-FIND'][0]['data'])), E_USER_WARNING);
 						}
 						if (empty($inline_find_count))
 						{
-							trigger_error(sprintf($user->lang['INVALID_MOD_NO_FIND'], $inline_actions[0]['data']), E_USER_WARNING);
+							trigger_error(sprintf($user->lang['INVALID_MOD_NO_FIND'], htmlspecialchars($inline_actions[0]['data'])), E_USER_WARNING);
 						}
 
 						for ($l = 0; $l < $inline_find_count; $l++)
