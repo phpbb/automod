@@ -1589,7 +1589,8 @@ class acp_mods
 									break;
 
 									default:
-										trigger_error("Error, unrecognised command $type", E_USER_WARNING); // ERROR!
+										$message = sprintf($user->lang['UNRECOGNISED_COMMAND'], $action);
+										trigger_error($message, E_USER_WARNING); // ERROR!
 									break;
 								}
 
