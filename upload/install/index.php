@@ -165,6 +165,7 @@ $versions = array(
 	'1.0.0-RC1'	=> array(),
 	'1.0.0-RC2' => array(),
 	'1.0.0-RC3'	=> array(),
+	'1.0.0-RC4' => array(),
 );
 
 // Include the UMIF Auto file and everything else will be handled automatically.
