@@ -304,7 +304,7 @@ function recursive_unlink($file)
 
 	while (($subfile = readdir($dh)) !== false)
 	{
-		if ($subfile[0] == '.')
+		if ($subfile == '.' || $subfile == '..')
 		{
 		    continue;
 		}
