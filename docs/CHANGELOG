@@ -1,5 +1,14 @@
 AutoMOD Changelog
 
+- Changes since 1.0.0 Release Candidate 3
+ + [Feature] MODX 1.2.4 and 1.2.5 support
+ + [Change] Do not try to cope with invalid MODX; throw errors instead.
+ + [Fix] Correct naming of files in the Compressed File Download write method
+ + [Fix] Improve handling of previously installed languages and styles
+ + [Fix] Do not re-do MOD edits when installing the MOD on a prosilver-based style
+ + [Fix] Better whitespace handling on installation and uninstallation as well
+ + [Fix] Remember FTP information when using the force install feature
+
 - Changes since 1.0.0 Release Candidate 2
  + [Feature] Allow MOD uploads directly in AutoMOD
  + [Feature] MODX 1.2.3 support
