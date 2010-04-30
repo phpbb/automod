@@ -2017,7 +2017,7 @@ class acp_mods
 	
 	function upload_mod()
 	{
-		global $phpbb_root_path, $phpEx, $template, $user;
+		global $phpbb_root_path, $phpEx, $template, $user, $config;
 		
 		if (!isset($_POST['submit']))
 		{
