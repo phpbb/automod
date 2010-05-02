@@ -53,77 +53,8 @@ $language_file = 'acp/mods';
 // Logo Image
 $logo_image = 'install/automod_logo.png';
 
-/*
-* The array of versions and actions within each.
-* You do not need to order it a specific way (it will be sorted automatically), however, you must enter every version, even if no actions are done for it.
-*
-* You must use correct version numbering.  Unless you know exactly what you can use, only use X.X.X (replacing X with an integer).
-* The version numbering must otherwise be compatible with the version_compare function - http://php.net/manual/en/function.version-compare.php
-*/
-
-$cat_module_data = array(
-	'module_enabled'	=> 1,
-	'module_display'	=> 1,
-	'module_basename'	=> '',
-	'module_langname'	=> '',
-	'module_mode'		=> '',
-	//'module_auth'		=> 'a_mods',
-	'module_langname'	=> 'ACP_CAT_MODS',
-	'module_auth'		=> 'acl_a_mods',
-);
-
-// Insert Parent Module
-$parent_module_data = array(
-	'module_enabled'	=> 1,
-	'module_display'	=> 1,
-	'module_langname'	=> 'ACP_MODS',
-	'module_auth'		=> 'acl_a_mods',
-);
-
-// Frontend Module
-$front_module_data = array(
-	'module_enabled'	=> 1,
-	'module_display'	=> 1,
-	'module_langname'	=> 'ACP_AUTOMOD',
-
-	'module_basename'	=> 'mods',
-	'module_mode'		=> 'frontend',
-	'module_auth'		=> 'acl_a_mods',
-);
-
-// Config Module
-$config_module_data = array(
-	'module_enabled'	=> 1,
-	'module_display'	=> 1,
-	'module_langname'	=> 'ACP_AUTOMOD_CONFIG',
-
-	'module_basename'	=> 'mods',
-	'module_mode'		=> 'config',
-	'module_auth'		=> 'acl_a_mods',
-);
-
-$schema_data = array(
-	'COLUMNS'		=> array(
-		'mod_id'				=> array('UINT', NULL, 'auto_increment'),
-		'mod_active'			=> array('BOOL', 0),
-		'mod_time'				=> array('TIMESTAMP', 0),
-		'mod_dependencies'		=> array('MTEXT_UNI', ''),
-		'mod_name'				=> array('XSTEXT_UNI', ''),
-		'mod_description'		=> array('TEXT_UNI', ''),
-		'mod_version'			=> array('VCHAR:25', ''),
-		'mod_author_notes'		=> array('TEXT_UNI', ''),
-		'mod_author_name'		=> array('XSTEXT_UNI', ''),
-		'mod_author_email'		=> array('XSTEXT_UNI', ''),
-		'mod_author_url'		=> array('XSTEXT_UNI', ''),
-		'mod_actions'			=> array('MTEXT_UNI', ''),
-		'mod_languages'			=> array('STEXT_UNI', ''),
-		'mod_template'			=> array('STEXT_UNI', ''),
-		'mod_path'				=> array('STEXT_UNI', ''),
-	),
-	'PRIMARY_KEY'	=> 'mod_id',
-);
-
-$versions = include($phpbb_root_path . 'install/install_versions.'.$phpEx);
+// Get version info
+include($phpbb_root_path . 'install/install_versions.'.$phpEx);
 
 // Include the UMIF Auto file and everything else will be handled automatically.
 include($phpbb_root_path . 'umil/umil_auto.' . $phpEx);
