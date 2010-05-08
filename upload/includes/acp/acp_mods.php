@@ -835,6 +835,8 @@ class acp_mods
 		// NB: There could and should be cases to check for duplicated MODs and contribs
 		// However, there is not appropriate book-keeping in place for those in 1.0.x
 
+		add_form_key('acp_mods');
+
 		$write_method = 'editor_' . determine_write_method(false);
 		$editor = new $write_method();
 
@@ -1090,6 +1092,7 @@ class acp_mods
 			{
 				$hidden_ary['dest'] = $dest_template;
 				$hidden_ary['source'] = $mod_path;
+				$hidden_ary['template_submit'] = true;
 			}
 
 			$template->assign_vars(array(
