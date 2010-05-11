@@ -1880,11 +1880,17 @@ class acp_mods
 		{
 			foreach ($children[$type] as $child_key => $child_data)
 			{
-				if ($child_data['realname'] == $name)
+				$root_position = strpos($child_data['href'], $this->mod_root);
+				if ($child_data['realname'] == $name && $root_position === false)
 				{
 					$child_filename = $this->mod_root . ltrim($child_data['href'], './');
 					break;
 				}
+				else if ($child_data['realname'] == $name && $root_position === 0)
+				{
+					$child_filename = $child_data['href'];
+				}
+
 			}
 
 			$actions_ary = $this->mod_actions($child_filename);
