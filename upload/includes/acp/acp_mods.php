@@ -579,7 +579,7 @@ class acp_mods
 					}
 
 					$s_hidden_fields = build_hidden_fields(array(
-						'action'	=> 'install',
+						'action'	=> ($uninstall) ? 'uninstall' : 'install',
 						'parent'	=> $parent_id,
 					));
 
@@ -1192,6 +1192,7 @@ class acp_mods
 			'MOD_ID'		=> $mod_id,
 
 			'U_UNINSTALL'	=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
+			'U_RETRY'		=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
 			'U_RETURN'		=> $this->u_action,
 			'U_BACK'		=> $this->u_action,
 		));
@@ -1231,8 +1232,10 @@ class acp_mods
 		{
 			$template->assign_var('S_FORCE', true);
 		}
-
-		$template->assign_var('S_ERROR', !$mod_uninstalled);
+		else if (!$mod_uninstalled)
+		{
+			$template->assign_var('S_ERROR', true);
+		}
 
 		if ($execute_edits && ($mod_uninstalled || $force_uninstall))
 		{
