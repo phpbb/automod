@@ -1,0 +1,9 @@
+1.0.1
+
+  - Add the copyright thing (c) in the copyright notice.
+
+1.0.0
+
+  - Updated for AutoMOD 1.0.0 support.
+  - Change license link in the copyright notice.
+  - Add README, AUTHORS, CHANGELOG and INSTALL files.

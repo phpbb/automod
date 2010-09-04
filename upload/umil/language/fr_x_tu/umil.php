@@ -1,6 +1,6 @@
 <?php
 /**
- * This file is part of French (Formal Honorifics) UMIL translation.
+ * This file is part of French (Casual Honorifics) UMIL translation.
  * Copyright (C) 2010 phpBB.fr
  *
  * This program is free software; you can redistribute it and/or modify
@@ -59,7 +59,7 @@ $lang = array_merge($lang, array(
 	'ADVANCED'						=> 'Avancé',
 	'AUTH_CACHE_PURGE'				=> 'Purgation du cache d’authentification',
 
-	'CACHE_PURGE'					=> 'Purgation du cache de votre forum',
+	'CACHE_PURGE'					=> 'Purgation du cache de ton forum',
 	'CONFIGURE'						=> 'Configurer',
 	'CONFIG_ADD'					=> 'Ajout d’une nouvelle variable de configuration : %s',
 	'CONFIG_ALREADY_EXISTS'			=> 'ERREUR : la variable de configuration %s existe déjà.',
@@ -68,14 +68,14 @@ $lang = array_merge($lang, array(
 	'CONFIG_UPDATE'					=> 'Mise à jour d’une variable de configuration : %s',
 
 	'DISPLAY_RESULTS'				=> 'Afficher tous les résultats',
-	'DISPLAY_RESULTS_EXPLAIN'		=> 'Sélectionnez “oui” afin d’afficher toutes les actions et tous les résultats durant l’action demandée.',
+	'DISPLAY_RESULTS_EXPLAIN'		=> 'Sélectionne “oui” afin d’afficher toutes les actions et tous les résultats durant l’action demandée.',
 
-	'ERROR_NOTICE'					=> 'Une ou plusieurs erreurs sont survenues lors de la réalisation de l’action demandée. Veuillez télécharger <a href="%1$s">ce fichier</a> listant les erreurs et demander de l’aide à l’auteur du MOD.<br /><br />Si vous éprouvez des difficultés à télécharger ce fichier, veuillez le télécharger directement par FTP en cliquant sur le lien suivant : %2$s',
-	'ERROR_NOTICE_NO_FILE'			=> 'Une ou plusieurs erreurs sont survenues lors de la réalisation de l’action demandée. Veuillez procéder à un enregistrement complet de toutes les erreurs et demander de l’aide à l’auteur du MOD.',
+	'ERROR_NOTICE'					=> 'Une ou plusieurs erreurs sont survenues lors de la réalisation de l’action demandée. Télécharge <a href="%1$s">ce fichier</a> listant les erreurs et demande de l’aide à l’auteur du MOD.<br /><br />Si tu éprouves des difficultés à télécharger ce fichier, télécharge-le directement par FTP en cliquant sur le lien suivant : %2$s',
+	'ERROR_NOTICE_NO_FILE'			=> 'Une ou plusieurs erreurs sont survenues lors de la réalisation de l’action demandée. Procède à un enregistrement complet de toutes les erreurs et demande de l’aide à l’auteur du MOD.',
 
 	'FAIL'							=> 'Échec',
 	'FILE_COULD_NOT_READ'			=> 'ERREUR : il n’a pas été possible d’ouvrir le fichier %s afin de le lire.',
-	'FOUNDERS_ONLY'					=> 'Vous devez être un fondateur du forum afin d’accéder à cette page.',
+	'FOUNDERS_ONLY'					=> 'Tu dois être un fondateur du forum afin d’accéder à cette page.',
 
 	'GROUP_NOT_EXIST'				=> 'Le groupe n’existe pas',
 
@@ -83,7 +83,7 @@ $lang = array_merge($lang, array(
 	'IMAGESET_CACHE_PURGE'			=> 'Rafraîchir l’archive d’images %s',
 	'INSTALL'						=> 'Installer',
 	'INSTALL_MOD'					=> 'Installer %s',
-	'INSTALL_MOD_CONFIRM'			=> 'Êtes-vous prêt à installer %s ?',
+	'INSTALL_MOD_CONFIRM'			=> 'Es-tu prêt à installer %s ?',
 
 	'MODULE_ADD'					=> 'Ajout du module %1$s : %2$s',
 	'MODULE_ALREADY_EXIST'			=> 'ERREUR : le module existe déjà.',
@@ -94,7 +94,7 @@ $lang = array_merge($lang, array(
 	'NO_TABLE_DATA'					=> 'ERREUR : aucune donnée n’a été spécifiée dans la table',
 
 	'PARENT_NOT_EXIST'				=> 'ERREUR : la catégorie parent spécifiée pour ce module n’existe pas.',
-	'PERMISSIONS_WARNING'			=> 'Les réglages de la nouvelle permission ont été ajoutés. Assurez-vous de vérifier les réglages de votre permission afin qu’ils soient exactement comme vous le souhaitez.',
+	'PERMISSIONS_WARNING'			=> 'Les réglages de la nouvelle permission ont été ajoutés. Assure-toi de vérifier les réglages de ta permission afin qu’ils soient exactement comme tu le souhaites.',
 	'PERMISSION_ADD'				=> 'Ajout d’une nouvelle option de permission : %s',
 	'PERMISSION_ALREADY_EXISTS'		=> 'ERREUR : l’option de permission %s existe déjà.',
 	'PERMISSION_NOT_EXIST'			=> 'ERREUR : l’option de permission %s n’existe pas.',
@@ -133,15 +133,15 @@ $lang = array_merge($lang, array(
 
 	'UNINSTALL'						=> 'Désinstaller',
 	'UNINSTALL_MOD'					=> 'Désinstaller %s',
-	'UNINSTALL_MOD_CONFIRM'			=> 'Êtes-vous prêt à désinstaller %s ? Tous les réglages et toutes les données sauvegardées par ce MOD seront supprimés !',
+	'UNINSTALL_MOD_CONFIRM'			=> 'Es-tu prêt à désinstaller %s ? Tous les réglages et toutes les données sauvegardées par ce MOD seront supprimés !',
 	'UNKNOWN'						=> 'Inconnu',
 	'UPDATE_MOD'					=> 'Mettre à jour %s',
-	'UPDATE_MOD_CONFIRM'			=> 'Êtes-vous prêt à mettre à jour %s ?',
-	'UPDATE_UMIL'					=> 'Cette version d’UMIL n’est pas à jour.<br /><br />Veuillez télécharger la dernière version d’UMIL sur : <a href="%1$s" target="_blank">%1$s</a>',
+	'UPDATE_MOD_CONFIRM'			=> 'Es-tu prêt à mettre à jour %s ?',
+	'UPDATE_UMIL'					=> 'Cette version d’UMIL n’est pas à jour.<br /><br />Télécharge la dernière version d’UMIL sur : <a href="%1$s" target="_blank">%1$s</a>',
 
 	'VERSIONS'						=> 'Version du MOD : <strong>%1$s</strong><br />Actuellement installée : <strong>%2$s</strong>',
-	'VERSION_SELECT'				=> 'Sélectionnez la version',
-	'VERSION_SELECT_EXPLAIN'		=> 'Ne modifiez pas “ignorer” sauf si vous savez ce que vous faites.',
+	'VERSION_SELECT'				=> 'Sélectionne la version',
+	'VERSION_SELECT_EXPLAIN'		=> 'Ne modifie pas “ignorer” sauf si tu sais ce que tu fais.',
 ));
 
 ?>

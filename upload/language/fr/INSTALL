@@ -1,0 +1,5 @@
+Decompress the downloaded package into the language/ directory and upload it.
+
+Remember when decompressing the packages that you must retain the directory structure. If you
+are unsure how to do this with your software, please check its documentation. Failure to retain
+the directory structure will result in the language not being available.
