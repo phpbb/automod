@@ -10,7 +10,7 @@
 
 /**
 * install a MOD using the command-line
-* copy me to ..
+* copy me to automod root
 */
 
 // make sure it's run through cli
