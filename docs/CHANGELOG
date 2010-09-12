@@ -1,5 +1,8 @@
 AutoMOD Changelog
 
+- Changes since 1.0.0
+ + [Fix] Use correct language key when creating dir fails
+
 - Changes since 1.0.0 Release Candidate 4
  + [Fix] Incorrect path error when installing MODX 1.0.x MODs
  + [Fix] Do not double-install MOD when style changes are forced
