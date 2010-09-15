@@ -815,7 +815,7 @@ class editor_direct extends editor
 		{
 			if ($this->recursive_mkdir($dirname_check) === false)
 			{
-				return sprintf($user->lang['MODS_MKDIR_FAILURE'], $dirname_check);
+				return sprintf($user->lang['MODS_MKDIR_FAILED'], $dirname_check);
 			}
 		}
 
