@@ -1595,7 +1595,7 @@ class acp_mods
 									break;
 
 									default:
-										$message = sprintf($user->lang['UNRECOGNISED_COMMAND'], $action);
+										$message = sprintf($user->lang['UNRECOGNISED_COMMAND'], $type);
 										trigger_error($message, E_USER_WARNING); // ERROR!
 									break;
 								}
