@@ -1,7 +1,7 @@
 <?php
 /**
  * This file is part of French (Casual Honorifics) UMIL translation.
- * Copyright (C) 2010 phpBB.fr
+ * Copyright (C) 2010 Maël Soucaze
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * @package   umil
- * @author    Maël Soucaze <maelsoucaze@phpbb.fr> (Maël Soucaze) http://www.phpbb.fr/
+ * @author    Maël Soucaze <maelsoucaze@gmail.com> http://mael.soucaze.com/
  * @author    EXreaction <N/A> (Nathan Guse) http://lithiumstudios.org
  * @author    Highway of Life <highwayoflife@gmail.com> (David Lewis) N/A
  * @copyright (c) 2008 phpBB Group
