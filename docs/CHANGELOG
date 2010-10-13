@@ -2,6 +2,7 @@ AutoMOD Changelog
 
 - Changes since 1.0.0
  + [Fix] Use correct language key when creating dir fails
+ + [Fix] Undefined variable error when an unknown action is attempted
 
 - Changes since 1.0.0 Release Candidate 4
  + [Fix] Incorrect path error when installing MODX 1.0.x MODs
