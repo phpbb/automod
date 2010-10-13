@@ -68,6 +68,4 @@ $lang = array_merge($lang, array(
 	'acl_a_mods'		=> array('lang' => 'Peut utiliser AutoMOD', 'cat' => 'misc'),
 ));
 
-
-
 ?>
