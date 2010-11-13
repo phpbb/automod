@@ -1,8 +1,8 @@
 <?php
 /**
 *
-* This file is part of French (Formal Honorifics) AutoMOD translation.
-* Copyright (C) 2010 Maël Soucaze
+* This file is part of French AutoMOD translation.
+* Copyright (c) 2010 Maël Soucaze.
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -17,13 +17,13 @@
 * with this program; if not, write to the Free Software Foundation, Inc.,
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 *
-* AutoMOD [French (Formal Honorifics)]
+* AutoMOD [French]
 *
 * @package   language
 * @author    Maël Soucaze <maelsoucaze@gmail.com> http://mael.soucaze.com/
 * @copyright (c) 2008 phpBB Group
 * @license   http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
-* @version   $Id: info_acp_modman.php 242 2010-04-29 00:56:35Z jelly_doughnut $
+* @version   $Id$
 *
 */
 /**
