@@ -54,10 +54,10 @@
 	<!-- END uninstalled -->
 	</tbody>
 	</table>
-	
+
 	<!-- IF S_MOD_UPLOAD -->
 	<br />
-	
+
 	<form action="{U_UPLOAD}" method="post" id="mod_upload"{S_FORM_ENCTYPE}>
 	<fieldset>
 		<legend>{L_MOD_UPLOAD}</legend>
@@ -70,7 +70,7 @@
 	</fieldset>
 	</form>
 	<!-- ENDIF -->
-	
+
 <!-- ELSEIF S_MOD_SUCCESSBOX -->
 
 	<div class="successbox">
@@ -379,11 +379,13 @@
 
 	<!-- INCLUDE acp_mods_actions.html -->
 
+	<!-- IF S_REMOVING_FILES or S_EDITS or S_SQL -->
 	<fieldset class="submit-buttons">
 		<legend>{L_UNINSTALL}</legend>
 		<input type="hidden" name="mod_id" value="{MOD_ID}" />
 		<input class="button1" type="submit" name="uninstall" value="{L_UNINSTALL}" />
 	</fieldset>
+	<!-- ENDIF -->
 	</form>
 
 	<br />
