@@ -1,10 +1,10 @@
 <?php
-/** 
+/**
 *
 * @package automod
 * @version $Id$
 * @copyright (c) 2008 phpBB Group
-* @license http://opensource.org/licenses/gpl-2.0.php GNU Public License 
+* @license http://opensource.org/licenses/gpl-2.0.php GNU Public License
 *
 */
 /**
@@ -203,12 +203,12 @@ class parser
 												// Replace with a blank string
 												$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$action_id][$inline_command]['in-line-replace'][] = '';
 											break;
-	
+
 											case 'IN-LINE-REPLACE':
 												// replace with the inline find
 												$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$action_id][$inline_command][$inline_action][] = $inline_find;
 											break;
-	
+
 											default:
 												// For the moment, we do nothing.  What about increment?
 											break;
@@ -319,7 +319,7 @@ class parser_xml
 		{
 			$this->modx_version = 1.2;
 
-			$version = trim($header['MOD-VERSION'][0]['data']); 
+			$version = trim($header['MOD-VERSION'][0]['data']);
 		}
 
 		// get phpBB version recommendation
@@ -371,7 +371,7 @@ class parser_xml
 
 			for ($j = 0; $j < $changelog_size; $j++)
 			{
-				// Ignore changelogs in foreign languages except in the case that there is no 
+				// Ignore changelogs in foreign languages except in the case that there is no
 				// match for the current user's language
 				// TODO: Look at modifying localise_tags() for use here.
 				if (match_language($user->data['user_lang'], $changelog[$j]['attrs']['LANG']))
@@ -422,10 +422,10 @@ class parser_xml
 				for ($i = 0, $size = sizeof($link_group['LINK']); $i <= $size; $i++)
 				{
 					// do some stuff with attrs
-					// commented out due to a possible PHP bug.  When using this, 
+					// commented out due to a possible PHP bug.  When using this,
 					// sizeof($link_group) changed each time ...
 					// $attrs = &$link_group[$i]['attrs'];
-	
+
 					if (!isset($link_group['LINK'][$i]))
 					{
 						continue;
@@ -440,6 +440,7 @@ class parser_xml
 						'href'		=> $link_group['LINK'][$i]['attrs']['HREF'],
 						'realname'	=> isset($link_group['LINK'][$i]['attrs']['REALNAME']) ? $link_group['LINK'][$i]['attrs']['REALNAME'] : core_basename($link_group['LINK'][$i]['attrs']['HREF']),
 						'title'		=> localise_tags($link_group, 'LINK', $i),
+						'lang'		=> $link_group['LINK'][$i]['attrs']['LANG'],
 					);
 				}
 			}
@@ -495,7 +496,7 @@ class parser_xml
 			break;
 
 			// and now for the MySQL fun
-			// This will generate an array of things we can probably use, but	
+			// This will generate an array of things we can probably use, but
 			// will not have any priority
 			case 'mysqli':
 				$match_dbms = array('mysql_41', 'mysqli', 'mysql');
@@ -642,13 +643,13 @@ class parser_xml
 						// is this anything but the last iteration of the loop?
 						if ($k < ($find_count - 1))
 						{
-							// NULL has special meaning for an action ... no action to be taken; advance pointer 
+							// NULL has special meaning for an action ... no action to be taken; advance pointer
 							$actions['EDITS'][$current_file][$j][$action_info['FIND'][$k]['data']] = NULL;
 						}
 						else
 						{
-							// this is the last iteration, assign the action tags 
-			
+							// this is the last iteration, assign the action tags
+
 							for ($l = 0; $l < $action_count; $l++)
 							{
 								$type = str_replace('-', ' ', $action_info['ACTION'][$l]['attrs']['TYPE']);
@@ -694,7 +695,7 @@ class parser_xml
 							// is this anything but the last iteration of the loop?
 							if ($k < ($find_count - 1))
 							{
-								// NULL has special meaning for an action ... no action to be taken; advance pointer 
+								// NULL has special meaning for an action ... no action to be taken; advance pointer
 								$actions['EDITS'][$current_file][$j][trim($action_info['FIND'][$k]['data'], "\r\n")] = NULL;
 							}
 						}
@@ -793,7 +794,7 @@ class xml_array
 		$this->XML = xml_parse($this->parser, $XML);
 		if (!$this->XML)
 		{
-			die(sprintf("<strong>XML error</strong>: %s at line %d.  View the file %s in a web browser for a more detailed error message.", 
+			die(sprintf("<strong>XML error</strong>: %s at line %d.  View the file %s in a web browser for a more detailed error message.",
 				xml_error_string(xml_get_error_code($this->parser)), xml_get_current_line_number($this->parser), $file));
 		}
 

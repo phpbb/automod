@@ -248,7 +248,7 @@ class acp_mods
 						$mod_ident = ($mod_id) ? $mod_id : $mod_path;
 						$this->list_details($mod_ident);
 					break;
-					
+
 					case 'delete':
 						$this->delete($mod_path);
 
@@ -263,7 +263,7 @@ class acp_mods
 								'U_UPLOAD'			=> $this->u_action,
 								'S_FORM_ENCTYPE'	=> ($can_upload) ? ' enctype="multipart/form-data"' : '',
 							));
-							
+
 							add_form_key('acp_mods_upload');
 
 							$this->list_installed();
@@ -287,7 +287,7 @@ class acp_mods
 						{
 							$download_name = str_replace(' ', '_', $row['mod_name']);
 						}
-		
+
 						$editor->compress->download("{$phpbb_root_path}store/mod_$time", $download_name);
 						exit;
 					break;
@@ -607,7 +607,7 @@ class acp_mods
 				$sql = 'SELECT mod_path FROM ' . MODS_TABLE . '
 					WHERE mod_id = ' . (int) $parent;
 				$result = $db->sql_query($sql);
-	
+
 				if ($row = $db->sql_fetchrow($result))
 				{
 					$this->mod_root = dirname($row['mod_path']) . '/';
@@ -823,7 +823,7 @@ class acp_mods
 		{
 			// Has this template already been processed?
 			$sql = 'SELECT mod_name FROM ' . MODS_TABLE . "
-				WHERE mod_id = $parent 
+				WHERE mod_id = $parent
 					AND mod_template " . $db->sql_like_expression($db->any_char . $dest_template . $db->any_char);
 			$result = $db->sql_query($sql);
 
@@ -1519,9 +1519,9 @@ class acp_mods
 
 														$inline_template_ary[] = array(
 															'FIND'		=>	array(
-		
+
 																'S_SUCCESS'	=> $status,
-							
+
 																'NAME'		=> $user->lang[$type],
 																'COMMAND'	=> htmlspecialchars($inline_find),
 															),
@@ -1540,43 +1540,43 @@ class acp_mods
 															$status = true;
 															continue 2;
 														break;
-	
+
 														case 'IN-LINE-BEFORE-ADD':
 															$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
 														break;
-	
+
 														case 'IN-LINE-AFTER-ADD':
 															$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
 														break;
-	
+
 														case 'IN-LINE-REPLACE':
 														case 'IN-LINE-REPLACE-WITH':
 															$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
 														break;
-	
+
 														case 'IN-LINE-OPERATION':
 															$status = $editor->inc_string($find, $inline_find, $inline_contents);
 														break;
-	
+
 														default:
 															$message = sprintf($user->lang['UNRECOGNISED_COMMAND'], $inline_action);
 															trigger_error($message, E_USER_WARNING); // ERROR!
 														break;
 													}
-	
+
 													$inline_template_ary[] = array(
 														'FIND'		=>	array(
-	
+
 															'S_SUCCESS'	=> $status,
-						
+
 															'NAME'		=> $user->lang[$type],
 															'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
 														),
-	
+
 														'ACTION'	=> array(
-	
+
 															'S_SUCCESS'	=> $status,
-	
+
 															'NAME'		=> $user->lang[$inline_action],
 															'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
 											//				'COMMENT'	=> $inline_comment, (inline comments aren't actually part of the MODX spec)
@@ -1622,7 +1622,7 @@ class acp_mods
 								{
 									$template->assign_block_vars('edit_files.finds.actions', array(
 										'S_SUCCESS'	=> $status,
-			
+
 										'NAME'		=> $user->lang[$type],
 										'COMMAND'	=> htmlspecialchars($contents_orig),
 									));
@@ -1785,7 +1785,7 @@ class acp_mods
 			}
 
 			$child_types = array('contrib', 'template', 'language', 'dependency', 'uninstall');
-	
+
 			foreach ($child_types as $type)
 			{
 				if (empty($children[$type]))
@@ -1845,13 +1845,56 @@ class acp_mods
 		}
 	}
 
+	/**
+	 * Get all contrib links for the selected language.
+	 */
+	function get_contrib_lang($contrib, $lang = 'en')
+	{
+		$ary = array();
+
+		foreach ($contrib as $element)
+		{
+			if ($element['lang'] == $lang)
+			{
+				$ary[] = $element;
+			}
+		}
+
+		return($ary);
+	}
+
 	function handle_contrib(&$children)
 	{
-		global $template, $parent_id, $phpbb_root_path;
+		global $template, $parent_id, $phpbb_root_path, $user;
 
 		if (isset($children['contrib']) && sizeof($children['contrib']))
 		{
 			$template->assign_var('S_CONTRIB_AVAILABLE', true);
+
+			// Do we have links in the users selected language.
+			// Start with getting the Enlgish links.
+			$contrib_en = $this->get_contrib_lang($children['contrib']);
+
+			if ($user->data['user_lang'] == 'en' || sizeof($contrib_en) == sizeof($children['contrib']))
+			{
+				// Our user has either English or there is only English links.
+				$children['contrib'] = $contrib_en;
+			}
+			else
+			{
+				// If there are any links in the users language, let's get them.
+				$contrib_lang = $this->get_contrib_lang($children['contrib'], $user->data['user_lang']);
+
+				if (!sizeof($contrib_lang))
+				{
+					// There is no links in the right language, give them the English links.
+					$children['contrib'] = $contrib_en;
+				}
+				else
+				{
+					$children['contrib'] = $contrib_lang;
+				}
+			}
 
 			// there are things like upgrades...we don't care unless the MOD has previously been installed.
 			foreach ($children['contrib'] as $xml_file)
@@ -2026,16 +2069,16 @@ class acp_mods
 			$process_templates = $elements['template'] = array_intersect($available_templates, $installed_templates);
 		}
 	}
-	
+
 	function upload_mod()
 	{
 		global $phpbb_root_path, $phpEx, $template, $user, $config;
-		
+
 		if (!isset($_POST['submit']))
 		{
 			return false;
 		}
-		
+
 		if (check_form_key('acp_mods_upload') && isset($_FILES['modupload']))
 		{
 			$user->add_lang('posting');  // For error messages
@@ -2043,15 +2086,15 @@ class acp_mods
 			$upload = new fileupload();
 			// Only allow ZIP files
 			$upload->set_allowed_extensions(array('zip'));
-			
+
 			// Let's make sure the mods directory exists and if it doesn't then create it
 			if (!is_dir($this->mods_dir))
 			{
 				mkdir($this->mods_dir, octdec($config['am_dir_perms']));
 			}
-			
+
 			$file = $upload->form_upload('modupload');
-			
+
 			if (empty($file->filename))
 			{
 				trigger_error($user->lang['NO_UPLOAD_FILE'] . adm_back_link($this->u_action), E_USER_WARNING);
@@ -2062,7 +2105,7 @@ class acp_mods
 				{
 					$file->clean_filename('real');
 					$file->move_file(str_replace($phpbb_root_path, '', $this->mods_dir), true, true);
-					
+
 					if (!sizeof($file->error))
 					{
 						include($phpbb_root_path . 'includes/functions_compress.' . $phpEx);
@@ -2082,9 +2125,9 @@ class acp_mods
 							// Change the name of the directory by moving to directory without _tmp in it
 							$this->directory_move($mod_dir . '_tmp/', $mod_dir);
 						}
-						
+
 						$this->directory_delete($mod_dir . '_tmp/');
-						
+
 						if (!sizeof($file->error))
 						{
 							$template->assign_vars(array(
@@ -2095,7 +2138,7 @@ class acp_mods
 						}
 					}
 				}
-				$file->remove();				
+				$file->remove();
 				if ($file->init_error || sizeof($file->error))
 				{
 					trigger_error((sizeof($file->error) ? implode('<br />', $file->error) : $user->lang['MOD_UPLOAD_INIT_FAIL']) . adm_back_link($this->u_action), E_USER_WARNING);
@@ -2106,14 +2149,14 @@ class acp_mods
 		{
 			trigger_error($user->lang['FORM_INVALID'] . adm_back_link($this->u_action), E_USER_WARNING);
 		}
-		
+
 		return true;
 	}
-	
+
 	function delete($mod_path)
 	{
 		global $template, $user;
-		
+
 		if (confirm_box(true))
 		{
 			$mod_path = request_var('mod_delete', '');
@@ -2134,7 +2177,7 @@ class acp_mods
 		else
 		{
 			$mod_path = explode('/', str_replace('\\', '/', $mod_path));
-			
+
 			confirm_box(false, $user->lang['DELETE_CONFIRM'], build_hidden_fields(array(
 					'delete_confirm'	=> true,
 					'action'		=> 'delete',
@@ -2142,22 +2185,22 @@ class acp_mods
 			)));
 		}
 	}
-	
+
 	function directory_delete($dir)
 	{
 		if (!file_exists($dir))
 		{
 			return true;
 		}
-		
+
 		if (!is_dir($dir) && is_file($dir))
 		{
 			phpbb_chmod($dir, CHMOD_ALL);
 			return unlink($dir);
 		}
-		
+
         foreach (scandir($dir) as $item)
-		{ 
+		{
             if ($item == '.' || $item == '..')
 			{
 				continue;
@@ -2171,25 +2214,25 @@ class acp_mods
 				}
             }
         }
-		
+
 		// Make sure we don't delete the MODs directory
 		if ($dir != $this->mods_dir)
 		{
 			return rmdir($dir);
 		}
 	}
-	
+
 	function directory_move($src, $dest)
 	{
 		global $config;
-		
+
 		$src_contents = scandir($src);
-		
+
 		if (!is_dir($dest) && is_dir($src))
 		{
 			mkdir($dest . '/', octdec($config['am_dir_perms']));
 		}
-		
+
 		foreach ($src_contents as $src_entry)
 		{
 			if ($src_entry != '.' && $src_entry != '..')
