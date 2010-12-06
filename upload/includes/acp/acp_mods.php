@@ -1258,6 +1258,8 @@ class acp_mods
 	*/
 	function find_mods($dir, $recurse = false)
 	{
+		global $user;
+
 		if ($recurse === false)
 		{
 			$mods = array('main' => array(), 'contrib' => array(), 'template' => array(), 'language' => array());
@@ -1274,6 +1276,11 @@ class acp_mods
 		if (!file_exists($dir))
 		{
 			return array();
+		}
+
+		if (!is_readable($dir))
+		{
+			trigger_error(sprintf($user->lang['NEED_READ_PERMISSIONS'], $dir), E_USER_WARNING);
 		}
 
 		$dp = opendir($dir);

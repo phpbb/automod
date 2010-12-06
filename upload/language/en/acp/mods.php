@@ -1,12 +1,12 @@
 <?php
-/** 
+/**
 *
 * acp_mods [English]
 *
 * @package language
 * @version $Id$
-* @copyright (c) 2008 phpBB Group 
-* @license http://opensource.org/licenses/gpl-license.php GNU Public License 
+* @copyright (c) 2008 phpBB Group
+* @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
 /**
@@ -24,7 +24,7 @@ if (empty($lang) || !is_array($lang))
 	$lang = array();
 }
 
-// DEVELOPERS PLEASE NOTE 
+// DEVELOPERS PLEASE NOTE
 //
 // Placeholders can now contain order information, e.g. instead of
 // 'Page %s of %s' you can (and should) write 'Page %1$s of %2$s', this allows
@@ -142,6 +142,7 @@ $lang = array_merge($lang, array(
 
 	'NAME'			=> 'Name',
 	'NEW_FILES'		=> 'New Files',
+	'NEED_READ_PERMISSIONS' => 'Incorrect permissions: %s is not readable.',
 	'NO_ATTEMPT'	=> 'Not Attempted',
 	'NO_INSTALLED_MODS'		=> 'No installed MODs detected',
 	'NO_MOD'				=> 'The selected MOD could not be found.',
