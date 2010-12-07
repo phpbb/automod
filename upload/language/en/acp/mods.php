@@ -68,7 +68,7 @@ $lang = array_merge($lang, array(
 
 	'DIR_PERMS'			=> 'Directory Permissions',
 	'DIR_PERMS_EXPLAIN'	=> 'Some systems require directories to have certain permissions to work properly.  Normally the default 0755 is correct.  This setting has no impact on Windows systems.',
-	'DIY_INSTRUCTIONS'	=> 'Do It Yourself Instructions',
+	'DIY_INSTRUCTIONS'	=> 'DIY Instructions (You need to follow these instructions manually to complete the MOD installation)',
 	'DEPENDENCY_INSTRUCTIONS'	=>	'The MOD you are trying to install depends on another MOD.  AutoMOD cannot detect if this MOD has been installed.  Please verify that you have installed <strong><a href="%1$s">%2$s</a></strong> before installing your MOD.',
 	'DESCRIPTION'	=> 'Description',
 	'DETAILS'		=> 'Details',
