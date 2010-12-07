@@ -773,13 +773,6 @@ class editor_direct extends editor
 			$from = $phpbb_root_path . $from;
 		}
 
-		// When installing a MODX 1.2.0 MOD, this happens once in a long while.
-		// Not sure why yet.
-		if (is_array($to))
-		{
-			return NULL;
-		}
-
 		if (strpos($to, $phpbb_root_path) !== 0)
 		{
 			$to = $phpbb_root_path . $to;
@@ -991,7 +984,7 @@ class editor_ftp extends editor
 	*
 	* @param $from string Can be a file or a directory. Will move either the file or all files within the directory
 	* @param $to string Where to move the file(s) to. If not specified then will get moved to the root folder
-	* @param $strip Used for FTP only
+	* @param $strip mixed (string or array) Used for FTP only
 	* @return mixed: Bool true on success, error string on failure, NULL if no action was taken
 	* 
 	* NOTE: function should preferably not return in case of failure on only one file.  
@@ -1001,22 +994,18 @@ class editor_ftp extends editor
 	{
 		global $phpbb_root_path, $user;
 
+		// Prefix $from with $phpbb_root_path
 		if (strpos($from, $phpbb_root_path) !== 0)
 		{
 			$from = $phpbb_root_path . $from;
 		}
 
-		// When installing a MODX 1.2.0 MOD, this happens once in a long while.
-		// Not sure why yet.
-		if (is_array($to))
-		{
-			return NULL;
-		}
-
-		if (strpos($to, $phpbb_root_path) !== 0)
-		{
-			$to = $phpbb_root_path . $to;
-		}
+		// Why are we stripping out phpbb_root_path from $to (unlike editor_direct)?
+		// Per includes/functions_transfer.php, all transfer functions do this,
+		// except overwrite_file() (which we use here) because it is called by other
+		// functions (write_file, copy_file) that strip phpbb_root_path before calling it.
+		// This is because class ftp (extends transfer) prepends the real $root_path
+		$to = str_replace($phpbb_root_path, '', $to);
 
 		$files = array();
 		if (is_dir($from))
@@ -1037,15 +1026,21 @@ class editor_ftp extends editor
 		// ftp
 		foreach ($files as $file)
 		{
-			$to_file = str_replace($strip, '', $file);
-
-			$this->recursive_mkdir(dirname($to_file));
-
-			if (!$this->transfer->overwrite_file($file, $to_file))
+			// If we got passed $strip, wildcards were used, so get $to out of $file ($from)
+			if (!empty($strip))
+			{
+				$to = str_replace($strip, '', $file);
+			}
+			
+			// no $phpbb_root_path prefix here, this is FTP (not direct)
+			// We also don't want return false here in case directory already exists (todo)
+			$this->recursive_mkdir(dirname($to));
+			
+			if (!$this->transfer->overwrite_file($file, $to))
 			{
 				// may as well return ... the MOD is likely dependent upon
 				// the file that is being copied
-				return sprintf($user->lang['MODS_FTP_FAILURE'], $to_file);
+				return sprintf($user->lang['MODS_FTP_FAILURE'], $to);
 			}
 		}
 

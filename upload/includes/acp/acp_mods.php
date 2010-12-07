@@ -1657,25 +1657,60 @@ class acp_mods
 		} // end foreach
 
 		// Move included files
-		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']) && $change && ($mod_installed || $force_install))
+		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']))
 		{
 			$template->assign_var('S_NEW_FILES', true);
 
-			foreach ($actions['NEW_FILES'] as $source => $target)
+			// Because foreach operates on a copy of the specified array and not the array itself,
+			// we cannot rely on the array pointer while using it, so we use a while loop w/ each()
+			// We need array pointer to rewind the loop when is_array($target) (See Ticket #62341)
+			while (list($source, $target) = each($actions['NEW_FILES']))
 			{
-				$status = $editor->copy_content($this->mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target));
-
-				if ($status !== true && !is_null($status))
+				if (is_array($target))
 				{
-					$mod_installed = false;
+					// If we've shifted off all targets, we're done w/ that element
+					if (empty($target))
+					{
+						continue;
+					}
+
+					// Shift off first target, then rewind array pointer to get next target
+					$target = array_shift($actions['NEW_FILES'][$source]);
+					prev($actions['NEW_FILES']);
 				}
 
-				$template->assign_block_vars('new_files', array(
-					'S_SUCCESS'			=> ($status === true) ? true : false,
-					'S_NO_COPY_ATTEMPT'	=> (is_null($status)) ? true : false,
-					'SOURCE'			=> $source,
-					'TARGET'			=> $target,
-				));
+				if ($change && ($mod_installed || $force_install))
+				{
+					$strip = (strpos($target, '*.*') !== false) ? "{$this->mod_root}root/" : '';
+					$status = $editor->copy_content($this->mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target), $strip);
+
+					if ($status !== true && !is_null($status))
+					{
+						$mod_installed = false;
+					}
+
+					$template->assign_block_vars('new_files', array(
+						'S_SUCCESS'			=> ($status === true) ? true : false,
+						'S_NO_COPY_ATTEMPT'	=> (is_null($status)) ? true : false,
+						'SOURCE'			=> $source,
+						'TARGET'			=> $target,
+					));
+				}
+				else if ($display && !$change)
+				{
+					$template->assign_block_vars('new_files', array(
+						'SOURCE'			=> $source,
+						'TARGET'			=> $target,
+					));
+				}
+				// To avoid "error" on install page when being asked to force install
+				else if ($change && $display && !$mod_installed && !$force_install)
+				{
+					$template->assign_block_vars('new_files', array(
+						'S_NO_COPY_ATTEMPT'	=> true,
+						'FILENAME'			=> $target,
+					));
+				}
 			}
 		}
 
