@@ -142,6 +142,15 @@
 	</fieldset>
 	<!-- ENDIF -->
 
+	<!-- IF S_DIY -->
+	<fieldset>
+		<legend>{L_DIY_INSTRUCTIONS}</legend>
+		<!-- BEGIN diy_instructions -->
+		<div>{diy_instructions.DIY_INSTRUCTION}</div>
+		<!-- END diy_instructions -->
+	</fieldset>
+	<!-- ENDIF -->
+
 	<!-- IF S_CONTRIB_AVAILABLE or S_UNKNOWN_LANGUAGES or S_UNKNOWN_TEMPLATES or (.board_templates and .avail_templates) -->
 	<fieldset>
 		<legend>{L_ADDITIONAL_CHANGES}</legend>

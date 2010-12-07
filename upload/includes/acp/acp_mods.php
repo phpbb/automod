@@ -405,6 +405,25 @@ class acp_mods
 			unset($details['AUTHOR_DETAILS']);
 		}
 
+		// Display Do-It-Yourself Actions...per the MODX spec,
+		// Need to handle the languag later, but it's not saved for now.
+		if (!empty($details['DIY_INSTRUCTIONS']))
+		{
+			$template->assign_var('S_DIY', true);
+
+			if (!is_array($details['DIY_INSTRUCTIONS']))
+			{
+				$details['DIY_INSTRUCTIONS'] = array($details['DIY_INSTRUCTIONS']);
+			}
+
+			foreach ($details['DIY_INSTRUCTIONS'] as $instruction)
+			{
+				$template->assign_block_vars('diy_instructions', array(
+					'DIY_INSTRUCTION'	=> nl2br($instruction),
+				));
+			}
+		}
+
 		if (!empty($details['MOD_HISTORY']))
 		{
 			$template->assign_var('S_CHANGELOG', true);
@@ -468,6 +487,8 @@ class acp_mods
 						'AUTHOR_WEBSITE'	=> $row['mod_author_url'],
 				);
 
+				$actions = unserialize($row['mod_actions']);
+
 				$details = array(
 					'MOD_ID'			=> $row['mod_id'],
 					'MOD_PATH'			=> $row['mod_path'],
@@ -476,6 +497,8 @@ class acp_mods
 					'MOD_NAME'			=> htmlspecialchars($row['mod_name']),
 					'MOD_DESCRIPTION'	=> nl2br($row['mod_description']),
 					'MOD_VERSION'		=> $row['mod_version'],
+
+					'DIY_INSTRUCTIONS'	=> $actions['DIY_INSTRUCTIONS'],
 
 					'AUTHOR_NOTES'		=> nl2br($row['mod_author_notes']),
 					'AUTHOR_DETAILS'	=> $author_details,
