@@ -3,6 +3,7 @@ AutoMOD Changelog
 - Changes since 1.0.0
  + [Feature] Show DIY instructions in the details. (Ticket #62171)
  + [Feature] Added error checking for readable MOD files. Patch by Callum95 (Ticket #62244)
+ + [Feature] Ability to hide successful edits when install fails. php Patch by EXreaction (Ticket #59995)
  + [Change] Changed the wording for DIY. (Ticket #62171)
  + [Change] Hide the second uninstall button if there are no file edits. (Ticket #62468)
  + [Fix] Use correct language key when creating dir fails

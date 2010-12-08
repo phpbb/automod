@@ -81,9 +81,52 @@
 	<!-- ENDIF -->
 
 	<!-- IF S_EDITS -->
+	<script type="text/javascript">
+	// <![CDATA[
+	function toggle_files()
+	{
+		var hide_files = document.getElementsByName('hide-file');
+
+		for (var i = 0; i < hide_files.length; i++)
+		{
+			hide_files[i].style.display = (hide_files[i].style.display == 'none') ? 'block' : 'none';
+		}
+
+		if (document.getElementById('hide-files').innerHTML == '{LA_CLICK_HIDE_FILES}')
+		{
+			document.getElementById('hide-files').innerHTML = '{LA_CLICK_SHOW_FILES}';
+		}
+		else
+		{
+			document.getElementById('hide-files').innerHTML = '{LA_CLICK_HIDE_FILES}';
+		}
+	}
+
+	function toggle_edits()
+	{
+		var hide_edits = document.getElementsByName('hide-edit');
+
+		for (var i = 0; i < hide_edits.length; i++)
+		{
+			hide_edits[i].style.display = (hide_edits[i].style.display == 'none') ? 'block' : 'none';
+		}
+
+		if (document.getElementById('hide-edits').innerHTML == '{LA_CLICK_HIDE_EDITS}')
+		{
+			document.getElementById('hide-edits').innerHTML = '{LA_CLICK_SHOW_EDITS}';
+		}
+		else
+		{
+			document.getElementById('hide-edits').innerHTML = '{LA_CLICK_HIDE_EDITS}';
+		}
+	}
+	// ]]>
+	</script>
+
 	<h2>{L_FILE_EDITS}</h2>
+	<p><a href="#" onclick="toggle_files(); return false;" id="hide-files">{L_CLICK_HIDE_FILES}</a> &bull; <a href="#" onclick="toggle_edits(); return false;" id="hide-edits">{L_CLICK_HIDE_EDITS}</a></p>
 	<!-- BEGIN edit_files -->
-	<fieldset>
+	<fieldset<!-- IF edit_files.S_SUCCESS --> name="hide-file"<!-- ENDIF -->>
 		<legend>{edit_files.FILENAME}</legend>
 		<!-- IF edit_files.S_MISSING_FILE -->
 		<strong><font color="red">{L_FILE_MISSING}</font></strong>
@@ -91,7 +134,7 @@
 		<strong>{edit_files.INHERIT_MSG}</strong>
 		<!-- ENDIF -->
 		<!-- BEGIN finds -->
-		<fieldset>
+		<fieldset<!-- IF edit_files.finds.S_SUCCESS --> name="hide-edit"<!-- ENDIF -->>
 			<h4 style="margin: 0; padding:0;">{L_FIND}</h4>
 			<!-- IF edit_files.finds.COMMENT --><p><strong>{L_COMMENT}</strong>: {edit_files.finds.COMMENT}</p><!-- ENDIF -->
 			<pre style="overflow-x: scroll;">{edit_files.finds.FIND_STRING}</pre>

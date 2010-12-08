@@ -1447,6 +1447,7 @@ class acp_mods
 				else
 				{
 					$template->assign_block_vars('edit_files', array(
+						'S_SUCCESS'	=> false,
 						'FILENAME'	=> $filename,
 					));
 
@@ -1460,6 +1461,8 @@ class acp_mods
 						$mod_installed = false;
 						continue;
 					}
+
+					$edit_success = true;
 
 					foreach ($edits as $finds)
 					{
@@ -1477,10 +1480,10 @@ class acp_mods
 								continue;
 							}
 
-							$template->assign_block_vars('edit_files.finds', array(
+							$find_tpl = array(
 								'FIND_STRING'	=> htmlspecialchars($find),
 								'COMMENT'		=> htmlspecialchars($comment),
-							));
+							);
 
 							$offset_ary = $editor->find($find);
 
@@ -1630,8 +1633,13 @@ class acp_mods
 									break;
 								}
 
+								$template->assign_block_vars('edit_files.finds', array_merge($find_tpl, array(
+									'S_SUCCESS'		=> $status,
+								)));
+
 								if (!$status)
 								{
+									$edit_success = false;
 									$mod_installed = false;
 								}
 
@@ -1662,6 +1670,10 @@ class acp_mods
 
 						$editor->close_edit();
 					}
+
+					$template->alter_block_array('edit_files', array(
+						'S_SUCCESS'		=> $edit_success,
+					), true, 'change');
 				}
 
 				if ($change)
