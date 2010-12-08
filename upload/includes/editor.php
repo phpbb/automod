@@ -1260,10 +1260,8 @@ class editor_manual extends editor
 			$from = $phpbb_root_path . $from;
 		}
 
-		if (strpos($to, $phpbb_root_path) !== 0)
-		{
-			$to = $phpbb_root_path . $to;
-		}
+		// It should have been already stripped out, but just to be sure
+		$to = str_replace($phpbb_root_path, '', $to);
 
 		// Note: phpBB's compression class does support adding a whole directory at a time.
 		// However, I chose not to use that function because it would not allow AutoMOD's
@@ -1286,16 +1284,21 @@ class editor_manual extends editor
 
 		foreach ($files as $file)
 		{
-			if (is_dir($to))
+			// If we got passed $strip, wildcards were used, so get $to_file out of $file ($from)
+			if (!empty($strip))
+			{
+				$to_file = str_replace($strip, '', $file);
+			}
+			else if (is_dir($phpbb_root_path . $to))
 			{
 				// this would find the directory part specified in MODX
-				$to_file = str_replace(array($phpbb_root_path, $strip), '', $to);
+				$to_file = str_replace($strip, '', $to);
 				// and this fetches any subdirectories and the filename of the destination file
 				$to_file .= substr($file, strpos($file, $to_file) + strlen($to_file));
 			}
 			else
 			{
-				$to_file = str_replace($phpbb_root_path, '', $to);
+				$to_file = $to;
 			}
 
 			// filename calculation is involved here:
