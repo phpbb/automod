@@ -211,21 +211,31 @@ class acp_mods
 
 					$test_connection = false;
 					$test_ftp_connection = request_var('test_connection', '');
-					if (!empty($test_ftp_connection) || $action == 'install' || $action == 'uninstall')
+					if (!empty($test_ftp_connection) || $action == 'install' || $action == 'uninstall' || $action == 'upload_mod' || $action == 'delete')
 					{
 						test_ftp_connection($method, $test_ftp_connection, $test_connection);
 
 						// Make sure the login details are correct before continuing
 						if ($test_connection !== true || !empty($test_ftp_connection))
 						{
-							$action = 'pre_' . $action;
+							if ($action == 'install' || $action == 'uninstall')
+							{
+								$action = 'pre_' . $action;
+							}
 							$test_ftp_connection = true;
 						}
 					}
 				}
-				else if ($config['write_method'] == WRITE_MANUAL && !is_writable($phpbb_root_path . 'store/'))
+				
+				// store/ needs to be writable even when FTP is the write method, for extracting uploaded mods
+				if (!is_writable("{$phpbb_root_path}store/"))
 				{
-					$template->assign_var('S_WRITABLE_WARN', true);
+					$template->assign_var('S_STORE_WRITABLE_WARN', true);
+				}
+				// Otherwise, store/mods/ needs to be writable
+				else if ($config['write_method'] != WRITE_FTP && !is_writable($this->mods_dir))
+				{
+					$template->assign_var('S_MODS_WRITABLE_WARN', true);
 				}
 
 				switch ($action)
@@ -250,21 +260,13 @@ class acp_mods
 
 					case 'delete':
 						$this->delete($mod_path);
+						break;
 
+					case 'upload_mod':
 					default:
-						if (!$this->upload_mod())
+						$action = (isset($action) && !empty($action)) ? $action : '';
+						if (!$this->upload_mod($action))
 						{
-							$can_upload = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || !@extension_loaded('zlib')) ? false : true;
-
-							$template->assign_vars(array(
-								'S_FRONTEND'		=> true,
-								'S_MOD_UPLOAD'		=> ($can_upload) ? true : false,
-								'U_UPLOAD'			=> $this->u_action,
-								'S_FORM_ENCTYPE'	=> ($can_upload) ? ' enctype="multipart/form-data"' : '',
-							));
-
-							add_form_key('acp_mods_upload');
-
 							$this->list_installed();
 							$this->list_uninstalled();
 						}
@@ -2328,12 +2330,54 @@ class acp_mods
 		}
 	}
 
-	function upload_mod()
+	function upload_mod($action)
 	{
 		global $phpbb_root_path, $phpEx, $template, $user, $config;
+		global $method, $test_ftp_connection, $test_connection;
 
-		if (!isset($_POST['submit']))
+		// get FTP information if we need it
+		$hidden_ary = array();
+		if ($config['write_method'] == WRITE_FTP)
 		{
+			if (isset($_POST['password']))
+			{
+				$hidden_ary['method'] = $config['ftp_method'];
+
+				if (empty($config['ftp_method']))
+				{
+					trigger_error('FTP_METHOD_ERROR');
+				}
+
+				$requested_data = call_user_func(array($config['ftp_method'], 'data'));
+
+				foreach ($requested_data as $data => $default)
+				{
+					if ($data == 'password')
+					{
+						$config['ftp_password'] = request_var('password', '');
+					}
+					$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+
+					$hidden_ary[$data] = $default;
+				}
+			}
+			handle_ftp_details($method, $test_ftp_connection, $test_connection);
+		}
+
+		$can_upload = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || !@extension_loaded('zlib')) ? false : true;
+		
+		if (!isset($_POST['submit']) || ($config['write_method'] == WRITE_FTP && $test_ftp_connection))
+		{
+			$template->assign_vars(array(
+				'S_FRONTEND'		=> true,
+				'S_MOD_UPLOAD'		=> ($can_upload) ? true : false,
+				'U_UPLOAD'			=> $this->u_action . '&amp;action=upload_mod',
+				'S_FORM_ENCTYPE'	=> ($can_upload) ? ' enctype="multipart/form-data"' : '',
+				'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
+			));
+
+			add_form_key('acp_mods_upload');
+
 			return false;
 		}
 
@@ -2345,12 +2389,48 @@ class acp_mods
 			// Only allow ZIP files
 			$upload->set_allowed_extensions(array('zip'));
 
+			if ($config['write_method'] == WRITE_FTP)
+			{
+				$editor = new editor_ftp();
+			}
+
 			// Let's make sure the mods directory exists and if it doesn't then create it
 			if (!is_dir($this->mods_dir))
 			{
-				mkdir($this->mods_dir, octdec($config['am_dir_perms']));
+				if ($config['write_method'] == WRITE_FTP)
+				{
+					$editor->recursive_mkdir($this->mods_dir, octdec($config['am_dir_perms']));
+				}
+				else
+				{
+					mkdir($this->mods_dir, octdec($config['am_dir_perms']));
+				}
+			}
+			
+			// For Direct and Manual write methods, make sure mods/ directory is writable (no other choice)
+			if ($config['write_method'] != WRITE_FTP)
+			{
+				if (is_writable($this->mods_dir .'/'))
+				{
+					$upload_dir = $this->mods_dir;
+				}
+				else
+				{
+					trigger_error($user->lang['MODS_NOT_WRITABLE'] . adm_back_link($this->u_action), E_USER_WARNING);
+				}
+			}
+			// FTP method: we need a known world-writable directory (store/) for temporary zip extraction
+			// Still, Direct write access is required, since we can't extract zip files over FTP
+			else if (is_writable("{$phpbb_root_path}store/"))
+			{
+				$upload_dir = "{$phpbb_root_path}store/";
+			}
+			else
+			{
+				trigger_error($user->lang['STORE_NOT_WRITABLE'] . adm_back_link($this->u_action), E_USER_WARNING);
 			}
 
+			// Proceed with the upload
 			$file = $upload->form_upload('modupload');
 
 			if (empty($file->filename))
@@ -2362,29 +2442,59 @@ class acp_mods
 				if (!$file->init_error && !sizeof($file->error))
 				{
 					$file->clean_filename('real');
-					$file->move_file(str_replace($phpbb_root_path, '', $this->mods_dir), true, true);
+					$file->move_file(str_replace($phpbb_root_path, '', $upload_dir), true, true);
 
 					if (!sizeof($file->error))
 					{
+						// Notice above we only instantiated $editor when write_method is editor_ftp
+						// if we did for all, we'd have to exlcude editor_manual from this (re-)include here
 						include($phpbb_root_path . 'includes/functions_compress.' . $phpEx);
-						$mod_dir = $this->mods_dir . '/' . str_replace('.zip', '', $file->get('realname'));
+						$mod_dir = $upload_dir . '/' . str_replace('.zip', '', $file->get('realname'));
 						$compress = new compress_zip('r', $file->destination_file);
 						$compress->extract($mod_dir . '_tmp/');
 						$compress->close();
 						$folder_contents = scandir($mod_dir . '_tmp/', 1);  // This ensures dir is at index 0
-						// We need to check if there's a main directory inside the temp MOD directory
+
+						// We need to check if there's only one (main) directory inside the temp MOD directory
 						if (sizeof($folder_contents) == 3)
 						{
-							// We need to move that directory then
-							$this->directory_move($mod_dir . '_tmp/' . $folder_contents[0], $this->mods_dir . '/' . $folder_contents[0]);
+							$from_dir = $mod_dir . '_tmp/' . $folder_contents[0];
+							$to_dir = $this->mods_dir . '/' . $folder_contents[0];
 						}
+						// Otherwise assume the temp directory is the main directroy, so change the directory
+						// name by moving to a directory without the '_tmp' suffix
 						else if (!is_dir($mod_dir))
 						{
-							// Change the name of the directory by moving to directory without _tmp in it
-							$this->directory_move($mod_dir . '_tmp/', $mod_dir);
+							$from_dir = $mod_dir . '_tmp/';
+							$to_dir = $mod_dir;
+						}
+						// We should never really get here, but you never know!
+						else
+						{
+							trigger_error($user->lang['MOD_UPLOAD_UNRECOGNIZED'] . adm_back_link($this->u_action), E_USER_WARNING);
 						}
 
-						$this->directory_delete($mod_dir . '_tmp/');
+						// Direct(ly) move that directory if the write method isn't FTP
+						if ($config['write_method'] != WRITE_FTP)
+						{
+							$this->directory_move($from_dir, $to_dir);
+						}
+						// Otherwise FTP Upload that directory to the new path
+						else
+						{
+							// get all of the files within the directory
+							$mod_files = find_files($from_dir, '.*');
+
+							// FTP the files into place
+							foreach ($mod_files as $mod_file)
+							{
+								$to_file = str_replace($phpbb_root_path, '', $to_dir) . str_replace($from_dir, '', $mod_file);
+								$editor->copy_content($mod_file, $to_file);
+							}
+						}
+						
+						// Finally delete the temp mod directory
+						recursive_unlink($mod_dir . '_tmp/');
 
 						if (!sizeof($file->error))
 						{
@@ -2413,70 +2523,99 @@ class acp_mods
 
 	function delete($mod_path)
 	{
-		global $template, $user;
+		global $template, $user, $config;
+		global $method, $test_ftp_connection, $test_connection;
 
-		if (confirm_box(true))
+		if (isset($mod_path) && !empty($mod_path))
+		{
+			$mod_path = explode('/', str_replace('\\', '/', $mod_path));
+			$mod_path = (!empty($mod_path[0])) ? $mod_path[0] : $mod_path[1];
+		}
+		else if (isset($_POST['mod_delete']) && !empty($_POST['mod_delete']))
 		{
 			$mod_path = request_var('mod_delete', '');
-
-			if ($this->directory_delete($this->mods_dir . '/' .	$mod_path))
+		}
+		
+		$hidden_ary = array(
+					'delete_confirm'	=> true,
+					'action'			=> 'delete',
+					'mod_delete'		=> $mod_path,
+					);
+		
+		// get FTP information if we need it
+		if ($config['write_method'] == WRITE_FTP)
+		{
+			if (isset($_POST['password']))
 			{
-				$template->assign_vars(array(
-					'S_MOD_SUCCESSBOX'	=> true,
-					'MESSAGE'			=> $user->lang['DELETE_SUCCESS'],
-					'U_RETURN'			=> $this->u_action
-				));
+				$hidden_ary['method'] = $config['ftp_method'];
+
+				if (empty($config['ftp_method']))
+				{
+					trigger_error('FTP_METHOD_ERROR');
+				}
+
+				$requested_data = call_user_func(array($config['ftp_method'], 'data'));
+
+				foreach ($requested_data as $data => $default)
+				{
+					if ($data == 'password')
+					{
+						$config['ftp_password'] = request_var('password', '');
+					}
+
+					$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+					$hidden_ary[$data] = $default;
+				}
 			}
 			else
 			{
-				trigger_error($user->lang['DELETE_ERROR'] . adm_back_link($this->u_action), E_USER_WARNING);
+				$test_ftp_connection = false;
 			}
+			handle_ftp_details($method, $test_ftp_connection, $test_connection);
+
+			if (!isset($_POST['submit']) || ($config['write_method'] == WRITE_FTP && $test_ftp_connection))
+			{
+				$template->assign_vars(array(
+					'S_MOD_DELETE'		=> true,
+					'U_DELETE'			=> $this->u_action,
+					'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
+				));
+				add_form_key('acp_mods_delete');
+				
+				return;
+			}
+
+			if (check_form_key('acp_mods_delete'))
+			{
+				$editor = new editor_ftp();
+				$status = $editor->remove("{$this->mods_dir}/{$mod_path}", true);
+			}
+			else
+			{
+				trigger_error($user->lang['FORM_INVALID'] . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+		}
+		else if (confirm_box(true))
+		{
+			$status = recursive_unlink("{$this->mods_dir}/{$mod_path}");
 		}
 		else
 		{
-			$mod_path = explode('/', str_replace('\\', '/', $mod_path));
-
-			confirm_box(false, $user->lang['DELETE_CONFIRM'], build_hidden_fields(array(
-					'delete_confirm'	=> true,
-					'action'		=> 'delete',
-					'mod_delete'	=> (!empty($mod_path[0]) ? $mod_path[0] : $mod_path[1]),
-			)));
-		}
-	}
-
-	function directory_delete($dir)
-	{
-		if (!file_exists($dir))
-		{
-			return true;
+			confirm_box(false, $user->lang['DELETE_CONFIRM'], build_hidden_fields($hidden_ary));
+			return;
 		}
 
-		if (!is_dir($dir) && is_file($dir))
+		if ($status === true)
 		{
-			phpbb_chmod($dir, CHMOD_ALL);
-			return unlink($dir);
+			$template->assign_vars(array(
+				'S_MOD_SUCCESSBOX'	=> true,
+				'MESSAGE'			=> $user->lang['DELETE_SUCCESS'],
+				'U_RETURN'			=> $this->u_action
+			));
 		}
-
-        foreach (scandir($dir) as $item)
+		else
 		{
-            if ($item == '.' || $item == '..')
-			{
-				continue;
-			}
-            if (!$this->directory_delete($dir . "/" . $item))
-			{
-				phpbb_chmod($dir . "/" . $item, CHMOD_ALL);
-                if (!$this->directory_delete($dir . "/" . $item))
-				{
-					return false;
-				}
-            }
-        }
-
-		// Make sure we don't delete the MODs directory
-		if ($dir != $this->mods_dir)
-		{
-			return rmdir($dir);
+			trigger_error($user->lang['DELETE_ERROR'] . "  $status" . adm_back_link($this->u_action), E_USER_WARNING);
 		}
 	}
 

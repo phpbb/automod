@@ -129,6 +129,7 @@ $lang = array_merge($lang, array(
 	'MOD_UPLOAD_EXPLAIN'		=> 'Here you can upload a zipped MOD package containing the necessary MODX files to perform installation.  AutoMOD will then attempt to unzip the file and have it ready for installation.',
 	'MOD_UPLOAD_INIT_FAIL'		=> 'There was an error initialising the MOD upload process.',
 	'MOD_UPLOAD_SUCCESS'		=> 'MOD uploaded and prepared for installation.',
+	'MOD_UPLOAD_UNRECOGNIZED'	=> 'The directory structure of the uploaded MOD archive is unrecognized.  Check if the zip archive you uploaded is corrupt or missing any files/directories, or contact the MOD Author.',
 	'AUTOMOD_INSTALLATION'		=> 'AutoMOD Installation',
 	'AUTOMOD_INSTALLATION_EXPLAIN'	=> 'Welcome to the AutoMOD Installation.  You will need your FTP details if AutoMOD detects that is the best way to write files.  The requirements test results are below.',
 
@@ -140,6 +141,7 @@ $lang = array_merge($lang, array(
 	'MODS_MKDIR_FAILED'			=> 'The directory %s could not be created',
 	'MODS_RMDIR_FAILURE'		=> 'The directory %s could not be removed',
 	'MODS_RMFILE_FAILURE'		=> 'The file %s could not be removed',
+	'MODS_NOT_WRITABLE'			=> 'The store/mods/ directory is not writable.  This is required for “Upload MOD” to work properly, unless you set your “write method” to “FTP”.  Please adjust your permissions or settings and try again.',
 	'MODS_SETUP_INCOMPLETE'		=> 'A problem was found with your configuration, and AutoMOD cannot operate.  This should only occur when settings (e.g. FTP username) have changed, and can be corrected in the AutoMOD configuration page.',
 
 	'NAME'			=> 'Name',
