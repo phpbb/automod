@@ -946,6 +946,48 @@ class editor_direct extends editor
 	{
 		return $this->recursive_mkdir($dir);
 	}
+
+	/**
+	 * Removes a file or a directory (optionally recursively)
+	 *
+	 * @param	$path		string (required)	- Filename/Directory path to remove
+	 * @param	$recursive	bool (optional)		- Recursively delete directories
+	 * @author jasmineaura
+	 */
+	function remove($path, $recursive = false)
+	{
+		global $phpbb_root_path, $user;
+
+		if (strpos($path, $phpbb_root_path) !== 0)
+		{
+			$path = $phpbb_root_path . $path;
+		}
+
+		if (is_dir($path))
+		{
+			if ($recursive)
+			{
+				// recursively delete (in functions_mod.php)
+				return recursive_unlink($path);
+			}
+			else
+			{
+				if (!rmdir($path))
+				{
+					return sprintf($user->lang['MODS_RMDIR_FAILURE'], $path);
+				}
+			}
+		}
+		else
+		{
+			if (!unlink($path))
+			{
+				return sprintf($user->lang['MODS_RMFILE_FAILURE'], $path);
+			}
+		}
+		
+		return true;
+	}
 }
 
 class editor_ftp extends editor
@@ -1109,6 +1151,81 @@ class editor_ftp extends editor
 	{
 		return $this->recursive_mkdir($dir);
 	}
+
+	/**
+	 * Removes a file or a directory (optionally recursively)
+	 *
+	 * @param	$path		string (required)	- Filename/Directory path to remove
+	 * @param	$recursive	bool (optional)		- Recursively delete directories
+	 * @author jasmineaura
+	 */
+	function remove($path, $recursive = false)
+	{
+		global $phpbb_root_path, $phpEx, $user;
+
+		// No need to strip phpbb_root_path afterwards, as the transfer class
+		// functions - remove_dir() and delete_file() - already do that for us
+		if (strpos($path, $phpbb_root_path) !== 0)
+		{
+			$path = $phpbb_root_path . $path;
+		}
+
+		if (is_dir($path))
+		{
+			// Recursive delete:
+			// remove_dir() in functions_transfer.php still says "todo remove child directories?"
+			// It's really easy to recursively delete in ftp, but unfortunately what exposes access to
+			// ftp_nlist() (or NLST); "_ls", is private to the transfer class, so we can't use it yet
+			if ($recursive)
+			{
+				// Insurance - this should never really happen
+				if ($path == $phpbb_root_path || is_file("$path/common.$phpEx"))
+				{
+					return false;
+				}
+
+				// Get all of the files in the source directory
+				$files = find_files($path, '.*');
+				// Get all of the sub-directories in the source directory
+				$subdirs = find_files($path, '.*', 20, true);
+
+				// Delete all the files
+				foreach ($files as $file)
+				{
+					if (!$this->transfer->delete_file($file))
+					{
+						return sprintf($user->lang['MODS_RMFILE_FAILURE'], $file);
+					}
+				}
+				
+				// Delete all the sub-directories, in _reverse_ order (array_pop)
+				for ($i=0, $cnt = count($subdirs); $i < $cnt; $i++)
+				{
+					$subdir = array_pop($subdirs);
+					if (!$this->transfer->remove_dir($subdir))
+					{
+						return sprintf($user->lang['MODS_RMDIR_FAILURE'], $subdir);
+					}
+				}
+				
+				// Finally, delete the directory itself
+				if (!$this->transfer->remove_dir($path))
+				{
+					return sprintf($user->lang['MODS_RMDIR_FAILURE'], $path);
+				}
+			}
+			else if (!$this->transfer->remove_dir($path))
+			{
+				return sprintf($user->lang['MODS_RMDIR_FAILURE'], $path);
+			}
+		}
+		else if (!$this->transfer->delete_file($path))
+		{
+			return sprintf($user->lang['MODS_RMFILE_FAILURE'], $path);
+		}
+		
+		return true;
+	}
 }
 
 class editor_manual extends editor
@@ -1210,10 +1327,6 @@ class editor_manual extends editor
 
 		// don't include extra dirs in zip file
 		$strip_position = strpos($new_filename, '_edited') + 8; // want the end of the string
-		if ($strip_position == 8)
-		{
-			$strip_position = strpos($new_filename, '_uninst') + 7;
-		}
 
 		$new_filename = 'files/' . substr($new_filename, $strip_position);
 
@@ -1261,6 +1374,11 @@ class editor_manual extends editor
 	}
 
 	function create_edited_root($dir)
+	{
+		return NULL;
+	}
+
+	function remove($file, $recursive = false)
 	{
 		return NULL;
 	}

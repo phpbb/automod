@@ -228,6 +228,14 @@ class parser
 			}
 		}
 
+		if (!empty($actions['NEW_FILES']))
+		{
+			foreach ($actions['NEW_FILES'] as $source => $target)
+			{
+				$reverse_edits['DELETE_FILES'][$source] = $target;
+			}
+		}
+
 		if (empty($actions['SQL']))
 		{
 			return $reverse_edits;

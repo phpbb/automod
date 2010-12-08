@@ -138,6 +138,8 @@ $lang = array_merge($lang, array(
 	'MODS_FTP_FAILURE'			=> 'AutoMOD could not FTP the file %s into place',
 	'MODS_FTP_CONNECT_FAILURE'	=> 'AutoMOD was unable to connect to your FTP server.  The error was %s',
 	'MODS_MKDIR_FAILED'			=> 'The directory %s could not be created',
+	'MODS_RMDIR_FAILURE'		=> 'The directory %s could not be removed',
+	'MODS_RMFILE_FAILURE'		=> 'The file %s could not be removed',
 	'MODS_SETUP_INCOMPLETE'		=> 'A problem was found with your configuration, and AutoMOD cannot operate.  This should only occur when settings (e.g. FTP username) have changed, and can be corrected in the AutoMOD configuration page.',
 
 	'NAME'			=> 'Name',
