@@ -1,8 +1,14 @@
 AutoMOD Changelog
 
 - Changes since 1.0.0
+ + [Feature] Show DIY instructions in the details. (Ticket #62171)
+ + [Feature] Added error checking for readable MOD files. Patch by Callum95 (Ticket #62244)
+ + [Change] Changed the wording for DIY. (Ticket #62171)
+ + [Change] Hide the second uninstall button if there are no file edits. (Ticket #62468)
  + [Fix] Use correct language key when creating dir fails
  + [Fix] Undefined variable error when an unknown action is attempted
+ + [Fix] Removed closing </a> that did not have any open tags. (Ticket #62152)
+ + [Fix] Show translated links if there are such in the users language. (Ticket #62507)
 
 - Changes since 1.0.0 Release Candidate 4
  + [Fix] Incorrect path error when installing MODX 1.0.x MODs
@@ -33,7 +39,7 @@ AutoMOD Changelog
  + [Fix] Special characters in file names are properly handled
  + [Fix] Force Install feature was broken when processing child MODX files
  + [Fix] Correct file selection when MOD has multiple MODX files in its directory
- + [Fix] Inherited styles now properly handled by AutoMOD 
+ + [Fix] Inherited styles now properly handled by AutoMOD
 
 - Changes since 1.0.0 Release Candidate 1
  + [Change] Show the filename when an XML parsing error occurs
@@ -47,7 +53,7 @@ AutoMOD Changelog
  + [Feature] Back up all files before editing them
  + [Feature] More stern warning prompt when using "force install" button
  + [Change] Paths are handled without passing $phpbb_root_path around
- + [Fix] Improved support for MODX 1.0.x 
+ + [Fix] Improved support for MODX 1.0.x
  + [Fix] Correct cosmetic issues under MSIE
  + [Fix] Do not copy files when installation fails
  + [Fix] Database changes are performed when using "force install"
