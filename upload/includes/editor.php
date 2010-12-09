@@ -773,13 +773,6 @@ class editor_direct extends editor
 			$from = $phpbb_root_path . $from;
 		}
 
-		// When installing a MODX 1.2.0 MOD, this happens once in a long while.
-		// Not sure why yet.
-		if (is_array($to))
-		{
-			return NULL;
-		}
-
 		if (strpos($to, $phpbb_root_path) !== 0)
 		{
 			$to = $phpbb_root_path . $to;
@@ -953,6 +946,48 @@ class editor_direct extends editor
 	{
 		return $this->recursive_mkdir($dir);
 	}
+
+	/**
+	 * Removes a file or a directory (optionally recursively)
+	 *
+	 * @param	$path		string (required)	- Filename/Directory path to remove
+	 * @param	$recursive	bool (optional)		- Recursively delete directories
+	 * @author jasmineaura
+	 */
+	function remove($path, $recursive = false)
+	{
+		global $phpbb_root_path, $user;
+
+		if (strpos($path, $phpbb_root_path) !== 0)
+		{
+			$path = $phpbb_root_path . $path;
+		}
+
+		if (is_dir($path))
+		{
+			if ($recursive)
+			{
+				// recursively delete (in functions_mod.php)
+				return recursive_unlink($path);
+			}
+			else
+			{
+				if (!rmdir($path))
+				{
+					return sprintf($user->lang['MODS_RMDIR_FAILURE'], $path);
+				}
+			}
+		}
+		else
+		{
+			if (!unlink($path))
+			{
+				return sprintf($user->lang['MODS_RMFILE_FAILURE'], $path);
+			}
+		}
+		
+		return true;
+	}
 }
 
 class editor_ftp extends editor
@@ -991,7 +1026,7 @@ class editor_ftp extends editor
 	*
 	* @param $from string Can be a file or a directory. Will move either the file or all files within the directory
 	* @param $to string Where to move the file(s) to. If not specified then will get moved to the root folder
-	* @param $strip Used for FTP only
+	* @param $strip mixed (string or array) Used for FTP only
 	* @return mixed: Bool true on success, error string on failure, NULL if no action was taken
 	* 
 	* NOTE: function should preferably not return in case of failure on only one file.  
@@ -1001,22 +1036,18 @@ class editor_ftp extends editor
 	{
 		global $phpbb_root_path, $user;
 
+		// Prefix $from with $phpbb_root_path
 		if (strpos($from, $phpbb_root_path) !== 0)
 		{
 			$from = $phpbb_root_path . $from;
 		}
 
-		// When installing a MODX 1.2.0 MOD, this happens once in a long while.
-		// Not sure why yet.
-		if (is_array($to))
-		{
-			return NULL;
-		}
-
-		if (strpos($to, $phpbb_root_path) !== 0)
-		{
-			$to = $phpbb_root_path . $to;
-		}
+		// Why are we stripping out phpbb_root_path from $to (unlike editor_direct)?
+		// Per includes/functions_transfer.php, all transfer functions do this,
+		// except overwrite_file() (which we use here) because it is called by other
+		// functions (write_file, copy_file) that strip phpbb_root_path before calling it.
+		// This is because class ftp (extends transfer) prepends the real $root_path
+		$to = str_replace($phpbb_root_path, '', $to);
 
 		$files = array();
 		if (is_dir($from))
@@ -1037,15 +1068,21 @@ class editor_ftp extends editor
 		// ftp
 		foreach ($files as $file)
 		{
-			$to_file = str_replace($strip, '', $file);
-
-			$this->recursive_mkdir(dirname($to_file));
-
-			if (!$this->transfer->overwrite_file($file, $to_file))
+			// If we got passed $strip, wildcards were used, so get $to out of $file ($from)
+			if (!empty($strip))
+			{
+				$to = str_replace($strip, '', $file);
+			}
+			
+			// no $phpbb_root_path prefix here, this is FTP (not direct)
+			// We also don't want return false here in case directory already exists (todo)
+			$this->recursive_mkdir(dirname($to));
+			
+			if (!$this->transfer->overwrite_file($file, $to))
 			{
 				// may as well return ... the MOD is likely dependent upon
 				// the file that is being copied
-				return sprintf($user->lang['MODS_FTP_FAILURE'], $to_file);
+				return sprintf($user->lang['MODS_FTP_FAILURE'], $to);
 			}
 		}
 
@@ -1114,6 +1151,81 @@ class editor_ftp extends editor
 	{
 		return $this->recursive_mkdir($dir);
 	}
+
+	/**
+	 * Removes a file or a directory (optionally recursively)
+	 *
+	 * @param	$path		string (required)	- Filename/Directory path to remove
+	 * @param	$recursive	bool (optional)		- Recursively delete directories
+	 * @author jasmineaura
+	 */
+	function remove($path, $recursive = false)
+	{
+		global $phpbb_root_path, $phpEx, $user;
+
+		// No need to strip phpbb_root_path afterwards, as the transfer class
+		// functions - remove_dir() and delete_file() - already do that for us
+		if (strpos($path, $phpbb_root_path) !== 0)
+		{
+			$path = $phpbb_root_path . $path;
+		}
+
+		if (is_dir($path))
+		{
+			// Recursive delete:
+			// remove_dir() in functions_transfer.php still says "todo remove child directories?"
+			// It's really easy to recursively delete in ftp, but unfortunately what exposes access to
+			// ftp_nlist() (or NLST); "_ls", is private to the transfer class, so we can't use it yet
+			if ($recursive)
+			{
+				// Insurance - this should never really happen
+				if ($path == $phpbb_root_path || is_file("$path/common.$phpEx"))
+				{
+					return false;
+				}
+
+				// Get all of the files in the source directory
+				$files = find_files($path, '.*');
+				// Get all of the sub-directories in the source directory
+				$subdirs = find_files($path, '.*', 20, true);
+
+				// Delete all the files
+				foreach ($files as $file)
+				{
+					if (!$this->transfer->delete_file($file))
+					{
+						return sprintf($user->lang['MODS_RMFILE_FAILURE'], $file);
+					}
+				}
+				
+				// Delete all the sub-directories, in _reverse_ order (array_pop)
+				for ($i=0, $cnt = count($subdirs); $i < $cnt; $i++)
+				{
+					$subdir = array_pop($subdirs);
+					if (!$this->transfer->remove_dir($subdir))
+					{
+						return sprintf($user->lang['MODS_RMDIR_FAILURE'], $subdir);
+					}
+				}
+				
+				// Finally, delete the directory itself
+				if (!$this->transfer->remove_dir($path))
+				{
+					return sprintf($user->lang['MODS_RMDIR_FAILURE'], $path);
+				}
+			}
+			else if (!$this->transfer->remove_dir($path))
+			{
+				return sprintf($user->lang['MODS_RMDIR_FAILURE'], $path);
+			}
+		}
+		else if (!$this->transfer->delete_file($path))
+		{
+			return sprintf($user->lang['MODS_RMFILE_FAILURE'], $path);
+		}
+		
+		return true;
+	}
 }
 
 class editor_manual extends editor
@@ -1148,10 +1260,8 @@ class editor_manual extends editor
 			$from = $phpbb_root_path . $from;
 		}
 
-		if (strpos($to, $phpbb_root_path) !== 0)
-		{
-			$to = $phpbb_root_path . $to;
-		}
+		// It should have been already stripped out, but just to be sure
+		$to = str_replace($phpbb_root_path, '', $to);
 
 		// Note: phpBB's compression class does support adding a whole directory at a time.
 		// However, I chose not to use that function because it would not allow AutoMOD's
@@ -1174,16 +1284,21 @@ class editor_manual extends editor
 
 		foreach ($files as $file)
 		{
-			if (is_dir($to))
+			// If we got passed $strip, wildcards were used, so get $to_file out of $file ($from)
+			if (!empty($strip))
+			{
+				$to_file = str_replace($strip, '', $file);
+			}
+			else if (is_dir($phpbb_root_path . $to))
 			{
 				// this would find the directory part specified in MODX
-				$to_file = str_replace(array($phpbb_root_path, $strip), '', $to);
+				$to_file = str_replace($strip, '', $to);
 				// and this fetches any subdirectories and the filename of the destination file
 				$to_file .= substr($file, strpos($file, $to_file) + strlen($to_file));
 			}
 			else
 			{
-				$to_file = str_replace($phpbb_root_path, '', $to);
+				$to_file = $to;
 			}
 
 			// filename calculation is involved here:
@@ -1215,10 +1330,6 @@ class editor_manual extends editor
 
 		// don't include extra dirs in zip file
 		$strip_position = strpos($new_filename, '_edited') + 8; // want the end of the string
-		if ($strip_position == 8)
-		{
-			$strip_position = strpos($new_filename, '_uninst') + 7;
-		}
 
 		$new_filename = 'files/' . substr($new_filename, $strip_position);
 
@@ -1266,6 +1377,11 @@ class editor_manual extends editor
 	}
 
 	function create_edited_root($dir)
+	{
+		return NULL;
+	}
+
+	function remove($file, $recursive = false)
 	{
 		return NULL;
 	}

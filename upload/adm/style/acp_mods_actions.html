@@ -36,12 +36,16 @@
 		<thead>
 		<tr>
 			<th>{L_SOURCE}</th>
+            <th>{L_STATUS}</th>
 		</tr>
 		</thead>
 		<tbody>
 			<!-- BEGIN removing_files -->
 				<tr>
 					<td><strong>{removing_files.FILENAME}</strong><!-- IF removing_files.S_MISSING_FILE -->&nbsp;&nbsp;&nbsp;<strong><font color="red">({L_FILE_MISSING})</font></strong>&nbsp;<!-- ENDIF --></td>
+                    <!-- IF S_UNINSTALL --><td>
+                    	<!-- IF removing_files.S_SUCCESS --><font color="green">{L_SUCCESS}</font><!-- ELSEIF removing_files.S_NO_DELETE_ATTEMPT -->{L_NO_ATTEMPT}<!-- ELSE --><font color="red">{L_ERROR}</font><!-- ENDIF -->
+					</td><!-- ENDIF -->
 				</tr>
 			<!-- END removing_files -->
 		</tbody>
