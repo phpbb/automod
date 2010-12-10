@@ -10,6 +10,13 @@ AutoMOD Changelog
  + [Fix] Undefined variable error when an unknown action is attempted
  + [Fix] Removed closing </a> that did not have any open tags. (Ticket #62152)
  + [Fix] Show translated links if there are such in the users language. (Ticket #62507)
+ + [Fix] Install w/ FTP method copying all files to phpbbroot, not honoring preview_changes config. Patch by jasmineaura (Ticket #62268)
+ + [Fix] editor->copy_content $to parameter is_array. Patch by jasmineaura (Ticket #62341)
+ + [Fix] uninstall cleanup: reverse-delete NEW_FILES & wildcards reversal. Patch by jasmineaura (Ticket #62271)
+ + [Fix] force_uninstall when using FTP write method results in "General Error". Patch by jasmineaura (Ticket #62288)
+ + [Fix] edited and *uninst directories clutter, _backups confusion. Patch by jasmineaura (Ticket #62293)
+ + [Fix] PHP error with compressed file method; strpos empty delimiter. Patch by jasmineaura (Ticket #62278)
+ + [Fix] mod_upload() & delete() should respect configured FTP write method Patch by jasmineaura (Ticket #62277)
 
 - Changes since 1.0.0 Release Candidate 4
  + [Fix] Incorrect path error when installing MODX 1.0.x MODs
