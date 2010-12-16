@@ -817,9 +817,10 @@ class xml_array
 		array_push($this->output, $tag);
 	}
 
-	function tag_data($parser, $tag_data)
+	function tag_data($parser, $tag_data = '')
 	{
-		if ($tag_data)
+		// Don't really see this not ever being set but 0 needs to be accepted as a find.
+		if ($tag_data != '')
 		{
 			if (isset($this->output[sizeof($this->output) - 1]['data']))
 			{
