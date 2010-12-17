@@ -85,6 +85,7 @@
 	<!-- ENDIF -->
 
 	<!-- IF S_EDITS -->
+    <!-- IF S_INSTALL or S_UNINSTALL -->
 	<script type="text/javascript">
 	// <![CDATA[
 	function toggle_files()
@@ -126,9 +127,12 @@
 	}
 	// ]]>
 	</script>
+    <!-- ENDIF -->
 
 	<h2>{L_FILE_EDITS}</h2>
+    <!-- IF S_INSTALL or S_UNINSTALL -->
 	<p><a href="#" onclick="toggle_files(); return false;" id="hide-files">{L_CLICK_HIDE_FILES}</a> &bull; <a href="#" onclick="toggle_edits(); return false;" id="hide-edits">{L_CLICK_HIDE_EDITS}</a></p>
+    <!-- ENDIF -->
 	<!-- BEGIN edit_files -->
 	<fieldset<!-- IF edit_files.S_SUCCESS --> name="hide-file"<!-- ENDIF -->>
 		<legend>{edit_files.FILENAME}</legend>
