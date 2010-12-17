@@ -188,33 +188,35 @@ class parser
 							break;
 
 							case 'IN-LINE-EDIT':
-								$action_id = 0;
 								// build the reverse just like the normal action
-								foreach ($command as $inline_find => $inline_action_ary)
+								foreach ($command as $action_id => $inline_edit)
 								{
-									foreach ($inline_action_ary as $inline_action => $inline_command)
+									foreach ($inline_edit as $inline_find => $inline_action_ary)
 									{
-										$inline_command = $inline_command[0];
-
-										switch (strtoupper($inline_action))
+										foreach ($inline_action_ary as $inline_action => $inline_command)
 										{
-											case 'IN-LINE-AFTER-ADD':
-											case 'IN-LINE-BEFORE-ADD':
-												// Replace with a blank string
-												$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$action_id][$inline_command]['in-line-replace'][] = '';
-											break;
-
-											case 'IN-LINE-REPLACE':
-												// replace with the inline find
-												$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$action_id][$inline_command][$inline_action][] = $inline_find;
-											break;
-
-											default:
-												// For the moment, we do nothing.  What about increment?
-											break;
+											$inline_command = $inline_command[0];
+	
+											switch (strtoupper($inline_action))
+											{
+												case 'IN-LINE-AFTER-ADD':
+												case 'IN-LINE-BEFORE-ADD':
+													// Replace with a blank string
+													$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$action_id][$inline_command]['in-line-replace'][] = '';
+												break;
+	
+												case 'IN-LINE-REPLACE':
+													// replace with the inline find
+													$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$action_id][$inline_command][$inline_action][] = $inline_find;
+												break;
+	
+												default:
+													// For the moment, we do nothing.  What about increment?
+												break;
+											}
+	
+											$action_id++;
 										}
-
-										$action_id++;
 									}
 								}
 							break;

@@ -679,21 +679,14 @@ class editor
 			(($this->last_action[2] == 'AFTER' && $this->curr_action[2] == 'BEFORE')
 			|| ($this->last_action[2] == 'BEFORE' && $this->curr_action[2] == 'AFTER')))
 		{
-			$last_action_index = sizeof($this->mod_actions[$this->open_filename]) - 1;
-			unset($this->mod_actions[$this->open_filename][$last_action_index]);
-
-			// Re-index the array to start at zero and go sequentially
-			$this->mod_actions[$this->open_filename] = array_merge($this->mod_actions[$this->open_filename]);
+			array_pop($this->mod_actions[$this->open_filename]);
 
 			$action_type = 'REPLACE';
 
 			// Remove the add from the find -- this is an effect of the way the
 			// add method works, putting the new lines in the same array element
 			// as the find
-			if (!empty($this->last_action))
-			{
-				$find = str_replace(trim($this->last_action[1]), '', $find);
-			}
+			$find = str_replace(trim($this->last_action[1]), '', $find);
 
 			if ($this->last_action[2] == 'AFTER')
 			{
@@ -718,15 +711,38 @@ class editor
 		}
 		else
 		{
-			$this->mod_actions[$this->open_filename][] = array(
-				$find => array(
-					'in-line-edit'	=> array(
-						$inline_find	=> array(
-							$action_type	=> array($action),
+			// Do we have preceding in-line-edit(s) on the same complete find or line?
+			if (!empty($this->last_action) && $this->last_action[0] == $this->curr_action[0])
+			{
+				$prev_inline_edits = array_pop($this->mod_actions[$this->open_filename]);
+				$prev_find = key($prev_inline_edits);
+
+				// Add our current in-line-edit
+				$prev_inline_edits[$prev_find]['in-line-edit'][] = array(
+					$inline_find	=> array(
+						$action_type	=> array($action),
+					),
+				);
+
+				// Add the new set of in-line-edit's to our MOD Actions array, w/ the updated $find
+				$this->mod_actions[$this->open_filename][] = array(
+					$find => $prev_inline_edits[$prev_find]
+				);
+			}
+			else
+			{
+				$this->mod_actions[$this->open_filename][] = array(
+					$find => array(
+						'in-line-edit'	=> array(
+							array(
+								$inline_find	=> array(
+									$action_type	=> array($action),
+								),
+							),
 						),
 					),
-				),
-			);
+				);
+			}
 		}
 
 		$this->last_action = $this->curr_action;
