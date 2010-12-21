@@ -2142,6 +2142,7 @@ class acp_mods
 
 	/**
 	 * Get all contrib links for the selected language.
+	 * This functions will be removed.
 	 */
 	function get_contrib_lang($contrib, $lang = 'en')
 	{
