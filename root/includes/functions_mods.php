@@ -235,12 +235,12 @@ function update_database_template($filename, $template_id, $file_contents, $inst
 	return true;
 }
 
-function determine_write_method($pre_install = false)
+function determine_write_method($preview = false)
 {
 	global $phpbb_root_path, $config;
 
 	// to be truly correct, we should scan all files ...
-	if ((is_writable($phpbb_root_path) && $config['write_method'] == WRITE_DIRECT) || $pre_install)
+	if (($config['write_method'] == WRITE_DIRECT && is_writable($phpbb_root_path)) || $preview)
 	{
 		$write_method = 'direct';
 	}
@@ -296,6 +296,51 @@ function handle_ftp_details($method, $test_ftp_connection, $test_connection)
 		'UPLOAD_METHOD'			=> $method,
 		'S_HIDDEN_FIELDS_FTP'	=> $s_hidden_fields,
 	));
+}
+
+/**
+* Gets FTP information if we need it
+*
+* @param	$preview	bool	true if in pre_(install|uninstall), false otherwise
+* @return				array	and array of connection info (currently only ftp)
+*/
+function get_connection_info($preview = false)
+{
+	global $config, $ftp_method, $test_ftp_connection, $test_connection;
+
+	$conn_info_ary = array();
+
+	// using $config instead of $editor because write_method is forced to direct
+	// when in preview mode
+	if ($config['write_method'] == WRITE_FTP)
+	{
+		if (!$preview && isset($_POST['password']))
+		{
+			$conn_info_ary['method'] = $config['ftp_method'];
+
+			if (empty($config['ftp_method']))
+			{
+				trigger_error('FTP_METHOD_ERROR');
+			}
+
+			$requested_data = call_user_func(array($config['ftp_method'], 'data'));
+
+			foreach ($requested_data as $data => $default)
+			{
+				if ($data == 'password')
+				{
+					$config['ftp_password'] = request_var('password', '');
+				}
+				$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+
+				$conn_info_ary[$data] = $default;
+			}
+		}
+
+		handle_ftp_details($ftp_method, $test_ftp_connection, $test_connection);
+	}
+
+	return $conn_info_ary;
 }
 
 /**
