@@ -226,7 +226,7 @@ class acp_mods
 						}
 					}
 				}
-				
+
 				// store/ needs to be writable even when FTP is the write method, for extracting uploaded mods
 				if (!is_writable("{$phpbb_root_path}store/"))
 				{
@@ -1823,7 +1823,7 @@ class acp_mods
 								$dst_file_cnt = directory_num_files($phpbb_root_path . $dir_target, false, true);
 								$src_dir_cnt = directory_num_files($dir_source, true, true);
 								$dst_dir_cnt = directory_num_files($phpbb_root_path . $dir_target, true, true);
-								
+
 								// Do we have a match in recursive file count and match in recursive subdir count?
 								// This could be vastly improved..
 								if ($src_file_cnt == $dst_file_cnt && $src_dir_cnt == $dst_dir_cnt)
@@ -1926,7 +1926,7 @@ class acp_mods
 						if ($change && ($mod_installed || $force_install))
 						{
 							$status = $editor->remove($directories['del'][$i]);
-		
+
 							$template->assign_block_vars('removing_files', array(
 								'S_SUCCESS'				=> ($status === true) ? true : false,
 								'S_NO_DELETE_ATTEMPT'	=> (is_null($status)) ? true : false,
@@ -2149,7 +2149,7 @@ class acp_mods
 
 		foreach ($contrib as $element)
 		{
-			if ($element['lang'] == $lang)
+			if (match_language($lang, $element['lang']))
 			{
 				$ary[] = $element;
 			}
@@ -2400,7 +2400,7 @@ class acp_mods
 		}
 
 		$can_upload = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || !@extension_loaded('zlib')) ? false : true;
-		
+
 		if (!isset($_POST['submit']) || ($config['write_method'] == WRITE_FTP && $test_ftp_connection))
 		{
 			$template->assign_vars(array(
@@ -2441,7 +2441,7 @@ class acp_mods
 					mkdir($this->mods_dir, octdec($config['am_dir_perms']));
 				}
 			}
-			
+
 			// For Direct and Manual write methods, make sure mods/ directory is writable (no other choice)
 			if ($config['write_method'] != WRITE_FTP)
 			{
@@ -2527,7 +2527,7 @@ class acp_mods
 								$editor->copy_content($mod_file, $to_file);
 							}
 						}
-						
+
 						// Finally delete the temp mod directory
 						recursive_unlink($mod_dir . '_tmp/');
 
@@ -2570,13 +2570,13 @@ class acp_mods
 		{
 			$mod_path = request_var('mod_delete', '');
 		}
-		
+
 		$hidden_ary = array(
 					'delete_confirm'	=> true,
 					'action'			=> 'delete',
 					'mod_delete'		=> $mod_path,
 					);
-		
+
 		// get FTP information if we need it
 		if ($config['write_method'] == WRITE_FTP)
 		{
@@ -2616,7 +2616,7 @@ class acp_mods
 					'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
 				));
 				add_form_key('acp_mods_delete');
-				
+
 				return;
 			}
 
