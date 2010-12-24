@@ -876,6 +876,7 @@ class acp_mods
 		$template->assign_vars(array(
 			'S_INSTALL'		=> $execute_edits,
 			'S_PRE_INSTALL'	=> !$execute_edits,
+			'S_PREVIEW'		=> $config['preview_changes'],
 			'MOD_PATH'		=> str_replace($this->mod_root, '', $mod_path),
 			'U_INSTALL'		=> $this->u_action . '&amp;action=install' . ($parent ? "&amp;parent=$parent" : ''),
 			'U_RETURN'		=> $this->u_action,
@@ -1102,6 +1103,7 @@ class acp_mods
 		$template->assign_vars(array(
 			'S_UNINSTALL'		=> $execute_edits,
 			'S_PRE_UNINSTALL'	=> !$execute_edits,
+			'S_PREVIEW'			=> $config['preview_changes'],
 			'L_FORCE_INSTALL'	=> $user->lang['FORCE_UNINSTALL'],
 			'MOD_ID'		=> $mod_id,
 			'U_UNINSTALL'	=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,

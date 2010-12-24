@@ -288,19 +288,6 @@
 
 	<p>{L_PRE_INSTALL_EXPLAIN}</p>
 
-	<form id="acp_mods" method="post" action="{U_INSTALL}">
-
-	<fieldset class="submit-buttons">
-		<legend>{L_INSTALL}</legend>
-		{S_FORM_TOKEN}
-		{S_HIDDEN_FIELDS}
-		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
-		<!-- IF .data -->
-		<input class="button1" type="submit" name="test_connection" value="{L_TEST_CONNECTION}" />
-		<!-- ENDIF -->
-		<input class="button1" type="submit" name="install" value="{L_INSTALL}" />
-	</fieldset>
-
 	<!-- IF S_AUTHOR_NOTES -->
 	<fieldset>
 		<legend>{L_AUTHOR_NOTES}</legend>
@@ -308,6 +295,7 @@
 	</fieldset>
 	<!-- ENDIF -->
 
+	<form id="acp_mods" method="post" action="{U_INSTALL}">
 <!-- IF .data -->
 	<!-- IF S_CONNECTION_SUCCESS -->
 		<div class="successbox">
@@ -321,15 +309,27 @@
 
 	<!-- INCLUDE acp_mods_ftp.html -->
 <!-- ENDIF -->
+	<fieldset class="submit-buttons">
+		<legend>{L_INSTALL}</legend>
+		{S_FORM_TOKEN}
+		{S_HIDDEN_FIELDS}
+		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
+		<!-- IF .data -->
+		<input class="button1" type="submit" name="test_connection" value="{L_TEST_CONNECTION}" />
+		<!-- ENDIF -->
+		<input class="button1" type="submit" name="install" value="{L_INSTALL}" />
+	</fieldset>
 
 	<!-- INCLUDE acp_mods_actions.html -->
 
-	<!-- IF S_NEW_FILES or S_EDITS or S_SQL or S_AUTHOR_NOTES or .data -->
+	<!-- IF S_PREVIEW -->
+	<!-- IF S_NEW_FILES or S_EDITS or S_SQL -->
 	<fieldset class="submit-buttons">
 		<legend>{L_INSTALL}</legend>
 		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
 		<input class="button1" type="submit" name="install" value="{L_INSTALL}" />
 	</fieldset>
+	<!-- ENDIF -->
 	<!-- ENDIF -->
 	</form>
 
@@ -413,16 +413,6 @@
 
 	<p>{L_PRE_UNINSTALL_EXPLAIN}</p>
 
-	<form id="acp_mods" method="post" action="{U_UNINSTALL}">
-	<fieldset class="submit-buttons">
-		<legend>{L_UNINSTALL}</legend>
-		<input type="hidden" name="mod_id" value="{MOD_ID}" />
-		<!-- IF .data -->
-		<input class="button1" type="submit" name="test_connection" value="{L_TEST_CONNECTION}" />
-		<!-- ENDIF -->
-		<input class="button1" type="submit" name="uninstall" value="{L_UNINSTALL}" />
-	</fieldset>
-
 	<!-- IF S_AUTHOR_NOTES -->
 	<fieldset>
 		<legend>{L_AUTHOR_NOTES}</legend>
@@ -430,6 +420,7 @@
 	</fieldset>
 	<!-- ENDIF -->
 
+	<form id="acp_mods" method="post" action="{U_UNINSTALL}">
 <!-- IF .data -->
 	<!-- IF S_CONNECTION_SUCCESS -->
 		<div class="successbox">
@@ -443,18 +434,25 @@
 
 	<!-- INCLUDE acp_mods_ftp.html -->
 <!-- ENDIF -->
-
-	<!-- INCLUDE acp_mods_actions.html -->
-
-	<!-- IF S_REMOVING_FILES or S_EDITS or S_SQL or S_AUTHOR_NOTES or .data -->
 	<fieldset class="submit-buttons">
 		<legend>{L_UNINSTALL}</legend>
+		<input type="hidden" name="mod_id" value="{MOD_ID}" />
 		<!-- IF .data -->
 		<input class="button1" type="submit" name="test_connection" value="{L_TEST_CONNECTION}" />
 		<!-- ENDIF -->
+		<input class="button1" type="submit" name="uninstall" value="{L_UNINSTALL}" />
+	</fieldset>
+
+	<!-- INCLUDE acp_mods_actions.html -->
+
+	<!-- IF S_PREVIEW -->
+	<!-- IF S_REMOVING_FILES or S_EDITS or S_SQL -->
+	<fieldset class="submit-buttons">
+		<legend>{L_UNINSTALL}</legend>
 		<input type="hidden" name="mod_id" value="{MOD_ID}" />
 		<input class="button1" type="submit" name="uninstall" value="{L_UNINSTALL}" />
 	</fieldset>
+	<!-- ENDIF -->
 	<!-- ENDIF -->
 	</form>
 
