@@ -103,7 +103,7 @@ class editor
 	* @param string $filename - relative path from phpBB Root to the file to open
 	* 		e.g. viewtopic.php, styles/prosilver/templates/index_body.html
 	*/
-	function open_file($filename, $backup_path)
+	function open_file($filename, $backup_path = '')
 	{
 		global $phpbb_root_path, $db, $user;
 
@@ -164,8 +164,11 @@ class editor
 		$this->start_index = 0;
 		$this->open_filename = $filename;
 
-		// Make a backup of this file
-		$this->backup_file($backup_path);
+		// Should we backup this file?
+		if ($backup_path)
+		{
+			$this->backup_file($backup_path);
+		}
 	}
 
 	/**
@@ -770,17 +773,16 @@ class editor_direct extends editor
 	}
 
 	/**
-	* Moves files or complete directories
+	* Copies files or complete directories
 	*
-	* @param $from string Can be a file or a directory. Will move either the file or all files within the directory
-	* @param $to string Where to move the file(s) to. If not specified then will get moved to the root folder
-	* @param $strip Used for FTP only
+	* @param $from string Can be a file or a directory. Will copy either the file or all files within the directory
+	* @param $to string Where to copy the file(s) to. If not specified then will get copied to the phpbb root directory
 	* @return mixed: Bool true on success, error string on failure, NULL if no action was taken
 	*
 	* NOTE: function should preferably not return in case of failure on only one file.
 	* 	The current method makes error handling difficult
 	*/
-	function copy_content($from, $to = '', $strip = '')
+	function copy_content($from, $to = '')
 	{
 		global $phpbb_root_path, $user, $config;
 
@@ -797,46 +799,36 @@ class editor_direct extends editor
 		$files = array();
 		if (is_dir($from))
 		{
-			// get all of the files within the directory
 			$files = find_files($from, '.*');
+			$dirname_check = $to;
+			$to_is_dir = true;
 		}
 		else if (is_file($from))
 		{
 			$files = array($from);
+			$dirname_check = dirname($to);
+			$to_is_dir = false;
 		}
 
 		if (empty($files))
 		{
 			return false;
 		}
-
-		// Look at the last character of $to and compare it to '/'
-		if ($to[strlen($to) - 1] == '/')
+		else if (!is_dir($dirname_check) && $this->recursive_mkdir($dirname_check) === false)
 		{
-			$dirname_check = $to;
-		}
-		else
-		{
-			$dirname_check = dirname($to);
-		}
-
-		if (!is_dir($dirname_check))
-		{
-			if ($this->recursive_mkdir($dirname_check) === false)
-			{
-				return sprintf($user->lang['MODS_MKDIR_FAILED'], $dirname_check);
-			}
+			return sprintf($user->lang['MODS_MKDIR_FAILED'], $dirname_check);
 		}
 
 		foreach ($files as $file)
 		{
-			if (is_dir($to))
+			if ($to_is_dir)
 			{
 				$dest = str_replace($from, $to, $file);
 
-				if (!file_exists($dest))
+				$dest_parent_dir = dirname($dest);
+				if (!file_exists($dest_parent_dir))
 				{
-					$this->recursive_mkdir(dirname($dest));
+					$this->recursive_mkdir($dest_parent_dir);
 				}
 			}
 			else
@@ -904,11 +896,6 @@ class editor_direct extends editor
 	*/
 	function backup_file($backup_dir)
 	{
-		if (!$backup_dir)
-		{
-			return;
-		}
-
 		return $this->close_file($backup_dir . $this->open_filename);
 	}
 
@@ -950,7 +937,7 @@ class editor_direct extends editor
 
 	function commit_changes($source, $destination)
 	{
-		return $this->copy_content($source, $destination, $source);
+		return $this->copy_content($source, $destination);
 	}
 
 	function commit_changes_final($source, $destination)
@@ -1038,17 +1025,16 @@ class editor_ftp extends editor
 	}
 
 	/**
-	* Moves files or complete directories
+	* Copies files or complete directories
 	*
-	* @param $from string Can be a file or a directory. Will move either the file or all files within the directory
-	* @param $to string Where to move the file(s) to. If not specified then will get moved to the root folder
-	* @param $strip mixed (string or array) Used for FTP only
+	* @param $from string Can be a file or a directory. Will copy either the file or all files within the directory
+	* @param $to string Where to copy the file(s) to. If not specified then will get copied to the phpbb root directory
 	* @return mixed: Bool true on success, error string on failure, NULL if no action was taken
 	*
 	* NOTE: function should preferably not return in case of failure on only one file.
 	* 	The current method makes error handling difficult
 	*/
-	function copy_content($from, $to = '', $strip = '')
+	function copy_content($from, $to = '')
 	{
 		global $phpbb_root_path, $user;
 
@@ -1058,47 +1044,60 @@ class editor_ftp extends editor
 			$from = $phpbb_root_path . $from;
 		}
 
-		// Why are we stripping out phpbb_root_path from $to (unlike editor_direct)?
-		// Per includes/functions_transfer.php, all transfer functions do this,
-		// except overwrite_file() (which we use here) because it is called by other
-		// functions (write_file, copy_file) that strip phpbb_root_path before calling it.
-		// This is because class ftp (extends transfer) prepends the real $root_path
-		$to = str_replace($phpbb_root_path, '', $to);
+		if (strpos($to, $phpbb_root_path) !== 0)
+		{
+			$to = $phpbb_root_path . $to;
+		}
 
 		$files = array();
 		if (is_dir($from))
 		{
-			// get all of the files within the directory
 			$files = find_files($from, '.*');
+			$dirname_check = $to;
+			$to_is_dir = true;
 		}
 		else if (is_file($from))
 		{
 			$files = array($from);
+			$dirname_check = dirname($to);
+			$to_is_dir = false;
 		}
 
 		if (empty($files))
 		{
 			return false;
 		}
+		else if (!is_dir($dirname_check) && $this->recursive_mkdir($dirname_check) === false)
+		{
+			return sprintf($user->lang['MODS_MKDIR_FAILED'], $dirname_check);
+		}
 
-		// ftp
 		foreach ($files as $file)
 		{
-			// If we got passed $strip, wildcards were used, so get $to out of $file ($from)
-			if (!empty($strip))
+			if ($to_is_dir)
 			{
-				$to = str_replace($strip, '', $file);
+				$dest = str_replace($from, $to, $file);
+
+				$dest_parent_dir = dirname($dest);
+				if (!file_exists($dest_parent_dir))
+				{
+					$this->recursive_mkdir($dest_parent_dir);
+				}
+			}
+			else
+			{
+				$dest = $to;
 			}
 
-			// no $phpbb_root_path prefix here, this is FTP (not direct)
-			// We also don't want return false here in case directory already exists (todo)
-			$this->recursive_mkdir(dirname($to));
+			// Per functions_transfer.php, overwrite_file() (which we'll use here) is the only
+			// transfer method that doesn't strip out phpbb_root_path, because it is called
+			// by other methods (write_file, copy_file) that already do so before calling it.
+			// The ftp class prepends the real (ftp) $root_path !
+			$dest = str_replace($phpbb_root_path, '', $dest);
 
-			if (!$this->transfer->overwrite_file($file, $to))
+			if (!$this->transfer->overwrite_file($file, $dest))
 			{
-				// may as well return ... the MOD is likely dependent upon
-				// the file that is being copied
-				return sprintf($user->lang['MODS_FTP_FAILURE'], $to);
+				return sprintf($user->lang['MODS_FTP_FAILURE'], $dest);
 			}
 		}
 
@@ -1147,15 +1146,20 @@ class editor_ftp extends editor
 	/**
 	* @ignore
 	*/
-	function recursive_mkdir($path, $mode = 0777)
+	function recursive_mkdir($path, $mode = false)
 	{
+		if ($mode)
+		{
+			$this->transfer->dir_perms = $mode;
+		}
+
 		return $this->transfer->make_dir($path);
 	}
 
 	function commit_changes($source, $destination)
 	{
 		// Move edited files back
-		return $this->copy_content($source, $destination, $source);
+		return $this->copy_content($source, $destination);
 	}
 
 	function commit_changes_final($source, $destionation)
@@ -1267,7 +1271,7 @@ class editor_manual extends editor
 		$this->compress = new $class('w', $phpbb_root_path . 'store/mod_' . $this->install_time . $config['compress_method'], $config['compress_method']);
 	}
 
-	function copy_content($from, $to = '', $strip = '')
+	function copy_content($from, $to = '')
 	{
 		global $phpbb_root_path, $user;
 
@@ -1276,8 +1280,10 @@ class editor_manual extends editor
 			$from = $phpbb_root_path . $from;
 		}
 
-		// It should have been already stripped out, but just to be sure
-		$to = str_replace($phpbb_root_path, '', $to);
+		if (strpos($to, $phpbb_root_path) !== 0)
+		{
+			$to = $phpbb_root_path . $to;
+		}
 
 		// Note: phpBB's compression class does support adding a whole directory at a time.
 		// However, I chose not to use that function because it would not allow AutoMOD's
@@ -1285,12 +1291,13 @@ class editor_manual extends editor
 		$files = array();
 		if (is_dir($from))
 		{
-			// get all of the files within the directory
 			$files = find_files($from, '.*');
+			$to_is_dir = true;
 		}
 		else if (is_file($from))
 		{
 			$files = array($from);
+			$to_is_dir = false;
 		}
 
 		if (empty($files))
@@ -1300,28 +1307,21 @@ class editor_manual extends editor
 
 		foreach ($files as $file)
 		{
-			// If we got passed $strip, wildcards were used, so get $to_file out of $file ($from)
-			if (!empty($strip))
+			if ($to_is_dir)
 			{
-				$to_file = str_replace($strip, '', $file);
-			}
-			else if (is_dir($phpbb_root_path . $to))
-			{
-				// this would find the directory part specified in MODX
-				$to_file = str_replace($strip, '', $to);
-				// and this fetches any subdirectories and the filename of the destination file
-				$to_file .= substr($file, strpos($file, $to_file) + strlen($to_file));
+				$dest = str_replace($from, $to, $file);
 			}
 			else
 			{
-				$to_file = $to;
+				$dest = $to;
 			}
 
-			// filename calculation is involved here:
-			// and prepend the "files" directory
-			if (!$this->compress->add_custom_file($file, 'files/' . $to_file))
+			// Replace root path with the "files/" directory that goes in the zip
+			$dest = str_replace($phpbb_root_path, 'files/', $dest);
+
+			if (!$this->compress->add_custom_file($file, $dest))
 			{
-				return sprintf($user->lang['WRITE_MANUAL_FAIL'], $to_file);
+				return sprintf($user->lang['WRITE_MANUAL_FAIL'], $dest);
 			}
 		}
 

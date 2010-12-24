@@ -23,6 +23,7 @@ class acp_mods
 	var $u_action;
 	var $parser;
 	var $mod_root = '';
+	var $store_dir = '';
 	var $mods_dir = '';
 	var $edited_root = '';
 	var $backup_root = '';
@@ -31,7 +32,7 @@ class acp_mods
 	{
 		global $config, $db, $user, $auth, $template, $cache;
 		global $phpbb_root_path, $phpEx;
-		global $method, $test_ftp_connection, $test_connection;
+		global $ftp_method, $test_ftp_connection, $test_connection;
 
 		include("{$phpbb_root_path}includes/functions_transfer.$phpEx");
 		include("{$phpbb_root_path}includes/editor.$phpEx");
@@ -43,6 +44,7 @@ class acp_mods
 
 		$this->tpl_name = 'acp_mods';
 		$this->page_title = 'ACP_CAT_MODS';
+		$this->store_dir = $phpbb_root_path . 'store';
 		$this->mods_dir = $phpbb_root_path . 'store/mods';
 
 		// get any url vars
@@ -55,10 +57,12 @@ class acp_mods
 
 		if ($mod_path)
 		{
-			$mod_path = htmlspecialchars_decode($mod_path);
-			$mod_dir = substr($mod_path, 1, strpos($mod_path, '/', 1));
+			$mod_path = htmlspecialchars_decode($mod_path);				// "/my_mod/install.xml" or "/./contrib/blah.xml"
+			$mod_dir = substr($mod_path, 1, strpos($mod_path, '/', 1));	// "my_mod/"
 
-			$this->mod_root = $this->mods_dir . '/' . $mod_dir;
+			$this->mod_root = $this->mods_dir . '/' . $mod_dir;			// "./../store/mods/my_mod/"
+			$this->backup_root = "{$this->mod_root}_backups/";			// "./../store/mods/my_mod/_backups/"
+			$this->edited_root = "{$this->mod_root}_edited/";			// "./../store/mods/my_mod/_edited/"
 		}
 
 		switch ($mode)
@@ -114,8 +118,8 @@ class acp_mods
 					}
 					else if ($write_method == WRITE_MANUAL)
 					{
-						// the compress class requires write access to the /store/ dir
-						if (!is_writable("{$phpbb_root_path}store/"))
+						// the compress class requires write access to the store/ dir
+						if (!is_writable($this->store_dir))
 						{
 							$error = 'STORE_NOT_WRITABLE';
 						}
@@ -151,10 +155,10 @@ class acp_mods
 
 				// implicit else
 				include("{$phpbb_root_path}includes/functions_compress.$phpEx");
-				foreach (compress::methods() as $method)
+				foreach (compress::methods() as $compress_method)
 				{
 					$template->assign_block_vars('compress', array(
-						'METHOD'	=> $method,
+						'METHOD'	=> $compress_method,
 					));
 				}
 
@@ -197,38 +201,35 @@ class acp_mods
 			case 'frontend':
 				if ($config['write_method'] == WRITE_FTP)
 				{
-					$method = basename(request_var('method', $config['ftp_method']));
-					if (!$method || !class_exists($method))
+					$ftp_method = basename(request_var('method', $config['ftp_method']));
+					if (!$ftp_method || !class_exists($ftp_method))
 					{
-						$method = 'ftp';
-						$methods = transfer::methods();
+						$ftp_method = 'ftp';
+						$ftp_methods = transfer::methods();
 
-						if (!in_array('ftp', $methods))
+						if (!in_array('ftp', $ftp_methods))
 						{
-							$method = $methods[0];
+							$ftp_method = $ftp_methods[0];
 						}
 					}
 
 					$test_connection = false;
 					$test_ftp_connection = request_var('test_connection', '');
-					if (!empty($test_ftp_connection) || $action == 'install' || $action == 'uninstall' || $action == 'upload_mod' || $action == 'delete')
+					if (!empty($test_ftp_connection) || in_array($action, array('install', 'uninstall', 'upload_mod', 'delete_mod')))
 					{
-						test_ftp_connection($method, $test_ftp_connection, $test_connection);
+						test_ftp_connection($ftp_method, $test_ftp_connection, $test_connection);
 
 						// Make sure the login details are correct before continuing
 						if ($test_connection !== true || !empty($test_ftp_connection))
 						{
-							if ($action == 'install' || $action == 'uninstall')
-							{
 								$action = 'pre_' . $action;
-							}
-							$test_ftp_connection = true;
 						}
 					}
 				}
 
-				// store/ needs to be writable even when FTP is the write method, for extracting uploaded mods
-				if (!is_writable("{$phpbb_root_path}store/"))
+				// store/ needs to be world-writable even when FTP is the write method,
+				// for extracting uploaded mod zip files
+				if (!is_writable($this->store_dir))
 				{
 					$template->assign_var('S_STORE_WRITABLE_WARN', true);
 				}
@@ -241,11 +242,8 @@ class acp_mods
 				switch ($action)
 				{
 					case 'pre_install':
-						$this->pre_install($mod_path);
-					break;
-
 					case 'install':
-						$this->install($mod_path, $parent);
+						$this->install($action, $mod_path, $parent);
 					break;
 
 					case 'pre_uninstall':
@@ -258,13 +256,15 @@ class acp_mods
 						$this->list_details($mod_ident);
 					break;
 
-					case 'delete':
-						$this->delete($mod_path);
+					case 'pre_delete_mod':
+					case 'delete_mod':
+						$this->delete_mod($action, $mod_path);
 						break;
 
+					case 'pre_upload_mod':
 					case 'upload_mod':
 					default:
-						$action = (isset($action) && !empty($action)) ? $action : '';
+						$action = (isset($action)) ? $action : '';
 						if (!$this->upload_mod($action))
 						{
 							$this->list_installed();
@@ -289,7 +289,7 @@ class acp_mods
 							$download_name = str_replace(' ', '_', $row['mod_name']);
 						}
 
-						$editor->compress->download("{$phpbb_root_path}store/mod_$time", $download_name);
+						$editor->compress->download("{$this->store_dir}/mod_$time", $download_name);
 						exit;
 					break;
 				}
@@ -375,7 +375,7 @@ class acp_mods
 				'MOD_PATH'	=> $short_path,
 
 				'U_INSTALL'	=> $this->u_action . "&amp;action=pre_install&amp;mod_path=$short_path",
-				'U_DELETE'	=> $this->u_action . "&amp;action=delete&amp;mod_path=$short_path",
+				'U_DELETE'	=> $this->u_action . "&amp;action=pre_delete_mod&amp;mod_path=$short_path",
 				'U_DETAILS'	=> $this->u_action . "&amp;action=details&amp;mod_path=$short_path",
 			));
 		}
@@ -555,7 +555,7 @@ class acp_mods
 								}
 								else
 								{
-									$xml_file = str_replace($this->mods_dir, '', dirname($row['mod_path'])) . '/' . $template_name['href'];
+									$xml_file = str_replace($this->mods_dir, '', $mod_dir) . '/' . $template_name['href'];
 								}
 
 								$template->assign_block_vars('avail_templates', array(
@@ -571,7 +571,7 @@ class acp_mods
 						{
 							// Override already exising actions with the ones
 							global $rev_actions;
-                            $xml_file = dirname($row['mod_path']) . '/' . ltrim($children['uninstall'][0]['href'], './');
+                            $xml_file = $mod_dir . '/' . ltrim($children['uninstall'][0]['href'], './');
 							$this->parser->set_file($xml_file);
 							$rev_actions = $this->parser->get_actions();
 						}
@@ -581,7 +581,7 @@ class acp_mods
 					{
 						$template->assign_block_vars('avail_templates', array(
 							'TEMPLATE_NAME'	=> 'prosilver',
-							'XML_FILE'		=> basename($row['mod_path']),
+							'XML_FILE'		=> basename($mod_path),
 						));
 					}
 
@@ -602,7 +602,7 @@ class acp_mods
 					}
 
 					$s_hidden_fields = build_hidden_fields(array(
-						'action'	=> ($uninstall) ? 'uninstall' : 'install',
+						'action'	=> ($uninstall) ? 'uninstall' : 'pre_install',
 						'parent'	=> $parent_id,
 					));
 
@@ -721,70 +721,10 @@ class acp_mods
 	}
 
 	/**
-	* Parses and displays all Edits, Copies, and SQL modifcations
-	*/
-	function pre_install($mod_path)
-	{
-		global $phpbb_root_path, $phpEx, $template, $db, $config, $user, $method, $test_ftp_connection, $test_connection;
-
-		// mod_path empty?
-		if (empty($mod_path))
-		{
-			// ERROR
-			return false;
-		}
-
-		$details = $this->mod_details($mod_path, false);
-		$actions = $this->mod_actions($mod_path);
-		$this->backup_root = "{$this->mod_root}_backups/";
-
-		$elements = array('language' => array(), 'template' => array());
-
-		// check for "child" MODX files and attempt to decide which ones we need
-		$children = $this->find_children($mod_path);
-		$this->handle_language_prompt($children, $elements, 'pre_install');
-		$this->handle_merge('language', $actions, $children, $elements['language']);
-		$this->handle_template_prompt($children, $elements, 'pre_install');
-		$this->handle_merge('template', $actions, $children, $elements['template']);
-
-
-		$template->assign_vars(array(
-			'S_PRE_INSTALL'	=> true,
-
-			'MOD_PATH'		=> str_replace($this->mod_root, '', $mod_path),
-
-			'U_INSTALL'		=> $this->u_action . '&amp;action=install',
-			'U_BACK'		=> $this->u_action,
-		));
-
-		$s_hidden_fields = '';
-		// get FTP information if we need it
-		if ($config['write_method'] == WRITE_FTP)
-		{
-			handle_ftp_details($method, $test_ftp_connection, $test_connection);
-		}
-
-		$s_hidden_fields .= build_hidden_fields(array('dependency_confirm' => !empty($_REQUEST['dependency_confirm'])));
-		$template->assign_var('S_HIDDEN_FIELDS', $s_hidden_fields);
-
-		$write_method = 'editor_' . determine_write_method(true);
-		$editor = new $write_method();
-
-		// Only display full actions if the user has requested them.
-		if (!$config['preview_changes'] || ($editor->write_method == WRITE_FTP && empty($_REQUEST['password'])))
-		{
-			return;
-		}
-
-		$this->process_edits($editor, $actions, $details, false, true, false);
-
-		return;
-	}
-
-	/**
+	* Install/pre-install a mod
 	* Preforms all Edits, Copies, and SQL queries
 	*/
-	function install($mod_path, $parent = 0)
+	function install($action, $mod_path, $parent = 0)
 	{
 		global $phpbb_root_path, $phpEx, $db, $template, $user, $config, $cache, $dest_template;
 		global $force_install, $mod_installed;
@@ -813,22 +753,10 @@ class acp_mods
 			}
 		}
 
-		// mod_path empty?
 		if (empty($mod_path))
 		{
-			// ERROR
-			return false;
+			return false;	// ERROR
 		}
-
-		if (request_var('method', ''))
-		{
-			set_config('ftp_method',	request_var('method', ''));
-		}
-		set_config('ftp_host',		request_var('host', ''));
-		set_config('ftp_username',	request_var('username', ''));
-		set_config('ftp_root_path', request_var('root_path', ''));
-		set_config('ftp_port',		request_var('port', 21));
-		set_config('ftp_timeout',	request_var('timeout', 10));
 
 		$details = $this->mod_details($mod_path, false);
 
@@ -859,14 +787,12 @@ class acp_mods
 		// NB: There could and should be cases to check for duplicated MODs and contribs
 		// However, there is not appropriate book-keeping in place for those in 1.0.x
 
-		add_form_key('acp_mods');
-
-		$write_method = 'editor_' . determine_write_method(false);
+		$execute_edits = ($action == 'pre_install') ? false : true;
+		$write_method = 'editor_' . determine_write_method(!$execute_edits);
 		$editor = new $write_method();
 
-		// get mod install root && make temporary edited folder root
-//		$this->mod_root = dirname(str_replace($phpbb_root_path, '', $mod_path)) . '/';
-		$this->edited_root = "{$this->mod_root}_edited/";
+		// get FTP information if we need it (or initialize array $hidden_ary)
+		$hidden_ary = get_connection_info(!$execute_edits);
 
 		$actions = $this->mod_actions($mod_path);
 
@@ -925,12 +851,14 @@ class acp_mods
 
 			$elements = array('language' => array(), 'template' => array());
 
-			global $mode;
-
-			$this->handle_dependency($children, $mode, $mod_path);
-			$this->handle_language_prompt($children, $elements, 'install');
+			if ($execute_edits)
+			{
+				global $mode;
+				$this->handle_dependency($children, $mode, $mod_path);
+			}
+			$this->handle_language_prompt($children, $elements, $action);
 			$this->handle_merge('language', $actions, $children, $elements['language']);
-			$this->handle_template_prompt($children, $elements, 'install');
+			$this->handle_template_prompt($children, $elements, $action);
 			$this->handle_merge('template', $actions, $children, $elements['template']);
 		}
 		else
@@ -945,12 +873,42 @@ class acp_mods
 			}
 		}
 
-		$editor->create_edited_root($this->edited_root);
+		$template->assign_vars(array(
+			'S_INSTALL'		=> $execute_edits,
+			'S_PRE_INSTALL'	=> !$execute_edits,
+			'MOD_PATH'		=> str_replace($this->mod_root, '', $mod_path),
+			'U_INSTALL'		=> $this->u_action . '&amp;action=install' . ($parent ? "&amp;parent=$parent" : ''),
+			'U_RETURN'		=> $this->u_action,
+			'U_BACK'		=> $this->u_action,
+		));
 
-		$force_install = request_var('force', false);
+		if ($execute_edits)
+		{
+			$editor->create_edited_root($this->edited_root);
+			$force_install = request_var('force', false);
+		}
 
-		// handle all edits here
-		$mod_installed = $this->process_edits($editor, $actions, $details, true, true, false);
+		$display = ($execute_edits || $config['preview_changes']) ? true : false;
+
+		// process the actions
+		$mod_installed = $this->process_edits($editor, $actions, $details, $execute_edits, $display, false);
+
+		if (!$execute_edits)
+		{
+			$s_hidden_fields = array('dependency_confirm'	=> !empty($_REQUEST['dependency_confirm']));
+
+			if ($dest_template)
+			{
+				$s_hidden_fields['dest'] = $dest_template;
+				$s_hidden_fields['source'] = $mod_path;
+				$s_hidden_fields['template_submit'] = true;
+			}
+
+			$template->assign_var('S_HIDDEN_FIELDS', build_hidden_fields($s_hidden_fields));
+			add_form_key('acp_mods');
+
+			return;
+		} // end pre_install
 
 		// Display Do-It-Yourself Actions...per the MODX spec, these should be displayed last
 		if (!empty($actions['DIY_INSTRUCTIONS']))
@@ -991,14 +949,6 @@ class acp_mods
 				));
 			}
 		}
-
-		// Finish by sending template data
-		$template->assign_vars(array(
-			'S_INSTALL'		=> true,
-
-			'U_RETURN'		=> $this->u_action,
-			'U_BACK'		=> $this->u_action,
-		));
 
 		// The editor class provides more pertinent information regarding edits
 		// so we store that as the canonical version, used for uninstalling
@@ -1083,30 +1033,6 @@ class acp_mods
 		// there was an error we need to tell the user about
 		else
 		{
-			$hidden_ary = array();
-			if ($editor->write_method == WRITE_FTP)
-			{
-				$hidden_ary['method'] = $config['ftp_method'];
-
-				if (empty($config['ftp_method']))
-				{
-					trigger_error('FTP_METHOD_ERROR');
-				}
-
-				$requested_data = call_user_func(array($config['ftp_method'], 'data'));
-
-				foreach ($requested_data as $data => $default)
-				{
-					if ($data == 'password')
-					{
-						$config['ftp_password'] = request_var('password', '');
-					}
-					$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-
-					$hidden_ary[$data] = $default;
-				}
-			}
-
 			if ($parent)
 			{
 				$hidden_ary['parent'] = $parent;
@@ -1122,8 +1048,7 @@ class acp_mods
 			$template->assign_vars(array(
 				'S_ERROR'			=> true,
 				'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
-
-				'U_RETRY'	=> $this->u_action . '&amp;action=install&amp;mod_path=' . $mod_path,
+				'U_RETRY'			=> $this->u_action . '&amp;action=install&amp;mod_path=' . $mod_path,
 			));
 		}
 
@@ -1144,14 +1069,12 @@ class acp_mods
 	*/
 	function uninstall($action, $mod_id)
 	{
-		global $phpbb_root_path, $phpEx, $db, $template, $user, $config, $force_install;
-		global $method, $test_ftp_connection, $test_connection, $mod_uninstalled;
+		global $phpbb_root_path, $phpEx, $db, $template, $user, $config;
+		global $force_install, $mod_uninstalled;
 
-		// mod_id blank?
 		if (!$mod_id)
 		{
-			// ERROR
-			return false;
+			return false;	// ERROR
 		}
 
 		// set the class parameters to refelect the proper directory
@@ -1162,49 +1085,19 @@ class acp_mods
 		if ($row = $db->sql_fetchrow($result))
 		{
 			$this->mod_root = dirname($row['mod_path']) . '/';
+			$this->edited_root = "{$this->mod_root}_edited/";
+		}
+		else
+		{
+			return false;	// ERROR
 		}
 
 		$execute_edits = ($action == 'pre_uninstall') ? false : true;
-
 		$write_method = 'editor_' . determine_write_method(!$execute_edits);
 		$editor = new $write_method();
 
-		// get mod install root && make temporary edited folder root
-		$this->edited_root = "{$this->mod_root}_edited/";
-
-		// get FTP information if we need it
-		// using $config instead of $editor because write_method is forced to direct
-		// when in preview mode
-		$hidden_ary = array();
-		if ($config['write_method'] == WRITE_FTP)
-		{
-			if($execute_edits && isset($_POST['password']))
-			{
-				$hidden_ary['method'] = $config['ftp_method'];
-
-				if (empty($config['ftp_method']))
-				{
-					trigger_error('FTP_METHOD_ERROR');
-				}
-
-				$requested_data = call_user_func(array($config['ftp_method'], 'data'));
-
-				foreach ($requested_data as $data => $default)
-				{
-					if ($data == 'password')
-					{
-						$config['ftp_password'] = request_var('password', '');
-					}
-					$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-
-					$hidden_ary[$data] = $default;
-				}
-			}
-
-			handle_ftp_details($method, $test_ftp_connection, $test_connection);
-		}
-
-		$editor->create_edited_root($this->edited_root);
+		// get FTP information if we need it (or initialize array $hidden_ary)
+		$hidden_ary = get_connection_info(!$execute_edits);
 
 		$template->assign_vars(array(
 			'S_UNINSTALL'		=> $execute_edits,
@@ -1212,7 +1105,6 @@ class acp_mods
 			'L_FORCE_INSTALL'	=> $user->lang['FORCE_UNINSTALL'],
 			'MOD_ID'		=> $mod_id,
 			'U_UNINSTALL'	=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
-			'U_RETRY'		=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
 			'U_RETURN'		=> $this->u_action,
 			'U_BACK'		=> $this->u_action,
 		));
@@ -1221,17 +1113,21 @@ class acp_mods
 		$details = $this->mod_details($mod_id, false, true);
 		$actions = $this->mod_actions($mod_id);
 
-		$force_install = request_var('force', false);
+		if ($execute_edits)
+		{
+			$editor->create_edited_root($this->edited_root);
+			$force_install = $force_uninstall = request_var('force', false);
+		}
+
+		$display = ($execute_edits || $config['preview_changes']) ? true : false;
 
 		// process the actions
-		$mod_uninstalled = $this->process_edits($editor, $actions, $details, $execute_edits, true, true);
+		$mod_uninstalled = $this->process_edits($editor, $actions, $details, $execute_edits, $display, true);
 
 		if (!$execute_edits)
 		{
 			return;
-		}
-
-		$force_uninstall = request_var('force', false);
+		} // end pre_uninstall
 
 		if ($mod_uninstalled || $force_uninstall)
 		{
@@ -1248,6 +1144,7 @@ class acp_mods
 			}
 		}
 
+		// if we forced uninstall of the MOD, we need to let the user know their board could be broken
 		if ($force_uninstall)
 		{
 			$template->assign_var('S_FORCE', true);
@@ -1255,13 +1152,13 @@ class acp_mods
 		else if (!$mod_uninstalled)
 		{
 			$template->assign_vars(array(
-				'S_ERROR'         => true,
-				'S_HIDDEN_FIELDS'   => build_hidden_fields($hidden_ary),
-				'U_RETRY'   => $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
+				'S_ERROR'			=> true,
+				'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
+				'U_RETRY'			=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
 			));
 		}
 
-		if ($execute_edits && ($mod_uninstalled || $force_uninstall))
+		if ($mod_uninstalled || $force_uninstall)
 		{
 			// Delete from DB
 			$sql = 'DELETE FROM ' . MODS_TABLE . '
@@ -1452,7 +1349,18 @@ class acp_mods
 						'FILENAME'	=> $filename,
 					));
 
-					$status = $editor->open_file($filename, $this->backup_root);
+					// If installing - not pre_install nor (pre_)uninstall, backup the file
+					// This is to make sure it works with editor_ftp because write_method is
+					// forced to direct when in preview modes, and ignored in editor_manual!
+					if ($change && !$reverse)
+					{
+						$status = $editor->open_file($filename, $this->backup_root);
+					}
+					else
+					{
+						$status = $editor->open_file($filename);
+					}
+
 					if (is_string($status))
 					{
 						$template->assign_block_vars('error', array(
@@ -1544,7 +1452,7 @@ class acp_mods
 											{
 												foreach ($inline_commands as $inline_action => $inline_contents)
 												{
-													// inline finds are pretty contankerous, so so them in the loop
+													// inline finds are pretty cantankerous, so do them in the loop
 													$line = $editor->inline_find($find, $inline_find, $offset_ary['start'], $offset_ary['end']);
 													if (!$line)
 													{
@@ -1717,8 +1625,7 @@ class acp_mods
 
 				if ($change && ($mod_installed || $force_install))
 				{
-					$strip = (strpos($target, '*.*') !== false) ? "{$this->mod_root}root/" : '';
-					$status = $editor->copy_content($this->mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target), $strip);
+					$status = $editor->copy_content($this->mod_root . str_replace('*.*', '', $source), str_replace('*.*', '', $target));
 
 					if ($status !== true && !is_null($status))
 					{
@@ -1787,63 +1694,52 @@ class acp_mods
 						unset($actions['DELETE_FILES'][$source]);
 						continue;
 					}
-					// MOD Author used '*.*' or 'dir/*.*' or files*.*  (Fun!)
-					else if (strpos($target, '*.*') !== false)
+					// MODX used '*.*' or 'dir/*.*'  (Fun!)
+					else if (strpos($source, '*.*') !== false)
 					{
 						// This could be phpbb_root_path, if "Copy: root/*.* to: *.*" syntax was used
-						// or could be root/custom_dir, if "Copy: root/custom/*.* to: custom/*.*", etc.
+						// or root/custom_dir if "Copy: root/custom/*.* to: custom/*.*", etc.
 						$source = $this->mod_root . str_replace('*.*', '', $source);
 						$target = str_replace('*.*', '', $target);
 
-						$files = array();
+						// Get all of the files in the source directory
+						$files = find_files($source, '.*');
+						// And translate into destination files
+						$files = str_replace($source, $target, $files);
 
-						if (is_dir($source))
+						// Get all of the sub-directories in the source directory
+						$directories['src'] = find_files($source, '.*', 20, true);
+						// And translate it into destination sub-directories
+						$directories['dst'] = str_replace($source, $target, $directories['src']);
+
+						// Compare source and destination subdirs, if any, in _reverse_ order! (array_pop)
+						for ($i=0, $cnt = count($directories['dst']); $i < $cnt; $i++)
 						{
-							// Get all of the files in the source directory
-							$files = find_files($source, '.*');
+							$dir_source = array_pop($directories['src']);
+							$dir_target = array_pop($directories['dst']);
 
-							// Get all of the sub-directories in the source directory
-							$directories['src'] = find_files($source, '.*', 20, true);
-							// And translate it into destinations - strip out './../store/mods/mod_name/' and 'root/'
-							$directories['dst'] = str_replace(array($this->mod_root, 'root/'), '', $directories['src']);
-
-							// Compare source and destination subdirs, if any, in _reverse_ order (array_pop)
-							for ($i=0, $cnt = count($directories['dst']); $i < $cnt; $i++)
+							// Some MODs include 'umil/', avoid deleting!
+							if (strpos($dir_target, 'umil/') === 0)
 							{
-								$dir_source = array_pop($directories['src']);
-								$dir_target = array_pop($directories['dst']);
-
-								// Some MODs include 'umil/', avoid deleting!
-								if (strpos($dir_target, 'umil/') === 0)
-								{
-									continue;
-								}
-
-								$src_file_cnt = directory_num_files($dir_source, false, true);
-								$dst_file_cnt = directory_num_files($phpbb_root_path . $dir_target, false, true);
-								$src_dir_cnt = directory_num_files($dir_source, true, true);
-								$dst_dir_cnt = directory_num_files($phpbb_root_path . $dir_target, true, true);
-
-								// Do we have a match in recursive file count and match in recursive subdir count?
-								// This could be vastly improved..
-								if ($src_file_cnt == $dst_file_cnt && $src_dir_cnt == $dst_dir_cnt)
-								{
-									$directories['del'][] = $dir_target;
-								}
-								unset($dir_source, $dir_target, $src_file_cnt, $dst_file_cnt, $src_dir_cnt, $dst_dir_cnt); //cleanup
+								continue;
 							}
-						}
-						else if (is_file($source))
-						{
-							$files = array($source);
+
+							$src_file_cnt = directory_num_files($dir_source, false, true);
+							$dst_file_cnt = directory_num_files($phpbb_root_path . $dir_target, false, true);
+							$src_dir_cnt = directory_num_files($dir_source, true, true);
+							$dst_dir_cnt = directory_num_files($phpbb_root_path . $dir_target, true, true);
+
+							// Do we have a match in recursive file count and match in recursive subdir count?
+							// This could be vastly improved..
+							if ($src_file_cnt == $dst_file_cnt && $src_dir_cnt == $dst_dir_cnt)
+							{
+								$directories['del'][] = $dir_target;
+							}
+							unset($dir_source, $dir_target, $src_file_cnt, $dst_file_cnt, $src_dir_cnt, $dst_dir_cnt); //cleanup
 						}
 
-						// Reverse magic, sources are cross-translated into currently installed file paths :)
 						foreach ($files as $file)
 						{
-							// Strip out './../store/mods/mod_name/' and 'root/'
-							$file = str_replace(array($this->mod_root, 'root/'), '', $file);
-
 							// Some MODs include 'umil/', avoid deleting!
 							if (strpos($file, 'umil/') === 0)
 							{
@@ -2203,7 +2099,7 @@ class acp_mods
 				// don't do the urlencode until after the file is looked up on the
 				// filesystem
 				$xml_file = urlencode('/' . $xml_file);
-				$child_details['U_INSTALL'] = ($parent_id) ? $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '';
+				$child_details['U_INSTALL'] = ($parent_id) ? $this->u_action . "&amp;action=pre_install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '';
 
 				$template->assign_block_vars('contrib', $child_details);
 			}
@@ -2292,11 +2188,10 @@ class acp_mods
 			$available_languages = array_keys($children['language']);
 			$process_languages = $elements['language'] = array_intersect($available_languages, $installed_languages);
 
-			// $unknown_languages are installed on the board, but not provied for by the MOD
+			// $unknown_languages are provided for by the MOD, but not installed on the board
 			$unknown_languages = array_diff($available_languages, $installed_languages);
 
-			// there are langauges which are installed, but not provided for by the MOD
-			// Inform the user.
+			// Inform the user if there are unknown languages provided for by the MOD
 			if (sizeof($unknown_languages) && $action == 'details')
 			{
 				// get full names from the DB
@@ -2323,7 +2218,7 @@ class acp_mods
 					$template->assign_block_vars('unknown_lang', array(
 						'ENGLISH_NAME'	=> $row['lang_english_name'],
 						'LOCAL_NAME'	=> $row['lang_local_name'],
-						'U_INSTALL'		=> (!empty($xml_file)) ? $this->u_action . "&amp;action=install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '',
+						'U_INSTALL'		=> (!empty($xml_file)) ? $this->u_action . "&amp;action=pre_install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '',
 					));
 
 					// may wish to rename away from "unknown" for our details mode
@@ -2368,41 +2263,14 @@ class acp_mods
 
 	function upload_mod($action)
 	{
-		global $phpbb_root_path, $phpEx, $template, $user, $config;
-		global $method, $test_ftp_connection, $test_connection;
-
-		// get FTP information if we need it
-		$hidden_ary = array();
-		if ($config['write_method'] == WRITE_FTP)
-		{
-			if (isset($_POST['password']))
-			{
-				$hidden_ary['method'] = $config['ftp_method'];
-
-				if (empty($config['ftp_method']))
-				{
-					trigger_error('FTP_METHOD_ERROR');
-				}
-
-				$requested_data = call_user_func(array($config['ftp_method'], 'data'));
-
-				foreach ($requested_data as $data => $default)
-				{
-					if ($data == 'password')
-					{
-						$config['ftp_password'] = request_var('password', '');
-					}
-					$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-
-					$hidden_ary[$data] = $default;
-				}
-			}
-			handle_ftp_details($method, $test_ftp_connection, $test_connection);
-		}
+		global $phpbb_root_path, $phpEx, $template, $user;
 
 		$can_upload = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || !@extension_loaded('zlib')) ? false : true;
 
-		if (!isset($_POST['submit']) || ($config['write_method'] == WRITE_FTP && $test_ftp_connection))
+		// get FTP information if we need it
+		$hidden_ary = get_connection_info(false);
+
+		if (!isset($_FILES['modupload']) || $action != 'upload_mod')
 		{
 			$template->assign_vars(array(
 				'S_FRONTEND'		=> true,
@@ -2411,276 +2279,176 @@ class acp_mods
 				'S_FORM_ENCTYPE'	=> ($can_upload) ? ' enctype="multipart/form-data"' : '',
 				'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
 			));
-
 			add_form_key('acp_mods_upload');
 
 			return false;
-		}
+		} // end pre_upload_mod
 
-		if (check_form_key('acp_mods_upload') && isset($_FILES['modupload']))
-		{
-			$user->add_lang('posting');  // For error messages
-			include($phpbb_root_path . 'includes/functions_upload.' . $phpEx);
-			$upload = new fileupload();
-			// Only allow ZIP files
-			$upload->set_allowed_extensions(array('zip'));
-
-			if ($config['write_method'] == WRITE_FTP)
-			{
-				$editor = new editor_ftp();
-			}
-
-			// Let's make sure the mods directory exists and if it doesn't then create it
-			if (!is_dir($this->mods_dir))
-			{
-				if ($config['write_method'] == WRITE_FTP)
-				{
-					$editor->recursive_mkdir($this->mods_dir, octdec($config['am_dir_perms']));
-				}
-				else
-				{
-					mkdir($this->mods_dir, octdec($config['am_dir_perms']));
-				}
-			}
-
-			// For Direct and Manual write methods, make sure mods/ directory is writable (no other choice)
-			if ($config['write_method'] != WRITE_FTP)
-			{
-				if (is_writable($this->mods_dir .'/'))
-				{
-					$upload_dir = $this->mods_dir;
-				}
-				else
-				{
-					trigger_error($user->lang['MODS_NOT_WRITABLE'] . adm_back_link($this->u_action), E_USER_WARNING);
-				}
-			}
-			// FTP method: we need a known world-writable directory (store/) for temporary zip extraction
-			// Still, Direct write access is required, since we can't extract zip files over FTP
-			else if (is_writable("{$phpbb_root_path}store/"))
-			{
-				$upload_dir = "{$phpbb_root_path}store/";
-			}
-			else
-			{
-				trigger_error($user->lang['STORE_NOT_WRITABLE'] . adm_back_link($this->u_action), E_USER_WARNING);
-			}
-
-			// Proceed with the upload
-			$file = $upload->form_upload('modupload');
-
-			if (empty($file->filename))
-			{
-				trigger_error($user->lang['NO_UPLOAD_FILE'] . adm_back_link($this->u_action), E_USER_WARNING);
-			}
-			else
-			{
-				if (!$file->init_error && !sizeof($file->error))
-				{
-					$file->clean_filename('real');
-					$file->move_file(str_replace($phpbb_root_path, '', $upload_dir), true, true);
-
-					if (!sizeof($file->error))
-					{
-						// Notice above we only instantiated $editor when write_method is editor_ftp
-						// if we did for all, we'd have to exlcude editor_manual from this (re-)include here
-						include($phpbb_root_path . 'includes/functions_compress.' . $phpEx);
-						$mod_dir = $upload_dir . '/' . str_replace('.zip', '', $file->get('realname'));
-						$compress = new compress_zip('r', $file->destination_file);
-						$compress->extract($mod_dir . '_tmp/');
-						$compress->close();
-						$folder_contents = scandir($mod_dir . '_tmp/', 1);  // This ensures dir is at index 0
-
-						// We need to check if there's only one (main) directory inside the temp MOD directory
-						if (sizeof($folder_contents) == 3)
-						{
-							$from_dir = $mod_dir . '_tmp/' . $folder_contents[0];
-							$to_dir = $this->mods_dir . '/' . $folder_contents[0];
-						}
-						// Otherwise assume the temp directory is the main directroy, so change the directory
-						// name by moving to a directory without the '_tmp' suffix
-						else if (!is_dir($mod_dir))
-						{
-							$from_dir = $mod_dir . '_tmp/';
-							$to_dir = $mod_dir;
-						}
-						// We should never really get here, but you never know!
-						else
-						{
-							trigger_error($user->lang['MOD_UPLOAD_UNRECOGNIZED'] . adm_back_link($this->u_action), E_USER_WARNING);
-						}
-
-						// Direct(ly) move that directory if the write method isn't FTP
-						if ($config['write_method'] != WRITE_FTP)
-						{
-							$this->directory_move($from_dir, $to_dir);
-						}
-						// Otherwise FTP Upload that directory to the new path
-						else
-						{
-							// get all of the files within the directory
-							$mod_files = find_files($from_dir, '.*');
-
-							// FTP the files into place
-							foreach ($mod_files as $mod_file)
-							{
-								$to_file = str_replace($phpbb_root_path, '', $to_dir) . str_replace($from_dir, '', $mod_file);
-								$editor->copy_content($mod_file, $to_file);
-							}
-						}
-
-						// Finally delete the temp mod directory
-						recursive_unlink($mod_dir . '_tmp/');
-
-						if (!sizeof($file->error))
-						{
-							$template->assign_vars(array(
-								'S_MOD_SUCCESSBOX'	=> true,
-								'MESSAGE'			=> $user->lang['MOD_UPLOAD_SUCCESS'],
-								'U_RETURN'			=> $this->u_action,
-							));
-						}
-					}
-				}
-				$file->remove();
-				if ($file->init_error || sizeof($file->error))
-				{
-					trigger_error((sizeof($file->error) ? implode('<br />', $file->error) : $user->lang['MOD_UPLOAD_INIT_FAIL']) . adm_back_link($this->u_action), E_USER_WARNING);
-				}
-			}
-		}
-		else
+		if (!check_form_key('acp_mods_upload'))
 		{
 			trigger_error($user->lang['FORM_INVALID'] . adm_back_link($this->u_action), E_USER_WARNING);
 		}
 
+		$user->add_lang('posting');  // For error messages
+		include($phpbb_root_path . 'includes/functions_upload.' . $phpEx);
+		$upload = new fileupload();
+		$upload->set_allowed_extensions(array('zip'));	// Only allow ZIP files
+
+		$write_method = 'editor_' . determine_write_method(false);
+
+		// For Direct & Manual write methods, make sure store/mods/ directory is writable
+		if ($write_method == 'editor_direct' || $write_method == 'editor_manual')
+		{
+			if (!is_writable($this->mods_dir))
+			{
+				trigger_error($user->lang['MODS_NOT_WRITABLE'] . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+
+			$write_method = 'editor_direct';	// Force Direct method, in the case of manual
+			$upload_dir = $this->mods_dir;
+		}
+		// FTP method: we still need a known world-writable directory (store/) for zip extraction
+		else if (is_writable($this->store_dir))
+		{
+			$upload_dir = $this->store_dir;
+		}
+		else
+		{
+			trigger_error($user->lang['STORE_NOT_WRITABLE'] . adm_back_link($this->u_action), E_USER_WARNING);
+		}
+
+		$editor = new $write_method();
+
+		// Make sure the store/mods/ directory exists and if it doesn't, create it
+		if (!is_dir($this->mods_dir))
+		{
+			$editor->recursive_mkdir($this->mods_dir);
+		}
+
+		// Proceed with the upload
+		$file = $upload->form_upload('modupload');
+
+		if (empty($file->filename))
+		{
+			trigger_error($user->lang['NO_UPLOAD_FILE'] . adm_back_link($this->u_action), E_USER_WARNING);
+		}
+		else if ($file->init_error || sizeof($file->error))
+		{
+			$file->remove();
+			trigger_error((sizeof($file->error) ? implode('<br />', $file->error) : $user->lang['MOD_UPLOAD_INIT_FAIL']) . adm_back_link($this->u_action), E_USER_WARNING);
+		}
+
+		$file->clean_filename('real');
+		$file->move_file(str_replace($phpbb_root_path, '', $upload_dir), true, true);
+
+		if (sizeof($file->error))
+		{
+			$file->remove();
+			trigger_error(implode('<br />', $file->error) . adm_back_link($this->u_action), E_USER_WARNING);
+		}
+
+		include($phpbb_root_path . 'includes/functions_compress.' . $phpEx);
+		$mod_dir = $upload_dir . '/' . str_replace('.zip', '', $file->get('realname'));
+		$compress = new compress_zip('r', $file->destination_file);
+		$compress->extract($mod_dir . '_tmp/');
+		$compress->close();
+		$folder_contents = scandir($mod_dir . '_tmp/', 1);  // This ensures dir is at index 0
+
+		// We need to check if there's only one (main) directory inside the temp MOD directory
+		if (sizeof($folder_contents) == 3)
+		{
+			$from_dir = $mod_dir . '_tmp/' . $folder_contents[0];
+			$to_dir = $this->mods_dir . '/' . $folder_contents[0];
+		}
+		// Otherwise assume the temp directory is the main directroy, so change the directory
+		// name by moving to a directory without the '_tmp' suffix
+		else if (!is_dir($mod_dir))
+		{
+			$from_dir = $mod_dir . '_tmp/';
+			$to_dir = $mod_dir;
+		}
+		// We should never really get here, but you never know!
+		else
+		{
+			trigger_error($user->lang['MOD_UPLOAD_UNRECOGNIZED'] . adm_back_link($this->u_action), E_USER_WARNING);
+		}
+
+		// Copy that directory to the new path
+		$editor->copy_content($from_dir, $to_dir);
+
+		// Finally remove the main tmp extraction directory, directly, just like we created it
+		recursive_unlink($mod_dir . '_tmp/');
+
+		$template->assign_vars(array(
+			'S_MOD_SUCCESSBOX'	=> true,
+			'MESSAGE'			=> $user->lang['MOD_UPLOAD_SUCCESS'],
+			'U_RETURN'			=> $this->u_action,
+		));
+
+		// Remove the uploaded archive file
+		$file->remove();
+
 		return true;
 	}
 
-	function delete($mod_path)
+	function delete_mod($action, $mod_path = '')
 	{
-		global $template, $user, $config;
-		global $method, $test_ftp_connection, $test_connection;
+		global $template, $user;
 
-		if (isset($mod_path) && !empty($mod_path))
+		if (!empty($mod_path))
 		{
 			$mod_path = explode('/', str_replace('\\', '/', $mod_path));
 			$mod_path = (!empty($mod_path[0])) ? $mod_path[0] : $mod_path[1];
 		}
-		else if (isset($_POST['mod_delete']) && !empty($_POST['mod_delete']))
+		else
 		{
 			$mod_path = request_var('mod_delete', '');
 		}
 
-		$hidden_ary = array(
-					'delete_confirm'	=> true,
-					'action'			=> 'delete',
-					'mod_delete'		=> $mod_path,
-					);
+		if (empty($mod_path) || !is_dir($this->mods_dir . '/' . $mod_path))
+		{
+			return false;	// ERROR
+		}
 
 		// get FTP information if we need it
-		if ($config['write_method'] == WRITE_FTP)
-		{
-			if (isset($_POST['password']))
-			{
-				$hidden_ary['method'] = $config['ftp_method'];
+		$hidden_ary = get_connection_info(false);
 
-				if (empty($config['ftp_method']))
-				{
-					trigger_error('FTP_METHOD_ERROR');
-				}
+		$hidden_ary['mod_delete'] = $mod_path;
 
-				$requested_data = call_user_func(array($config['ftp_method'], 'data'));
-
-				foreach ($requested_data as $data => $default)
-				{
-					if ($data == 'password')
-					{
-						$config['ftp_password'] = request_var('password', '');
-					}
-
-					$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-					$hidden_ary[$data] = $default;
-				}
-			}
-			else
-			{
-				$test_ftp_connection = false;
-			}
-			handle_ftp_details($method, $test_ftp_connection, $test_connection);
-
-			if (!isset($_POST['submit']) || ($config['write_method'] == WRITE_FTP && $test_ftp_connection))
-			{
-				$template->assign_vars(array(
-					'S_MOD_DELETE'		=> true,
-					'U_DELETE'			=> $this->u_action,
-					'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
-				));
-				add_form_key('acp_mods_delete');
-
-				return;
-			}
-
-			if (check_form_key('acp_mods_delete'))
-			{
-				$editor = new editor_ftp();
-				$status = $editor->remove("{$this->mods_dir}/{$mod_path}", true);
-			}
-			else
-			{
-				trigger_error($user->lang['FORM_INVALID'] . adm_back_link($this->u_action), E_USER_WARNING);
-			}
-		}
-		else if (confirm_box(true))
-		{
-			$status = recursive_unlink("{$this->mods_dir}/{$mod_path}");
-		}
-		else
-		{
-			confirm_box(false, $user->lang['DELETE_CONFIRM'], build_hidden_fields($hidden_ary));
-			return;
-		}
-
-		if ($status === true)
+		if ($action != 'delete_mod')
 		{
 			$template->assign_vars(array(
-				'S_MOD_SUCCESSBOX'	=> true,
-				'MESSAGE'			=> $user->lang['DELETE_SUCCESS'],
-				'U_RETURN'			=> $this->u_action
+				'S_MOD_DELETE'		=> true,
+				'U_DELETE'			=> $this->u_action . '&amp;action=delete_mod',
+				'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
 			));
+			add_form_key('acp_mods_delete');
+
+			return;
+		} // end pre_delete_mod
+
+		$write_method = 'editor_' . determine_write_method(false);
+		// Force Direct method, in the case of manual - just like above in mod_upload()
+		$write_method = ($write_method == 'editor_manual') ? 'editor_direct' : $write_method;
+		$editor = new $write_method();
+
+		if (!check_form_key('acp_mods_delete'))
+		{
+			trigger_error($user->lang['FORM_INVALID'] . adm_back_link($this->u_action), E_USER_WARNING);
 		}
-		else
+
+		$status = $editor->remove("{$this->mods_dir}/{$mod_path}", true);
+
+		if ($status !== true)
 		{
 			trigger_error($user->lang['DELETE_ERROR'] . "  $status" . adm_back_link($this->u_action), E_USER_WARNING);
 		}
-	}
 
-	function directory_move($src, $dest)
-	{
-		global $config;
-
-		$src_contents = scandir($src);
-
-		if (!is_dir($dest) && is_dir($src))
-		{
-			mkdir($dest . '/', octdec($config['am_dir_perms']));
-		}
-
-		foreach ($src_contents as $src_entry)
-		{
-			if ($src_entry != '.' && $src_entry != '..')
-			{
-				if (is_dir($src . '/' . $src_entry) && !is_dir($dest . '/' . $src_entry))
-				{
-					$this->directory_move($src . '/' . $src_entry, $dest . '/' . $src_entry);
-				}
-				else if (is_file($src . '/' . $src_entry) && !is_file($dest . '/' . $src_entry))
-				{
-					copy($src . '/' . $src_entry, $dest . '/' . $src_entry);
-					chmod($dest . '/' . $src_entry, octdec($config['am_file_perms']));
-				}
-			}
-		}
+		$template->assign_vars(array(
+			'S_MOD_SUCCESSBOX'	=> true,
+			'MESSAGE'			=> $user->lang['DELETE_SUCCESS'],
+			'U_RETURN'			=> $this->u_action,
+		));
 	}
 }
 
