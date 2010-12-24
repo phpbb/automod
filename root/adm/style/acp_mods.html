@@ -324,7 +324,7 @@
 
 	<!-- INCLUDE acp_mods_actions.html -->
 
-	<!-- IF S_NEW_FILES or S_EDITS or S_SQL -->
+	<!-- IF S_NEW_FILES or S_EDITS or S_SQL or S_AUTHOR_NOTES or .data -->
 	<fieldset class="submit-buttons">
 		<legend>{L_INSTALL}</legend>
 		<input type="hidden" name="mod_path" value="{MOD_PATH}" />
@@ -446,9 +446,12 @@
 
 	<!-- INCLUDE acp_mods_actions.html -->
 
-	<!-- IF S_REMOVING_FILES or S_EDITS or S_SQL -->
+	<!-- IF S_REMOVING_FILES or S_EDITS or S_SQL or S_AUTHOR_NOTES or .data -->
 	<fieldset class="submit-buttons">
 		<legend>{L_UNINSTALL}</legend>
+		<!-- IF .data -->
+		<input class="button1" type="submit" name="test_connection" value="{L_TEST_CONNECTION}" />
+		<!-- ENDIF -->
 		<input type="hidden" name="mod_id" value="{MOD_ID}" />
 		<input class="button1" type="submit" name="uninstall" value="{L_UNINSTALL}" />
 	</fieldset>
