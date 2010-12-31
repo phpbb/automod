@@ -1,3 +1,13 @@
+	<!-- IF S_CONNECTION_SUCCESS -->
+		<div class="successbox">
+			<p>{L_CONNECTION_SUCCESS}</p>
+		</div>
+	<!-- ELSEIF S_CONNECTION_FAILED -->
+		<div class="errorbox">
+			<p>{L_CONNECTION_FAILED}<br />{ERROR_MSG}</p>
+		</div>
+	<!-- ENDIF -->
+
 	<fieldset id="ftp_details" <!-- IF S_HIDE_FTP -->style="display: none"<!-- ENDIF -->>
 		<legend>{L_FTP_SETTINGS}</legend>
 		<dl>

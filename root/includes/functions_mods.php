@@ -263,41 +263,6 @@ function determine_write_method($preview = false)
 	return $write_method;
 }
 
-function handle_ftp_details($method, $test_ftp_connection, $test_connection)
-{
-	global $config, $template, $user;
-
-	$s_hidden_fields = build_hidden_fields(array('method' => $method));
-
-	if (!class_exists($method))
-	{
-		trigger_error('Method does not exist.', E_USER_ERROR);
-	}
-
-	$requested_data = call_user_func(array($method, 'data'));
-	foreach ($requested_data as $data => $default)
-	{
-		$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-
-		$template->assign_block_vars('data', array(
-			'DATA'		=> $data,
-			'NAME'		=> $user->lang[strtoupper($method . '_' . $data)],
-			'EXPLAIN'	=> $user->lang[strtoupper($method . '_' . $data) . '_EXPLAIN'],
-			'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
-		));
-	}
-
-	$template->assign_vars(array(
-		'S_CONNECTION_SUCCESS'		=> ($test_ftp_connection && $test_connection === true) ? true : false,
-		'S_CONNECTION_FAILED'		=> ($test_ftp_connection && $test_connection !== true) ? true : false,
-		'ERROR_MSG'					=> ($test_ftp_connection && $test_connection !== true) ? $user->lang[$test_connection] : '',
-
-		'S_FTP_UPLOAD'			=> true,
-		'UPLOAD_METHOD'			=> $method,
-		'S_HIDDEN_FIELDS_FTP'	=> $s_hidden_fields,
-	));
-}
-
 /**
 * Gets FTP information if we need it
 *
@@ -306,38 +271,56 @@ function handle_ftp_details($method, $test_ftp_connection, $test_connection)
 */
 function get_connection_info($preview = false)
 {
-	global $config, $ftp_method, $test_ftp_connection, $test_connection;
+	global $config, $template, $user, $ftp_method, $test_ftp_connection, $test_connection;
 
 	$conn_info_ary = array();
 
-	// using $config instead of $editor because write_method is forced to direct
-	// when in preview mode
-	if ($config['write_method'] == WRITE_FTP)
+	// using $config instead of $editor because write_method is forced to direct when in preview mode
+	if ($config['write_method'] != WRITE_FTP)
 	{
-		if (!$preview && isset($_POST['password']))
+		return $conn_info_ary;
+	}
+
+	$requested_data = call_user_func(array($ftp_method, 'data'));
+
+	if ($preview)
+	{
+		foreach ($requested_data as $data => $default)
 		{
-			$conn_info_ary['method'] = $config['ftp_method'];
-
-			if (empty($config['ftp_method']))
-			{
-				trigger_error('FTP_METHOD_ERROR');
-			}
-
-			$requested_data = call_user_func(array($config['ftp_method'], 'data'));
-
-			foreach ($requested_data as $data => $default)
-			{
-				if ($data == 'password')
-				{
-					$config['ftp_password'] = request_var('password', '');
-				}
-				$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-
-				$conn_info_ary[$data] = $default;
-			}
+			$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+	
+			$template->assign_block_vars('data', array(
+				'DATA'		=> $data,
+				'NAME'		=> $user->lang[strtoupper($ftp_method . '_' . $data)],
+				'EXPLAIN'	=> $user->lang[strtoupper($ftp_method . '_' . $data) . '_EXPLAIN'],
+				'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
+			));
 		}
+	
+		$template->assign_vars(array(
+			'S_CONNECTION_SUCCESS'		=> ($test_ftp_connection && $test_connection === true) ? true : false,
+			'S_CONNECTION_FAILED'		=> ($test_ftp_connection && $test_connection !== true) ? true : false,
+			'ERROR_MSG'					=> ($test_ftp_connection && $test_connection !== true) ? $user->lang[$test_connection] : '',
+	
+			'S_FTP_UPLOAD'			=> true,
+			'UPLOAD_METHOD'			=> $ftp_method,
+			'S_HIDDEN_FIELDS_FTP'	=> build_hidden_fields(array('method' => $ftp_method)),
+		));
+	}
+	else if (isset($_POST['password']))	// implicit && !$preview
+	{
+		$conn_info_ary['method'] = $ftp_method;
 
-		handle_ftp_details($ftp_method, $test_ftp_connection, $test_connection);
+		foreach ($requested_data as $data => $default)
+		{
+			if ($data == 'password')
+			{
+				$config['ftp_password'] = request_var('password', '');
+			}
+			$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+
+			$conn_info_ary[$data] = $default;
+		}
 	}
 
 	return $conn_info_ary;
