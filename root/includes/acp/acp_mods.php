@@ -308,7 +308,7 @@ class acp_mods
 	{
 		global $db, $template;
 
-		$sql = 'SELECT mod_id, mod_name
+		$sql = 'SELECT LOWER(mod_name) as mod_name, mod_id
 			FROM ' . MODS_TABLE . '
 			ORDER BY mod_name ASC';
 		$result = $db->sql_query($sql);
