@@ -408,16 +408,9 @@ class acp_mods
 			unset($details['AUTHOR_DETAILS']);
 		}
 
-		// Display Do-It-Yourself Actions...per the MODX spec,
-		// Need to handle the languag later, but it's not saved for now.
 		if (!empty($details['DIY_INSTRUCTIONS']))
 		{
 			$template->assign_var('S_DIY', true);
-
-			if (!is_array($details['DIY_INSTRUCTIONS']))
-			{
-				$details['DIY_INSTRUCTIONS'] = array($details['DIY_INSTRUCTIONS']);
-			}
 
 			foreach ($details['DIY_INSTRUCTIONS'] as $instruction)
 			{
@@ -693,14 +686,11 @@ class acp_mods
 			$row = $db->sql_fetchrow($result);
 			$db->sql_freeresult($result);
 
-			if ($row)
-			{
-				return unserialize($row['mod_actions']);
-			}
-			else
+			if (!$row)
 			{
 				trigger_error($user->lang['NO_MOD'] . adm_back_link($this->u_action), E_USER_WARNING);
 			}
+			return unserialize($row['mod_actions']);
 		}
 		else
 		{
@@ -715,11 +705,8 @@ class acp_mods
 			}
 
 			$this->parser->set_file($mod_ident);
-			$actions = $this->parser->get_actions();
+			return $this->parser->get_actions();
 		}
-
-		return $actions;
-
 	}
 
 	/**
@@ -760,8 +747,19 @@ class acp_mods
 			return false;	// ERROR
 		}
 
-		$details = $this->mod_details($mod_path, false);
+		$execute_edits = ($action == 'pre_install') ? false : true;
+		$write_method = 'editor_' . determine_write_method(!$execute_edits);
+		$editor = new $write_method();
 
+		// get FTP information if we need it (or initialize array $hidden_ary)
+		$hidden_ary = get_connection_info(!$execute_edits);
+
+		// grab actions and details
+		$details = $this->mod_details($mod_path, false);
+		$actions = $this->mod_actions($mod_path);
+
+		// NB: There could and should be cases to check for duplicated MODs and contribs
+		// However, there is not appropriate book-keeping in place for those in 1.0.x
 		if (!$parent)
 		{
 			$sql = 'SELECT mod_name FROM ' . MODS_TABLE . "
@@ -772,85 +770,8 @@ class acp_mods
 			{
 				trigger_error('AM_MOD_ALREADY_INSTALLED');
 			}
-		}
-		else if ($dest_template) // implicit && $parent
-		{
-			// Has this template already been processed?
-			$sql = 'SELECT mod_name FROM ' . MODS_TABLE . "
-				WHERE mod_id = $parent
-					AND mod_template " . $db->sql_like_expression($db->any_char . $dest_template . $db->any_char);
-			$result = $db->sql_query($sql);
 
-			if ($row = $db->sql_fetchrow($result))
-			{
-				trigger_error('AM_MOD_ALREADY_INSTALLED');
-			}
-		}
-		// NB: There could and should be cases to check for duplicated MODs and contribs
-		// However, there is not appropriate book-keeping in place for those in 1.0.x
-
-		$execute_edits = ($action == 'pre_install') ? false : true;
-		$write_method = 'editor_' . determine_write_method(!$execute_edits);
-		$editor = new $write_method();
-
-		// get FTP information if we need it (or initialize array $hidden_ary)
-		$hidden_ary = get_connection_info(!$execute_edits);
-
-		$actions = $this->mod_actions($mod_path);
-
-		if ($dest_template)
-		{
-			$sql = 'SELECT template_inherit_path FROM ' . STYLES_TEMPLATE_TABLE . "
-				WHERE template_path = '" . $db->sql_escape($dest_template) . "'";
-			$result = $db->sql_query($sql);
-
-			if ($row = $db->sql_fetchrow($result))
-			{
-				$dest_inherits = $row['template_inherit_path'];
-			}
-			$db->sql_freeresult($result);
-
-			if (!empty($actions['EDITS']))
-			{
-				foreach ($actions['EDITS'] as $file => $edits)
-				{
-					if (strpos($file, 'styles/') === false)
-					{
-						unset($actions['EDITS'][$file]);
-					}
-					else if ($src_template != $dest_template)
-					{
-						$file_new = str_replace($src_template, $dest_template, $file);
-						$actions['EDITS'][$file_new] = $edits;
-						unset($actions['EDITS'][$file]);
-					}
-				}
-			}
-
-			if (!empty($actions['NEW_FILES']))
-			{
-				foreach ($actions['NEW_FILES'] as $src_file => $dest_file)
-				{
-					if (strpos($src_file, 'styles/') === false)
-					{
-						unset($actions['NEW_FILES']);
-					}
-					else
-					{
-						$actions['NEW_FILES'][$src_file] = str_replace($src_template, $dest_template, $dest_file);
-					}
-				}
-			}
-
-			// Passed on from pre_install & retry/force pages
-			$hidden_ary['dest'] = $dest_template;
-			$hidden_ary['source'] = $mod_path;
-			$hidden_ary['template_submit'] = true;
-		}
-
-		// only supporting one level of hierarchy here
-		if (!$parent)
-		{
+			// only supporting one level of hierarchy here
 			// check for "child" MODX files and attempt to decide which ones we need
 			$children = $this->find_children($mod_path);
 			$elements = array('language' => array(), 'template' => array());
@@ -864,16 +785,64 @@ class acp_mods
 			$this->handle_template_prompt($children, $elements, $action);
 			$this->handle_merge('template', $actions, $children, $elements['template']);
 		}
-		else
+		else if ($dest_template) // implicit && $parent
 		{
-			if ($dest_template)
+			// Has this template already been processed?
+			$sql = 'SELECT mod_name FROM ' . MODS_TABLE . "
+				WHERE mod_id = $parent
+					AND mod_template " . $db->sql_like_expression($db->any_char . $dest_template . $db->any_char);
+			$result = $db->sql_query($sql);
+
+			if ($row = $db->sql_fetchrow($result))
 			{
-				$elements['template'] = array($dest_template);
+				trigger_error('AM_MOD_ALREADY_INSTALLED');
 			}
-			else
+
+			$sql = 'SELECT template_inherit_path FROM ' . STYLES_TEMPLATE_TABLE . "
+				WHERE template_path = '" . $db->sql_escape($dest_template) . "'";
+			$result = $db->sql_query($sql);
+
+			if ($row = $db->sql_fetchrow($result))
 			{
-				$elements['language'] = array(core_basename($mod_path));
+				$dest_inherits = $row['template_inherit_path'];
 			}
+			$db->sql_freeresult($result);
+
+			foreach ($actions['EDITS'] as $file => $edits)
+			{
+				if (strpos($file, 'styles/') === false)
+				{
+					unset($actions['EDITS'][$file]);
+				}
+				else if ($src_template != $dest_template)
+				{
+					$file_new = str_replace($src_template, $dest_template, $file);
+					$actions['EDITS'][$file_new] = $edits;
+					unset($actions['EDITS'][$file]);
+				}
+			}
+
+			foreach ($actions['NEW_FILES'] as $src_file => $dest_file)
+			{
+				if (strpos($src_file, 'styles/') === false)
+				{
+					unset($actions['NEW_FILES']);
+				}
+				else
+				{
+					$actions['NEW_FILES'][$src_file] = str_replace($src_template, $dest_template, $dest_file);
+				}
+			}
+
+			$hidden_ary['dest'] = $dest_template;
+			$hidden_ary['source'] = $mod_path;
+			$hidden_ary['template_submit'] = true;
+
+			$elements['template'] = array($dest_template);
+		}
+		else // implicit $parent && !$dest_template
+		{
+			$elements['language'] = array(core_basename($mod_path));
 		}
 
 		$template->assign_vars(array(
@@ -910,11 +879,6 @@ class acp_mods
 		{
 			$template->assign_var('S_DIY', true);
 
-			if (!is_array($actions['DIY_INSTRUCTIONS']))
-			{
-				$actions['DIY_INSTRUCTIONS'] = array($actions['DIY_INSTRUCTIONS']);
-			}
-
 			foreach ($actions['DIY_INSTRUCTIONS'] as $instruction)
 			{
 				$template->assign_block_vars('diy_instructions', array(
@@ -925,9 +889,7 @@ class acp_mods
 
 		if (!empty($actions['PHP_INSTALLER']))
 		{
-			$template->assign_vars(array(
-				'U_PHP_INSTALLER'   => $phpbb_root_path . $actions['PHP_INSTALLER'],
-			));
+			$template->assign_var('U_PHP_INSTALLER', $phpbb_root_path . $actions['PHP_INSTALLER']);
 		}
 
 		if ($this->process_success || $this->process_force)
@@ -1298,279 +1260,266 @@ class acp_mods
 		}
 
 		// not all MODs will have edits (!)
-		if (isset($actions['EDITS']))
+		if (!empty($actions['EDITS']))
 		{
 			$template->assign_var('S_EDITS', true);
+		}
 
-			foreach ($actions['EDITS'] as $filename => $edits)
+		foreach ($actions['EDITS'] as $filename => $edits)
+		{
+			// see if the file to be opened actually exists
+			if (!file_exists("$phpbb_root_path$filename"))
 			{
-				// see if the file to be opened actually exists
-				if (!file_exists("$phpbb_root_path$filename"))
+				$is_inherit = (strpos($filename, 'styles/') !== false && !empty($dest_inherits)) ? true : false;
+
+				$template->assign_block_vars('edit_files', array(
+					'S_MISSING_FILE'	=> ($is_inherit) ? false : true,
+					'INHERIT_MSG'		=> ($is_inherit) ? sprintf($user->lang['INHERIT_NO_CHANGE'], $dest_template, $dest_inherits) : '',
+					'FILENAME'			=> $filename,
+				));
+
+				$this->process_success = ($is_inherit) ? $this->process_success : false;
+				continue;
+			}
+
+			$template->assign_block_vars('edit_files', array(
+				'S_SUCCESS'	=> false,
+				'FILENAME'	=> $filename,
+			));
+
+			// Open the file to edit, and if installing, backup it up first
+			// note: write_method is always forced to direct in preview mode.
+			$backup_path = ($change && !$reverse) ? $this->backup_root : '';
+			$status = $editor->open_file($filename, $backup_path);
+
+			if (is_string($status))
+			{
+				$template->assign_block_vars('error', array(
+					'ERROR'	=> $status,
+				));
+
+				$this->process_success = false;
+				continue;
+			}
+
+			$edit_success = true;
+
+			foreach ($edits as $finds)
+			{
+				$comment = '';
+				foreach ($finds as $find => $commands)
 				{
-					$is_inherit = (strpos($filename, 'styles/') !== false && !empty($dest_inherits)) ? true : false;
-
-					$template->assign_block_vars('edit_files', array(
-						'S_MISSING_FILE'	=> ($is_inherit) ? false : true,
-						'INHERIT_MSG'		=> ($is_inherit) ? sprintf($user->lang['INHERIT_NO_CHANGE'], $dest_template, $dest_inherits) : '',
-						'FILENAME'			=> $filename,
-					));
-
-					$this->process_success = ($is_inherit) ? $this->process_success : false;
-
-					continue;
-				}
-				else
-				{
-					$template->assign_block_vars('edit_files', array(
-						'S_SUCCESS'	=> false,
-						'FILENAME'	=> $filename,
-					));
-
-					// Open the file to edit, and if installing, backup it up first
-					// note: write_method is always forced to direct in preview mode.
-					if ($change && !$reverse)
+					if (isset($finds['comment']) && !$comment && $finds['comment'] != $user->lang['UNKNOWN_MOD_COMMENT'])
 					{
-						$status = $editor->open_file($filename, $this->backup_root);
-					}
-					else
-					{
-						$status = $editor->open_file($filename);
+						$comment = $finds['comment'];
+						unset($finds['comment']);
 					}
 
-					if (is_string($status))
+					if ($find == 'comment')
 					{
-						$template->assign_block_vars('error', array(
-							'ERROR'	=> $status,
-						));
-
-						$this->process_success = false;
 						continue;
 					}
 
-					$edit_success = true;
+					$find_tpl = array(
+						'FIND_STRING'	=> htmlspecialchars($find),
+						'COMMENT'		=> htmlspecialchars($comment),
+					);
 
-					foreach ($edits as $finds)
+					$offset_ary = $editor->find($find);
+
+					// special case for FINDs with no action associated
+					if (is_null($commands))
 					{
-						$comment = '';
-						foreach ($finds as $find => $commands)
+						continue;
+					}
+
+					foreach ($commands as $type => $contents)
+					{
+						$status = false;
+						$inline_template_ary = array();
+						$contents_orig = $contents;
+
+						switch (strtoupper($type))
 						{
-							if (isset($finds['comment']) && !$comment && $finds['comment'] != $user->lang['UNKNOWN_MOD_COMMENT'])
-							{
-								$comment = $finds['comment'];
-								unset($finds['comment']);
-							}
+							case 'AFTER ADD':
+								$status = $editor->add_string($find, $contents, 'AFTER', $offset_ary['start'], $offset_ary['end']);
+							break;
 
-							if ($find == 'comment')
-							{
-								continue;
-							}
+							case 'BEFORE ADD':
+								$status = $editor->add_string($find, $contents, 'BEFORE', $offset_ary['start'], $offset_ary['end']);
+							break;
 
-							$find_tpl = array(
-								'FIND_STRING'	=> htmlspecialchars($find),
-								'COMMENT'		=> htmlspecialchars($comment),
-							);
+							case 'INCREMENT':
+							case 'OPERATION':
+								//$contents = "";
+								$status = $editor->inc_string($find, '', $contents);
+							break;
 
-							$offset_ary = $editor->find($find);
+							case 'REPLACE WITH':
+								$status = $editor->replace_string($find, $contents, $offset_ary['start'], $offset_ary['end']);
+							break;
 
-							// special case for FINDs with no action associated
-							if (is_null($commands))
-							{
-								continue;
-							}
-
-							foreach ($commands as $type => $contents)
-							{
-								if (!$offset_ary)
+							case 'IN-LINE-EDIT':
+								// these aren't quite as straight forward.  Still have multi-level arrays to sort through
+								$inline_comment = '';
+								foreach ($contents as $inline_edit_id => $inline_edit)
 								{
-									$offset_ary['start'] = $offset_ary['end'] = false;
-								}
-
-								$status = false;
-								$inline_template_ary = array();
-								$contents_orig = $contents;
-
-								switch (strtoupper($type))
-								{
-									case 'AFTER ADD':
-										$status = $editor->add_string($find, $contents, 'AFTER', $offset_ary['start'], $offset_ary['end']);
-									break;
-
-									case 'BEFORE ADD':
-										$status = $editor->add_string($find, $contents, 'BEFORE', $offset_ary['start'], $offset_ary['end']);
-									break;
-
-									case 'INCREMENT':
-									case 'OPERATION':
-										//$contents = "";
-										$status = $editor->inc_string($find, '', $contents);
-									break;
-
-									case 'REPLACE WITH':
-										$status = $editor->replace_string($find, $contents, $offset_ary['start'], $offset_ary['end']);
-									break;
-
-									case 'IN-LINE-EDIT':
-										// these aren't quite as straight forward.  Still have multi-level arrays to sort through
-										$inline_comment = '';
-										foreach ($contents as $inline_edit_id => $inline_edit)
+									if ($inline_edit_id === 'inline-comment')
+									{
+										// This is a special case for tucking comments in the array
+										if ($inline_edit != $user->lang['UNKNOWN_MOD_INLINE-COMMENT'])
 										{
-											if ($inline_edit_id === 'inline-comment')
+											$inline_comment = $inline_edit;
+										}
+										continue;
+									}
+
+									foreach ($inline_edit as $inline_find => $inline_commands)
+									{
+										foreach ($inline_commands as $inline_action => $inline_contents)
+										{
+											// inline finds are pretty cantankerous, so do them in the loop
+											$line = $editor->inline_find($find, $inline_find, $offset_ary['start'], $offset_ary['end']);
+											if (!$line)
 											{
-												// This is a special case for tucking comments in the array
-												if ($inline_edit != $user->lang['UNKNOWN_MOD_INLINE-COMMENT'])
-												{
-													$inline_comment = $inline_edit;
-												}
-												continue;
+												// inline find failed
+												$status = $edit_success = $this->process_success = false;
+
+												$inline_template_ary[] = array(
+													'FIND'		=>	array(
+														'S_SUCCESS'	=> $status,
+														'NAME'		=> $user->lang[$type],
+														'COMMAND'	=> htmlspecialchars($inline_find),
+													),
+													'ACTION'	=> array());
+
+												continue 2;
 											}
 
-											foreach ($inline_edit as $inline_find => $inline_commands)
+											$inline_contents = $inline_contents[0];
+											$contents_orig = $inline_find;
+
+											switch (strtoupper($inline_action))
 											{
-												foreach ($inline_commands as $inline_action => $inline_contents)
-												{
-													// inline finds are pretty cantankerous, so do them in the loop
-													$line = $editor->inline_find($find, $inline_find, $offset_ary['start'], $offset_ary['end']);
-													if (!$line)
-													{
-														// find failed
-														$status = $this->process_success = false;
+												case 'IN-LINE-':
+													$editor->last_string_offset = $line['string_offset'] + $line['find_length'] - 1;
+													$status = true;
+													continue 2;
+												break;
 
-														$inline_template_ary[] = array(
-															'FIND'		=>	array(
-																'S_SUCCESS'	=> $status,
-																'NAME'		=> $user->lang[$type],
-																'COMMAND'	=> htmlspecialchars($inline_find),
-															),
-															'ACTION'	=> array());
+												case 'IN-LINE-BEFORE-ADD':
+													$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
+												break;
 
-														continue 2;
-													}
+												case 'IN-LINE-AFTER-ADD':
+													$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
+												break;
 
-													$inline_contents = $inline_contents[0];
-													$contents_orig = $inline_find;
+												case 'IN-LINE-REPLACE':
+												case 'IN-LINE-REPLACE-WITH':
+													$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
+												break;
 
-													switch (strtoupper($inline_action))
-													{
-														case 'IN-LINE-':
-															$editor->last_string_offset = $line['string_offset'] + $line['find_length'] - 1;
-															$status = true;
-															continue 2;
-														break;
+												case 'IN-LINE-OPERATION':
+													$status = $editor->inc_string($find, $inline_find, $inline_contents);
+												break;
 
-														case 'IN-LINE-BEFORE-ADD':
-															$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
-														break;
+												default:
+													$message = sprintf($user->lang['UNRECOGNISED_COMMAND'], $inline_action);
+													trigger_error($message, E_USER_WARNING); // ERROR!
+												break;
+											}
 
-														case 'IN-LINE-AFTER-ADD':
-															$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
-														break;
+											$inline_template_ary[] = array(
+												'FIND'		=>	array(
+													'S_SUCCESS'	=> $status,
+													'NAME'		=> $user->lang[$type],
+													'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
+												),
 
-														case 'IN-LINE-REPLACE':
-														case 'IN-LINE-REPLACE-WITH':
-															$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
-														break;
+												'ACTION'	=> array(
+													'S_SUCCESS'	=> $status,
+													'NAME'		=> $user->lang[$inline_action],
+													'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
+													//'COMMENT'	=> $inline_comment, (inline comments aren't actually part of the MODX spec)
+												),
+											);
 
-														case 'IN-LINE-OPERATION':
-															$status = $editor->inc_string($find, $inline_find, $inline_contents);
-														break;
-
-														default:
-															$message = sprintf($user->lang['UNRECOGNISED_COMMAND'], $inline_action);
-															trigger_error($message, E_USER_WARNING); // ERROR!
-														break;
-													}
-
-													$inline_template_ary[] = array(
-														'FIND'		=>	array(
-															'S_SUCCESS'	=> $status,
-															'NAME'		=> $user->lang[$type],
-															'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
-														),
-
-														'ACTION'	=> array(
-															'S_SUCCESS'	=> $status,
-															'NAME'		=> $user->lang[$inline_action],
-															'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
-															//'COMMENT'	=> $inline_comment, (inline comments aren't actually part of the MODX spec)
-														),
-													);
-
-													if (!$status)
-													{
-														// inline_action failed
-														$edit_success = $this->process_success = false;
-													}
-												}
-
-												$editor->close_inline_edit();
+											if (!$status)
+											{
+												// inline_action failed
+												$edit_success = $this->process_success = false;
 											}
 										}
-									break;
 
-									default:
-										$message = sprintf($user->lang['UNRECOGNISED_COMMAND'], $type);
-										trigger_error($message, E_USER_WARNING); // ERROR!
-									break;
-								}
-
-								$template->assign_block_vars('edit_files.finds', array_merge($find_tpl, array(
-									'S_SUCCESS'		=> $status,
-								)));
-
-								if (!$status)
-								{
-									$edit_success = $this->process_success = false;
-								}
-
-								if (sizeof($inline_template_ary))
-								{
-									foreach ($inline_template_ary as $inline_template)
-									{
-										// We must assign the vars for the FIND first
-										$template->assign_block_vars('edit_files.finds.actions', $inline_template['FIND']);
-
-										// And now the vars for the ACTION
-										$template->assign_block_vars('edit_files.finds.actions.inline', $inline_template['ACTION']);
-
+										$editor->close_inline_edit();
 									}
-									$inline_template_ary = array();
 								}
-								else if (!is_array($contents_orig))
-								{
-									$template->assign_block_vars('edit_files.finds.actions', array(
-										'S_SUCCESS'	=> $status,
-										'NAME'		=> $user->lang[$type],
-										'COMMAND'	=> htmlspecialchars($contents_orig),
-									));
-								}
-							}
+							break;
+
+							default:
+								$message = sprintf($user->lang['UNRECOGNISED_COMMAND'], $type);
+								trigger_error($message, E_USER_WARNING); // ERROR!
+							break;
 						}
 
-						$editor->close_edit();
-					}
+						$template->assign_block_vars('edit_files.finds', array_merge($find_tpl, array(
+							'S_SUCCESS'		=> $status,
+						)));
 
-					$template->alter_block_array('edit_files', array(
-						'S_SUCCESS'		=> $edit_success,
-					), true, 'change');
+						if (!$status)
+						{
+							$edit_success = $this->process_success = false;
+						}
+
+						if (sizeof($inline_template_ary))
+						{
+							foreach ($inline_template_ary as $inline_template)
+							{
+								// We must assign the vars for the FIND first
+								$template->assign_block_vars('edit_files.finds.actions', $inline_template['FIND']);
+
+								// And now the vars for the ACTION
+								$template->assign_block_vars('edit_files.finds.actions.inline', $inline_template['ACTION']);
+
+							}
+							$inline_template_ary = array();
+						}
+						else if (!is_array($contents_orig))
+						{
+							$template->assign_block_vars('edit_files.finds.actions', array(
+								'S_SUCCESS'	=> $status,
+								'NAME'		=> $user->lang[$type],
+								'COMMAND'	=> htmlspecialchars($contents_orig),
+							));
+						}
+					}
 				}
 
-				if ($change)
-				{
-					$status = $editor->close_file("{$this->edited_root}$filename", $this->process_success, $this->process_force);
-					if (is_string($status))
-					{
-						$template->assign_block_vars('error', array(
-							'ERROR'	=> $status,
-						));
+				$editor->close_edit();
+			}
 
-						$this->process_success = false;
-					}
+			if ($change)
+			{
+				$status = $editor->close_file("{$this->edited_root}$filename", $this->process_success, $this->process_force);
+				if (is_string($status))
+				{
+					$template->assign_block_vars('error', array(
+						'ERROR'	=> $status,
+					));
+
+					$edit_success = $this->process_success = false;
 				}
 			}
-		} // end foreach
+
+			$template->alter_block_array('edit_files', array(
+				'S_SUCCESS'		=> $edit_success,
+			), true, 'change');
+
+		} // end foreach $actions['EDITS']
 
 		// Move included files
-		if (isset($actions['NEW_FILES']) && !empty($actions['NEW_FILES']))
+		if (!empty($actions['NEW_FILES']))
 		{
 			$template->assign_var('S_NEW_FILES', true);
 

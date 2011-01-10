@@ -176,7 +176,7 @@ class editor
 	* Keep in mind partial finds and multi-line finds
 	*
 	* @param string $find - string to find
-	* @return mixed : array with position information if $find is found; false otherwise
+	* @return array : start and end positions if $find is found; false's otherwise
 	*/
 	function find($find)
 	{
@@ -205,7 +205,7 @@ class editor
 					// if we've reached the EOF, the find failed.
 					if (!isset($this->file_contents[$i + $j]))
 					{
-						return false;
+						return array('start' => false, 'end' => false);
 					}
 
 					if (!trim($find_ary[$j]))
@@ -261,8 +261,8 @@ class editor
 			}
 		}
 
-		// if return has not been previously invoked, the find failed.
-		return false;
+		// if we got this far, the find failed
+		return array('start' => false, 'end' => false);
 	}
 
 	/**
