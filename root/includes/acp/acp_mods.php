@@ -1325,7 +1325,7 @@ class acp_mods
 						'COMMENT'		=> htmlspecialchars($comment),
 					);
 
-					$offset_ary = $editor->find($find);
+					$find_success = $editor->find($find);
 
 					// special case for FINDs with no action associated
 					if (is_null($commands))
@@ -1338,129 +1338,126 @@ class acp_mods
 						$status = false;
 						$inline_template_ary = array();
 						$contents_orig = $contents;
+						$TYPE = strtoupper($type);
 
-						switch (strtoupper($type))
+						switch ( ($find_success) ? $TYPE : 'FIND FAILED')
 						{
+							case 'FIND FAILED':
+								// Find has failed, skip the actions switch
+							break;
+
 							case 'AFTER ADD':
-								$status = $editor->add_string($find, $contents, 'AFTER', $offset_ary['start'], $offset_ary['end']);
+								$status = $editor->add_string($find, $contents, 'AFTER');
 							break;
 
 							case 'BEFORE ADD':
-								$status = $editor->add_string($find, $contents, 'BEFORE', $offset_ary['start'], $offset_ary['end']);
+								$status = $editor->add_string($find, $contents, 'BEFORE');
 							break;
 
 							case 'INCREMENT':
 							case 'OPERATION':
-								//$contents = "";
 								$status = $editor->inc_string($find, '', $contents);
 							break;
 
 							case 'REPLACE WITH':
-								$status = $editor->replace_string($find, $contents, $offset_ary['start'], $offset_ary['end']);
+								$status = $editor->replace_string($find, $contents);
 							break;
 
 							case 'IN-LINE-EDIT':
-								// these aren't quite as straight forward.  Still have multi-level arrays to sort through
-								$inline_comment = '';
-								foreach ($contents as $inline_edit_id => $inline_edit)
-								{
-									if ($inline_edit_id === 'inline-comment')
-									{
-										// This is a special case for tucking comments in the array
-										if ($inline_edit != $user->lang['UNKNOWN_MOD_INLINE-COMMENT'])
-										{
-											$inline_comment = $inline_edit;
-										}
-										continue;
-									}
-
-									foreach ($inline_edit as $inline_find => $inline_commands)
-									{
-										foreach ($inline_commands as $inline_action => $inline_contents)
-										{
-											// inline finds are pretty cantankerous, so do them in the loop
-											$line = $editor->inline_find($find, $inline_find, $offset_ary['start'], $offset_ary['end']);
-											if (!$line)
-											{
-												// inline find failed
-												$status = $edit_success = $this->process_success = false;
-
-												$inline_template_ary[] = array(
-													'FIND'		=>	array(
-														'S_SUCCESS'	=> $status,
-														'NAME'		=> $user->lang[$type],
-														'COMMAND'	=> htmlspecialchars($inline_find),
-													),
-													'ACTION'	=> array());
-
-												continue 2;
-											}
-
-											$inline_contents = $inline_contents[0];
-											$contents_orig = $inline_find;
-
-											switch (strtoupper($inline_action))
-											{
-												case 'IN-LINE-':
-													$editor->last_string_offset = $line['string_offset'] + $line['find_length'] - 1;
-													$status = true;
-													continue 2;
-												break;
-
-												case 'IN-LINE-BEFORE-ADD':
-													$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE', $line['array_offset'], $line['string_offset'], $line['find_length']);
-												break;
-
-												case 'IN-LINE-AFTER-ADD':
-													$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER', $line['array_offset'], $line['string_offset'], $line['find_length']);
-												break;
-
-												case 'IN-LINE-REPLACE':
-												case 'IN-LINE-REPLACE-WITH':
-													$status = $editor->inline_replace($find, $inline_find, $inline_contents, $line['array_offset'], $line['string_offset'], $line['find_length']);
-												break;
-
-												case 'IN-LINE-OPERATION':
-													$status = $editor->inc_string($find, $inline_find, $inline_contents);
-												break;
-
-												default:
-													$message = sprintf($user->lang['UNRECOGNISED_COMMAND'], $inline_action);
-													trigger_error($message, E_USER_WARNING); // ERROR!
-												break;
-											}
-
-											$inline_template_ary[] = array(
-												'FIND'		=>	array(
-													'S_SUCCESS'	=> $status,
-													'NAME'		=> $user->lang[$type],
-													'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
-												),
-
-												'ACTION'	=> array(
-													'S_SUCCESS'	=> $status,
-													'NAME'		=> $user->lang[$inline_action],
-													'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
-													//'COMMENT'	=> $inline_comment, (inline comments aren't actually part of the MODX spec)
-												),
-											);
-
-											if (!$status)
-											{
-												// inline_action failed
-												$edit_success = $this->process_success = false;
-											}
-										}
-
-										$editor->close_inline_edit();
-									}
-								}
+								// Still have multi-level arrays to sort through, so do them outside this switch
+								// Keep in mind that if the find have failed, this case would be skipped anyway
 							break;
 
 							default:
 								$message = sprintf($user->lang['UNRECOGNISED_COMMAND'], $type);
 								trigger_error($message, E_USER_WARNING); // ERROR!
 							break;
+						}
+
+						if ($TYPE == 'IN-LINE-EDIT')
+						{
+							$inline_comment = '';
+							foreach ($contents as $inline_edit_id => $inline_edit)
+							{
+								if ($inline_edit_id === 'inline-comment')
+								{
+									// This is a special case for tucking comments in the array
+									if ($inline_edit != $user->lang['UNKNOWN_MOD_INLINE-COMMENT'])
+									{
+										$inline_comment = $inline_edit;
+									}
+									continue;
+								}
+
+								foreach ($inline_edit as $inline_find => $inline_commands)
+								{
+									foreach ($inline_commands as $inline_action => $inline_contents)
+									{
+										// inline finds are pretty cantankerous, so do them in the loop
+										$status = ($find_success) ? $editor->inline_find($find, $inline_find) : false;
+
+										$inline_contents = $inline_contents[0];
+										$contents_orig = $inline_find;
+
+										switch ( ($status) ? strtoupper($inline_action) : 'FIND FAILED')
+										{
+											case 'FIND FAILED':
+												// Find (or inline find) has failed, skip the actions switch
+											break;
+
+											// special case for INLINE FINDs with no action associated
+											case 'IN-LINE-':
+												$status = $editor->close_inline_edit(strlen($inline_find));
+											continue 2; // break out of switch, continue at next iteration of $inline_commands
+
+											case 'IN-LINE-BEFORE-ADD':
+												$status = $editor->inline_add($find, $inline_find, $inline_contents, 'BEFORE');
+											break;
+
+											case 'IN-LINE-AFTER-ADD':
+												$status = $editor->inline_add($find, $inline_find, $inline_contents, 'AFTER');
+											break;
+
+											case 'IN-LINE-REPLACE':
+											case 'IN-LINE-REPLACE-WITH':
+												$status = $editor->inline_replace($find, $inline_find, $inline_contents);
+											break;
+
+											case 'IN-LINE-OPERATION':
+												$status = $editor->inc_string($find, $inline_find, $inline_contents);
+											break;
+
+											default:
+												$message = sprintf($user->lang['UNRECOGNISED_COMMAND'], $inline_action);
+												trigger_error($message, E_USER_WARNING); // ERROR!
+											break;
+										}
+
+										$inline_template_ary[] = array(
+											'FIND'		=>	array(
+												'S_SUCCESS'	=> $status,
+												'NAME'		=> $user->lang[$type],
+												'COMMAND'	=> (is_array($contents_orig)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($contents_orig),
+											),
+
+											'ACTION'	=> array(
+												'S_SUCCESS'	=> $status,
+												'NAME'		=> $user->lang[$inline_action],
+												'COMMAND'	=> (is_array($inline_contents)) ? $user->lang['INVALID_MOD_INSTRUCTION'] : htmlspecialchars($inline_contents),
+												//'COMMENT'	=> $inline_comment, (inline comments aren't actually part of the MODX spec)
+											),
+										);
+
+										if (!$status)
+										{
+											// inline_action failed
+											$edit_success = $this->process_success = false;
+										}
+									}
+
+									$editor->close_inline_edit();
+								}
+							}
 						}
 
 						$template->assign_block_vars('edit_files.finds', array_merge($find_tpl, array(

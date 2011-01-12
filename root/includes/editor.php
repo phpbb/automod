@@ -49,19 +49,27 @@ class editor
 	var $write_method = 0;
 
 	/**
-	* Keeps finds sequential, plus loop optimization
+	* Line from where we start/continue searching (keeps finds sequential)
 	*/
 	var $start_index = 0;
 
-	/*
-	* Keeps inline find sequential
+	/**
+	* Start and end lines of the find, if found
+	*/
+	var $start_offset = false;
+	var $end_offset = false;
+
+	/**
+	* String offset and the line where it's found (keeps inline finds sequential)
 	*/
 	var $last_string_offset = 0;
+	var $last_inline_offset = 0;
 
-	/*
-	* Only apply string offset to the line to which it belongs
+	/**
+	* String offset and the line number of the current inline find, if found
 	*/
-	var $last_inline_ary_offset = 0;
+	var $string_offset = false;
+	var $inline_offset = false;
 
 	/**
 	* Time when MOD was installed
@@ -175,12 +183,13 @@ class editor
 	* Checks if a find is present
 	* Keep in mind partial finds and multi-line finds
 	*
-	* @param string $find - string to find
-	* @return array : start and end positions if $find is found; false's otherwise
+	* @param	string	$find	string to find
+	* @return	bool			true if $find is found, false otherwise
 	*/
 	function find($find)
 	{
 		$find_success = 0;
+		$this->start_offset = $this->end_offset = false;
 
 		$find = $this->normalize($find);
 		$find_ary = explode("\n", rtrim($find, "\n"));
@@ -188,6 +197,7 @@ class editor
 		$total_lines = sizeof($this->file_contents);
 		$find_lines = sizeof($find_ary);
 
+		// If first iteration doesn't return, trim() the find and repeat
 		$mode = array('', 'trim');
 
 		foreach ($mode as $function)
@@ -205,7 +215,7 @@ class editor
 					// if we've reached the EOF, the find failed.
 					if (!isset($this->file_contents[$i + $j]))
 					{
-						return array('start' => false, 'end' => false);
+						return false;
 					}
 
 					if (!trim($find_ary[$j]))
@@ -250,11 +260,10 @@ class editor
 						// we found the proper number of lines
 						$this->start_index = $i;
 
-						// return our array offsets
-						return array(
-							'start' => $i,
-							'end' => $i + $j,
-						);
+						// set our find offsets and return
+						$this->start_offset = $i;
+						$this->end_offset = $i + $j;
+						return true;
 					}
 
 				}
@@ -262,7 +271,7 @@ class editor
 		}
 
 		// if we got this far, the find failed
-		return array('start' => false, 'end' => false);
+		return false;
 	}
 
 	/**
@@ -278,106 +287,82 @@ class editor
 
 	/*
 	* In-line analog to close_edit(), above.
-	* Advance the pointer one character
+	* If length parameter not specified, advances the pointer by one character.
+	*
+	* @param	int		$length		inline_find length, to increment on its string offset (optional)
+	* @return	bool				always true
 	*/
-	function close_inline_edit()
+	function close_inline_edit($length = 0)
 	{
-		$this->last_string_offset++;
+		if ($length > 0)
+		{
+			$this->last_string_offset = $this->string_offset + $length - 1;
+		}
+		else
+		{
+			$this->last_string_offset++;
+		}
+
+		return true;
 	}
 
 	/**
 	* Find a string within a given line
 	*
-	* @param string $find Complete find - narrows the scope of the inline search
-	* @param string $inline_find - the substring to find
-	* @param int $start_offset - the line number where $find starts
-	* @param int $end_offset - the line number where $find ends
+	* @param	string	$find			Complete find - narrows the scope of the inline search
+	* @param	string	$inline_find	the substring to find
 	*
-	* @return mixed array on success or false on failure of find
+	* @return	bool					true if $find and $inline_find are found, false otherwise
 	*/
-	function inline_find($find, $inline_find, $start_offset = false, $end_offset = false)
+	function inline_find($find, $inline_find)
 	{
-		$find = $this->normalize($find);
+		$this->string_offset = $this->inline_offset = false;
 
-		if ($start_offset === false || $end_offset === false)
+		if ($this->start_offset === false)
 		{
-			$offsets = $this->find($find);
-
-			if (!$offsets)
-			{
-				// the find failed, so no further action can occur.
-				return false;
-			}
-
-			$start_offset = $offsets['start'];
-			$end_offset = $offsets['end'];
-
-			unset($offsets);
+			// the find failed, so the inline find cannot occur.
+			return false;
 		}
 
 		// cast is required in case someone tries to find a number
 		// Often done in colspan="7" type inline operations
 		$inline_find = (string) $inline_find;
 
-		// similar method to find().  Just much more limited scope
-		for ($i = $start_offset; $i <= $end_offset; $i++)
+		// If first iteration doesn't return, trim() the find and repeat
+		$mode = array('', 'trim');
+
+		foreach ($mode as $function)
 		{
-			if ($this->last_string_offset > 0 && ($this->last_inline_ary_offset == 0 || $this->last_inline_ary_offset == $i))
+			// similar method to find().  Just much more limited scope
+			for ($i = $this->start_offset; $i <= $this->end_offset; $i++)
 			{
-				$string_offset = strpos(substr($this->file_contents[$i], $this->last_string_offset), $inline_find);
-
-				if ($string_offset !== false)
+				if ($function)
 				{
-					$string_offset += $this->last_string_offset;
+					$inline_find = $function($inline_find);
 				}
-			}
-			else
-			{
-				$string_offset = strpos($this->file_contents[$i], $inline_find);
-			}
 
-			if ($string_offset !== false)
-			{
-				$this->last_string_offset = $string_offset;
-				$this->last_inline_ary_offset = $i;
-
-				// if we find something, return the line number, string offset, and find length
-				return array(
-					'array_offset'	=> $i,
-					'string_offset'	=> $string_offset,
-					'find_length'	=> strlen($inline_find),
-				);
-			}
-		}
-
-		// if the previous failed, trim() the find and try again
-		for ($i = $start_offset; $i <= $end_offset; $i++)
-		{
-			$inline_find = trim($inline_find);
-			if ($this->last_string_offset > 0 && ($this->last_inline_ary_offset == 0 || $this->last_inline_ary_offset == $i))
-			{
-				$string_offset = strpos(substr($this->file_contents[$i], $this->last_string_offset), $inline_find);
-
-				if ($string_offset !== false)
+				if ($this->last_string_offset > 0 && ($this->last_inline_offset == 0 || $this->last_inline_offset == $i))
 				{
-					$string_offset += $this->last_string_offset;
+					$this->string_offset = strpos(substr($this->file_contents[$i], $this->last_string_offset), $inline_find);
+
+					if ($this->string_offset !== false)
+					{
+						$this->string_offset += $this->last_string_offset;
+					}
 				}
-			}
-			else
-			{
-				$string_offset = strpos($this->file_contents[$i], $inline_find);
-			}
+				else
+				{
+					$this->string_offset = strpos($this->file_contents[$i], $inline_find);
+				}
 
-			if ($string_offset !== false)
-			{
-				$this->last_string_offset = $string_offset;
+				// if we find something, set the line number and string offset then return
+				if ($this->string_offset !== false)
+				{
+					$this->last_string_offset = $this->string_offset;
+					$this->last_inline_offset = $this->inline_offset = $i;
 
-				// if we find something, return the line number, string offset, and find length
-				return array(
-					'array_offset'	=> $i,
-					'string_offset'	=> $string_offset,
-					'find_length'	=> strlen($inline_find),
-				);
+					return true;
+				}
 			}
 		}
 
@@ -390,34 +375,21 @@ class editor
 	* @param string $find - Complete find - narrows the scope of the inline search
 	* @param string $add - The string to be added before or after $find
 	* @param string $pos - BEFORE or AFTER
-	* @param int $start_offset - First line in the FIND
-	* @param int $end_offset - Last line in the FIND
 	*
 	* @return bool success or failure of add
 	*/
-	function add_string($find, $add, $pos, $start_offset = false, $end_offset = false)
+	function add_string($find, $add, $pos)
 	{
-		// this seems pretty simple...throughly test
-		$add = $this->normalize($add);
-
-		if ($start_offset === false || $end_offset === false)
+		if ($this->start_offset === false)
 		{
-			$offsets = $this->find($find);
-
-			if (!$offsets)
-			{
-				// the find failed, so the add cannot occur.
-				return false;
-			}
-
-			$start_offset = $offsets['start'];
-			$end_offset = $offsets['end'];
-
-			unset($offsets);
+			// the find failed, so the add cannot occur.
+			return false;
 		}
 
+		$add = $this->normalize($add);
+
 		$full_find = array();
-		for ($i = $start_offset; $i <= $end_offset; $i++)
+		for ($i = $this->start_offset; $i <= $this->end_offset; $i++)
 		{
 			$full_find[] = $this->file_contents[$i];
 		}
@@ -430,12 +402,12 @@ class editor
 
 		if ($pos == 'AFTER')
 		{
-			$this->file_contents[$end_offset] = rtrim($this->file_contents[$end_offset], "\n") . $add;
+			$this->file_contents[$this->end_offset] = rtrim($this->file_contents[$this->end_offset], "\n") . $add;
 		}
 
 		if ($pos == 'BEFORE')
 		{
-			$this->file_contents[$start_offset] = $add . ltrim($this->file_contents[$start_offset], "\n");
+			$this->file_contents[$this->start_offset] = $add . ltrim($this->file_contents[$this->start_offset], "\n");
 		}
 
 		$this->curr_action = func_get_args();
@@ -450,32 +422,19 @@ class editor
 	* This method is a variation on the inline find and replace methods
 	*
 	* @param string $find - Complete find - contains $inline_find
-	* @param string $inline_find - contains tokens to be replaced
+	* @param string $inline_find - contains tokens to be replaced (optional)
 	* @param string $operation - tokens to do some math
-	* @param int $start_offset - First line in the FIND
-	* @param int $end_offset - Last line in the FIND
 	*
 	* @return bool
 	*/
-	function inc_string($find, $inline_find, $operation, $start_offset = false, $end_offset = false)
+	function inc_string($find, $inline_find = '', $operation)
 	{
-		if ($start_offset === false || $end_offset === false)
+		if ($this->start_offset === false)
 		{
-			$offsets = $this->find($find);
-
-			if (!$offsets)
-			{
-				// the find failed, so the add cannot occur.
-				return false;
-			}
-
-			$start_offset = $offsets['start'];
-			$end_offset = $offsets['end'];
-
-			unset($offsets);
+			// the find failed, so the operation cannot occur.
+			return false;
 		}
 
-		// $inline_find is optional
 		if (!$inline_find)
 		{
 			$inline_find = $find;
@@ -492,11 +451,10 @@ class editor
 		$action[3] = (isset($action[3])) ? $action[3] : 1;
 
 		$matches = 0;
-		// $start_offset _should_ equal $end_offset, but we allow other cases
-		for ($i = $start_offset; $i <= $end_offset; $i++)
+		// $this->start_offset _should_ equal $this->end_offset, but we allow other cases
+		for ($i = $this->start_offset; $i <= $this->end_offset; $i++)
 		{
-			// This is intended.  We turn the MODX token into something PCRE can
-			// understand.
+			// This is intended.  We turn the MODX token into something PCRE can understand
 			$inline_find = preg_replace('#{%:(\d+)}#', '(\d+)', $inline_find);
 
 			if (preg_match('#' . $inline_find . '#is', $this->file_contents[$i], $find_contents))
@@ -526,40 +484,30 @@ class editor
 	/**
 	* Replace a string - replaces the entirety of $find with $replace
 	*
-	* @param string $find - Complete find - contains $inline_find
+	* @param string $find - Complete find
 	* @param string $replace - Will replace $find
-	* @param int $start_offset - First line in the FIND
-	* @param int $end_offset - Last line in the FIND
 	*
 	* @return bool
 	*/
-	function replace_string($find, $replace, $start_offset = false, $end_offset = false)
+	function replace_string($find, $replace)
 	{
-		$replace = $this->normalize($replace);
-
-		if ($start_offset === false || $end_offset === false)
+		if ($this->start_offset === false)
 		{
-			$offsets = $this->find($find);
-
-			if (!$offsets)
-			{
-				return false;
-			}
-
-			$start_offset = $offsets['start'];
-			$end_offset = $offsets['end'];
-			unset($offsets);
+			// the find failed, so the replacement cannot occur.
+			return false;
 		}
+
+		$replace = $this->normalize($replace);
 
 		// remove each line from the file, but add it to $full_find
 		$full_find = array();
-		for ($i = $start_offset; $i <= $end_offset; $i++)
+		for ($i = $this->start_offset; $i <= $this->end_offset; $i++)
 		{
 			$full_find[] = $this->file_contents[$i];
 			$this->file_contents[$i] = '';
 		}
 
-		$this->file_contents[$start_offset] = rtrim($replace) . "\n";
+		$this->file_contents[$this->start_offset] = rtrim($replace) . "\n";
 
 		$this->curr_action = func_get_args();
 		$this->build_uninstall(implode("", $full_find), NULL, 'replace-with', $replace);
@@ -571,32 +519,23 @@ class editor
 	* Replace $inline_find with $inline_replace
 	* Arguments are very similar to inline_add, below
 	*/
-	function inline_replace($find, $inline_find, $inline_replace, $array_offset = false, $string_offset = false, $length = false)
+	function inline_replace($find, $inline_find, $inline_replace)
 	{
-		if ($string_offset === false || $length === false)
+		if ($this->string_offset === false)
 		{
-			// look for the inline find
-			$inline_offsets = $this->inline_find($find, $inline_find);
-
-			if (!$inline_offsets)
-			{
-				return false;
-			}
-
-			$array_offset = $inline_offsets['array_offset'];
-			$string_offset = $inline_offsets['string_offset'];
-			$length = $inline_offsets['find_length'];
-			unset($inline_offsets);
+			return false;
 		}
 
-		$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_replace, $string_offset, $length);
+		$length = strlen($inline_find);
+
+		$this->file_contents[$this->inline_offset] = substr_replace($this->file_contents[$this->inline_offset], $inline_replace, $this->string_offset, $length);
 
 		$this->last_string_offset += strlen($inline_replace) - 1;
 
 		$this->curr_action = func_get_args();
 
 		// This isn't a full find, but it is the closest we can get
-		$this->build_uninstall($this->file_contents[$array_offset], $inline_find, 'in-line-replace', $inline_replace);
+		$this->build_uninstall($this->file_contents[$this->inline_offset], $inline_find, 'in-line-replace', $inline_replace);
 
 		return true;
 	}
@@ -608,31 +547,19 @@ class editor
 	* @param string $inline_find - the string to add before or after
 	* @param string $inline_add - added before or after $inline_find
 	* @param string $pos - 'BEFORE' or 'AFTER'
-	* @param int $array_offset - line number where $inline_find may be found (optional)
-	* @param int $string_offset - location within the line where $inline_find begins (optional)
-	* @param int $length - essentially strlen($inline_find) (optional)
 	*
 	* @return bool success or failure of action
 	*/
-	function inline_add($find, $inline_find, $inline_add, $pos, $array_offset = false, $string_offset = false, $length = false)
+	function inline_add($find, $inline_find, $inline_add, $pos)
 	{
-		if ($string_offset === false || $length === false)
+		if ($this->string_offset === false)
 		{
-			// look for the inline find
-			$inline_offsets = $this->inline_find($find, $inline_find);
-
-			if (!$inline_offsets)
-			{
-				return false;
-			}
-
-			$array_offset = $inline_offsets['array_offset'];
-			$string_offset = $inline_offsets['string_offset'];
-			$length = $inline_offsets['find_length'];
-			unset($inline_offsets);
+			return false;
 		}
 
-		if ($string_offset + $length > strlen($this->file_contents[$array_offset]))
+		$length = strlen($inline_find);
+
+		if ($this->string_offset + $length > strlen($this->file_contents[$this->inline_offset]))
 		{
 			// we have an invalid string offset.  rats.
 			return false;
@@ -640,18 +567,18 @@ class editor
 
 		if ($pos == 'AFTER')
 		{
-			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset + $length, 0);
+			$this->file_contents[$this->inline_offset] = substr_replace($this->file_contents[$this->inline_offset], $inline_add, $this->string_offset + $length, 0);
 			$this->last_string_offset += strlen($inline_add) + $length - 1;
 		}
 		else if ($pos == 'BEFORE')
 		{
-			$this->file_contents[$array_offset] = substr_replace($this->file_contents[$array_offset], $inline_add, $string_offset, 0);
+			$this->file_contents[$this->inline_offset] = substr_replace($this->file_contents[$this->inline_offset], $inline_add, $this->string_offset, 0);
 			$this->last_string_offset += (strlen($inline_add) - 1);
 		}
 
 		$this->curr_action = func_get_args();
 
-		$this->build_uninstall($this->file_contents[$array_offset], $inline_find, 'in-line-' . strtolower($pos) . '-add', $inline_add);
+		$this->build_uninstall($this->file_contents[$this->inline_offset], $inline_find, 'in-line-' . strtolower($pos) . '-add', $inline_add);
 
 		return true;
 	}
