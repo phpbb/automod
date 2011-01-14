@@ -23,33 +23,106 @@ define('WRITE_DIRECT', 1);
 define('WRITE_FTP', 2);
 define('WRITE_MANUAL', 3);
 
-function test_ftp_connection($method, &$test_ftp_connection, &$test_connection)
+function get_ftp_method($ftp_method = 'ftp')
+{
+	$ftp_method = request_var('ftp_method', $ftp_method);
+
+	if (!$ftp_method || !class_exists($ftp_method))
+	{
+		$ftp_methods = transfer::methods();
+
+		if (!in_array('ftp', $ftp_methods))
+		{
+			$ftp_method = $ftp_methods[0];
+		}
+	}
+
+	return $ftp_method;
+}
+
+function test_connection($method)
 {
 	global $phpbb_root_path, $phpEx;
 
 	$transfer = new $method(request_var('host', ''), request_var('username', ''), request_var('password', ''), request_var('root_path', ''), request_var('port', ''), request_var('timeout', ''));
 
-	$test_connection = $transfer->open_session();
+	$test_result = $transfer->open_session();
 
-	// Make sure that the directory is correct by checking for the existence of common.php
-	if ($test_connection === true)
+	// Make sure that the path is correct by checking for the existence of common.php
+	if ($test_result === true && !$transfer->file_exists($phpbb_root_path, 'common.' . $phpEx))
 	{
-		// Check for common.php file
-		if (!$transfer->file_exists($phpbb_root_path, 'common.' . $phpEx))
-		{
-			$test_connection = 'ERR_WRONG_PATH_TO_PHPBB';
-		}
+		$test_result = 'ERR_WRONG_PATH_TO_PHPBB';
 	}
 
 	$transfer->close_session();
 
-	// Make sure the login details are correct before continuing
-	if ($test_connection !== true)
+	return $test_result;
+}
+
+/**
+* Gets FTP information if we need it
+*
+* @param	$preview	bool	true if in pre_(action) mode, false otherwise
+* @param	$connection	array	method (string), test (bool) - whether testing requested,
+								result (true=pass, false=fail, string=error)
+* @return				array	connection data (currently only ftp)
+*/
+function get_connection_info($preview = false, $connection = array('method'=>'ftp', 'test'=>false, 'result'=>true))
+{
+	global $config, $template, $user;
+
+	$conn_info_ary = array();
+
+	// using $config instead of $editor because write_method is forced to direct when in preview mode
+	if ($config['write_method'] != WRITE_FTP)
 	{
-		$test_ftp_connection = true;
+		return $conn_info_ary;
 	}
 
-	return;
+	$requested_data = call_user_func(array($connection['method'], 'data'));
+
+	if ($preview)
+	{
+		foreach ($requested_data as $data => $default)
+		{
+			$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+	
+			$template->assign_block_vars('data', array(
+				'DATA'		=> $data,
+				'NAME'		=> $user->lang[strtoupper($connection['method'] . '_' . $data)],
+				'EXPLAIN'	=> $user->lang[strtoupper($connection['method'] . '_' . $data) . '_EXPLAIN'],
+				'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
+			));
+		}
+	
+		$template->assign_vars(array(
+			'S_CONNECTION_SUCCESS'	=> ($connection['test'] && $connection['result'] === true) ? true : false,
+			'S_CONNECTION_FAILED'	=> ($connection['test'] && $connection['result'] !== true) ? true : false,
+			'ERROR_MSG'				=> (is_string($connection['result'])) ? $user->lang[$connection['result']] : '',
+	
+			'S_FTP_UPLOAD'			=> true,
+			'UPLOAD_METHOD_FTP'		=> ($config['ftp_method'] == 'ftp') ? ' checked="checked"' : '',
+			'UPLOAD_METHOD_FSOCK'	=> ($config['ftp_method'] == 'ftp_fsock') ? ' checked="checked"' : '',
+			'S_HIDDEN_FIELDS_FTP'	=> build_hidden_fields(array('ftp_method' => $connection['method'])),
+		));
+	}
+	else if (isset($_POST['password']))	// implicit && !$preview
+	{
+		$conn_info_ary['ftp_method'] = $connection['method'];
+
+		foreach ($requested_data as $data => $default)
+		{
+			if ($data == 'password')
+			{
+				$config['ftp_password'] = request_var('password', '');
+			}
+			$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
+
+			$conn_info_ary[$data] = $default;
+		}
+	}
+
+	return $conn_info_ary;
 }
 
 /**
@@ -261,69 +334,6 @@ function determine_write_method($preview = false)
 	}
 
 	return $write_method;
-}
-
-/**
-* Gets FTP information if we need it
-*
-* @param	$preview	bool	true if in pre_(install|uninstall), false otherwise
-* @return				array	and array of connection info (currently only ftp)
-*/
-function get_connection_info($preview = false)
-{
-	global $config, $template, $user, $ftp_method, $test_ftp_connection, $test_connection;
-
-	$conn_info_ary = array();
-
-	// using $config instead of $editor because write_method is forced to direct when in preview mode
-	if ($config['write_method'] != WRITE_FTP)
-	{
-		return $conn_info_ary;
-	}
-
-	$requested_data = call_user_func(array($ftp_method, 'data'));
-
-	if ($preview)
-	{
-		foreach ($requested_data as $data => $default)
-		{
-			$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-	
-			$template->assign_block_vars('data', array(
-				'DATA'		=> $data,
-				'NAME'		=> $user->lang[strtoupper($ftp_method . '_' . $data)],
-				'EXPLAIN'	=> $user->lang[strtoupper($ftp_method . '_' . $data) . '_EXPLAIN'],
-				'DEFAULT'	=> (!empty($_REQUEST[$data])) ? request_var($data, '') : $default
-			));
-		}
-	
-		$template->assign_vars(array(
-			'S_CONNECTION_SUCCESS'		=> ($test_ftp_connection && $test_connection === true) ? true : false,
-			'S_CONNECTION_FAILED'		=> ($test_ftp_connection && $test_connection !== true) ? true : false,
-			'ERROR_MSG'					=> ($test_ftp_connection && $test_connection !== true) ? $user->lang[$test_connection] : '',
-	
-			'S_FTP_UPLOAD'			=> true,
-			'UPLOAD_METHOD'			=> $ftp_method,
-			'S_HIDDEN_FIELDS_FTP'	=> build_hidden_fields(array('method' => $ftp_method)),
-		));
-	}
-	else if (isset($_POST['password']))	// implicit && !$preview
-	{
-		$conn_info_ary['method'] = $ftp_method;
-
-		foreach ($requested_data as $data => $default)
-		{
-			if ($data == 'password')
-			{
-				$config['ftp_password'] = request_var('password', '');
-			}
-			$default = (!empty($config['ftp_' . $data])) ? $config['ftp_' . $data] : $default;
-
-			$conn_info_ary[$data] = $default;
-		}
-	}
-
-	return $conn_info_ary;
 }
 
 /**
