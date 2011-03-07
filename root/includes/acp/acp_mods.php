@@ -2354,11 +2354,14 @@ class acp_mods
 		$compress->close();
 		$folder_contents = scandir($mod_dir . '_tmp/', 1);  // This ensures dir is at index 0
 
+		$folder_contents = array_diff($folder_contents, array('.', '..'));
+
 		// We need to check if there's only one (main) directory inside the temp MOD directory
-		if (sizeof($folder_contents) == 3)
+		if (sizeof($folder_contents) == 1)
 		{
-			$from_dir = $mod_dir . '_tmp/' . $folder_contents[0];
-			$to_dir = $this->mods_dir . '/' . $folder_contents[0];
+			$folder_contents = implode(null, $folder_contents);
+			$from_dir = $mod_dir . '_tmp/' . $folder_contents;
+			$to_dir = $this->mods_dir . '/' . $folder_contents;
 		}
 		// Otherwise assume the temp directory is the main directroy, so change the directory
 		// name by moving to a directory without the '_tmp' suffix
