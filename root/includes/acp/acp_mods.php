@@ -2357,8 +2357,8 @@ class acp_mods
 		// We need to check if there's only one (main) directory inside the temp MOD directory
 		if (sizeof($folder_contents) == 3)
 		{
-			$from_dir = $mod_dir . '_tmp/' . $folder_contents[0];
-			$to_dir = $this->mods_dir . '/' . $folder_contents[0];
+			$from_dir = $mod_dir . '_tmp/' . $folder_contents[2];
+			$to_dir = $this->mods_dir . '/' . $folder_contents[2];
 		}
 		// Otherwise assume the temp directory is the main directroy, so change the directory
 		// name by moving to a directory without the '_tmp' suffix
