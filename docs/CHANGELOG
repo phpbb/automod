@@ -17,6 +17,7 @@ AutoMOD Changelog
  + [Fix] edited and *uninst directories clutter, _backups confusion. Patch by jasmineaura (Ticket #62293)
  + [Fix] PHP error with compressed file method; strpos empty delimiter. Patch by jasmineaura (Ticket #62278)
  + [Fix] mod_upload() & delete() should respect configured FTP write method Patch by jasmineaura (Ticket #62277)
+ + [Fix] MODs with special chars was copied to the wrong place. Patch by callumacrae (Ticket #62688)
 
 - Changes since 1.0.0 Release Candidate 4
  + [Fix] Incorrect path error when installing MODX 1.0.x MODs
