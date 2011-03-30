@@ -84,7 +84,7 @@ class parser
 		{
 			return "ALTER TABLE {$matches[1]} DROP COLUMN {$matches[3]};";
 		}
-		else if (preg_match('#CREATE TABLE\s([a-z_])+#i', $orig_query, $matches))
+		else if (preg_match('#CREATE TABLE\s([a-z_]+)#i', $orig_query, $matches))
 		{
 			return "DROP TABLE {$matches[1]};";
 		}
