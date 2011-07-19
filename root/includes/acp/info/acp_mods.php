@@ -18,7 +18,7 @@ class acp_mods_info
 		return array(
 			'filename'	=> 'acp_mods',
 			'title'		=> 'ACP_CAT_MODS',
-			'version'	=> '1.0.0',
+			'version'	=> '1.0.0.1',
 			'modes'		=> array(
 				'frontend'		=> array('title' => 'ACP_AUTOMOD', 'auth' => 'acl_a_mods', 'cat' => array('ACP_MODS_GENERAL')),
 				'config'		=> array('title' => 'ACP_AUTOMOD_CONFIG', 'auth' => 'acl_a_mods', 'cat' => array('ACP_MODS_GENERAL')),
