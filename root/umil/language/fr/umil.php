@@ -1,7 +1,7 @@
 <?php
 /**
- * This file is part of French (Formal Honorifics) UMIL translation.
- * Copyright (C) 2010 Maël Soucaze
+ * This file is part of French UMIL translation.
+ * Copyright (c) 2010 Maël Soucaze.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,12 +17,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * @package   umil
- * @author    Maël Soucaze <maelsoucaze@gmail.com> http://mael.soucaze.com/
- * @author    EXreaction <N/A> (Nathan Guse) http://lithiumstudios.org
- * @author    Highway of Life <highwayoflife@gmail.com> (David Lewis) N/A
+ * @author    Maël Soucaze <maelsoucaze@gmail.com> (Maël Soucaze) http://mael.soucaze.com/
+ * @author    EXreaction (Nathan Guse) http://lithiumstudios.org
+ * @author    Highway of Life <highwayoflife@gmail.com> (David Lewis)
  * @copyright (c) 2008 phpBB Group
- * @license   http://www.gnu.org/licenses/gpl-2.0.html GNU General Public License
- * @version   $Id: umil.php 228 2010-06-29 19:43:25Z SyntaxError90 $
+ * @license   http://opensource.org/licenses/gpl-2.0.php GNU General Public License
+ * @version   $Id$
  */
 
 /**
