@@ -43,9 +43,11 @@ class parser
 		switch ($ext)
 		{
 			case 'xml':
-			default:
+				// fix ticket 62689 only enter parser if it is xml
+				//http://www.phpbb.com/bugs/modteamtools/62689
 				$this->parser = new parser_xml();
 			break;
+			default:
 		}
 	}
 
