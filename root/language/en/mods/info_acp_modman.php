@@ -1,10 +1,10 @@
 <?php
 /**
 *
-* AutoMOD [English]
+* AutoMOD [Spanish]
 *
 * @package language
-* @version $Id$
+* @version $Id: info_acp_modman.php 242 2012-01-16 23:20:35Z urielmx $
 * @copyright (c) 2008 phpBB Group
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -37,18 +37,18 @@ if (empty($lang) || !is_array($lang))
 // in a url you again do not need to specify an order e.g., 'Click %sHERE%s' is fine
 
 $lang = array_merge($lang, array(
-	'ACP_CAT_MODS'			=> 'AutoMOD',
+	'ACP_CAT_MODS'			=> 'Instalador AutoMOD',
 	'ACP_MODS'				=> 'AutoMOD',
 	'ACP_AUTOMOD'			=> 'AutoMOD',
-	'ACP_AUTOMOD_CONFIG'	=> 'AutoMOD Configuration',
+	'ACP_AUTOMOD_CONFIG'	=> 'Configuraci&oacute;n de AutoMOD',
 
-	'LOG_MOD_ADD'		=> '<strong>Added new MOD</strong><br />» %s',
-	'LOG_MOD_CHANGE'	=> '<strong>Changed components for MOD</strong><br />» %x',
-	'LOG_MOD_REMOVE'	=> '<strong>Removed MOD</strong><br />» %s',
+	'LOG_MOD_ADD'		=> '<strong>Nuevo MOD a&ntilde;adido</strong><br />» %s',
+	'LOG_MOD_CHANGE'	=> '<strong>Componentes de MOD cambiados</strong><br />» %x',
+	'LOG_MOD_REMOVE'	=> '<strong>MOD eliminado</strong><br />» %s',
 
 	'MOD_CHANGELOG'		=> 'MOD Changelog',
 
-	'acl_a_mods'		=> array('lang' => 'Can use AutoMOD', 'cat' => 'misc'),
+	'acl_a_mods'		=> array('lang' => 'Puede usar AutoMOD', 'cat' => 'misc'),
 ));
 
 
