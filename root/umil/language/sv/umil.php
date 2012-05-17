@@ -80,7 +80,7 @@ $lang = array_merge($lang, array(
 	'NO_TABLE_DATA'		=> 'FEL: Ingen tabelldata angavs',
 
 	'PARENT_NOT_EXIST'		=> 'FEL: Den ovanstående kategorin som anges för denna modul finns inte.',
-	'PERMISSIONS_WARNING'	=> 'Nya inställningar för behörigheter har lagts till.  Var noga med att kontrollera inställningarna och se till att de pasasr forumet.',
+	'PERMISSIONS_WARNING'	=> 'Nya inställningar för behörigheter har lagts till.  Var noga med att kontrollera inställningarna och se till att de passar forumet.',
 	'PERMISSION_ADD'	=> 'Lägger till nytt behörighetsalternativ: %s',
 	'PERMISSION_ALREADY_EXISTS'		=> 'FEL: Behörighetsalternativ %s finns redan.',
 	'PERMISSION_NOT_EXIST'	=> 'FEL: Behörighetsalternativ %s finns inte.',
