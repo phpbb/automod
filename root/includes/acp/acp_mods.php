@@ -34,7 +34,7 @@ class acp_mods
 	{
 		global $config, $db, $user, $auth, $template, $cache;
 		global $phpbb_root_path, $phpEx;
-		global $ftp_method, $test_ftp_connection, $test_connection;
+		global $ftp_method, $test_ftp_connection, $test_connection, $sort_key, $sort_dir;
 
 		include("{$phpbb_root_path}includes/functions_transfer.$phpEx");
 		include("{$phpbb_root_path}includes/editor.$phpEx");
