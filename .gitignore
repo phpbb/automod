@@ -4,5 +4,3 @@
 .project
 .settings
 .cache
-# ignore backup files
-*.bak
