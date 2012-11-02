@@ -975,9 +975,15 @@ class editor_direct extends editor
 			}
 			else
 			{
-				if (!rmdir($path))
+				if (check_empty_dir($path))
 				{
-					return sprintf($user->lang['MODS_RMDIR_FAILURE'], $path);
+					// No error message.
+					// If the directory is not empty it is probably not an error.
+
+					if (!rmdir($path))
+					{
+						return sprintf($user->lang['MODS_RMDIR_FAILURE'], $path);
+					}
 				}
 			}
 		}

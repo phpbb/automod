@@ -372,7 +372,7 @@ function recursive_unlink($path)
 			return sprintf($user->lang['MODS_RMFILE_FAILURE'], $file);
 		}
 	}
-	
+
 	// Delete all the sub-directories, in _reverse_ order (array_pop)
 	for ($i=0, $cnt = count($subdirs); $i < $cnt; $i++)
 	{
@@ -382,16 +382,15 @@ function recursive_unlink($path)
 			return sprintf($user->lang['MODS_RMDIR_FAILURE'], $subdir);
 		}
 	}
-	
+
 	// Finally, delete the directory itself
 	if (!rmdir($path))
 	{
 		return sprintf($user->lang['MODS_RMDIR_FAILURE'], $path);
 	}
-	
+
 	return true;
 }
-
 
 /**
 * PHP 5 Wrapper - simulate scandir, but only those features that we actually need
@@ -432,7 +431,7 @@ if (!function_exists('scandir'))
 * @return				int					- Count of files (or count of subdirectories)
 * @author	jasmineaura
 */
-function directory_num_files($dir, $subdirs = false, $recurse = false, $count=0)
+function directory_num_files($dir, $subdirs = false, $recurse = false, $count = 0)
 {
 	if (is_dir($dir))
 	{
@@ -466,6 +465,41 @@ function directory_num_files($dir, $subdirs = false, $recurse = false, $count=0)
 	}
 
 	return $count;
+}
+
+/**
+* Check if a directory is empty.
+*
+* @param $dir, string - directory to check
+* @return bool, true if directory is empty.
+*/
+function check_empty_dir($dir)
+{
+	if (!is_dir($dir) || !is_readable($dir))
+	{
+		return(false);
+	}
+
+	if(!$handle = opendir($dir))
+	{
+		return(false);
+	}
+
+	while (($file = readdir($handle)) !== false)
+	{
+		if ($file == '.' || $file == '..')
+		{
+			continue;
+		}
+
+		// If we get here the directory is not empty
+		closedir($handle);
+		return(false);
+	}
+
+	// The directory is empty
+	closedir($handle);
+	return(true);
 }
 
 ?>
