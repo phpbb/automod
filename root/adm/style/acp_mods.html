@@ -17,21 +17,22 @@
 	<p>{L_MODS_EXPLAIN}</p>
 
 	<table cellspacing="1">
-		<col class="row1" /><col class="row2" /><col class="row2" />
+		<col class="row1" /><col class="row2" /><col class="row2" /><col class="row2" />
 	<thead>
 	<tr>
 		<th>{L_NAME}</th>
 		<th>{L_OPTIONS}</th>
 		<th>{L_ACTIONS}</th>
+        <th>{L_INSTALL_DATE}</th>
 	</tr>
 	</thead>
 	<tbody>
 	<tr>
-		<td class="row3" colspan="3"><strong>{L_INSTALLED_MODS}</strong></td>
+		<td class="row3" colspan="4"><strong>{L_INSTALLED_MODS}</strong></td>
 	</tr>
 	<!-- IF not .installed -->
 		<tr>
-			<td class="row1" colspan="3" style="text-align: center;">{L_NO_INSTALLED_MODS}</td>
+			<td class="row1" colspan="4" style="text-align: center;">{L_NO_INSTALLED_MODS}</td>
 		</tr>
 	<!-- ENDIF -->
 	<!-- BEGIN installed -->
@@ -39,14 +40,15 @@
 		<td><strong>{installed.MOD_NAME}</strong></td>
 		<td style="text-align: center;"><a href="{installed.U_DETAILS}">{L_DETAILS}</a></td>
 		<td style="text-align: center;"><a href="{installed.U_UNINSTALL}">{L_UNINSTALL}</a></td>
+        <td style="text-align: center;"><p>{installed.MOD_TIME}</p></td>
 	</tr>
 	<!-- END installed -->
 	<tr>
-		<td class="row3" colspan="3"><strong>{L_UNINSTALLED_MODS}</strong></td>
+		<td class="row3" colspan="4"><strong>{L_UNINSTALLED_MODS}</strong></td>
 	</tr>
 	<!-- IF not .uninstalled -->
 	<tr>
-		<td class="row1" colspan="3" style="text-align: center;">{L_NO_UNINSTALLED_MODS}</td>
+		<td class="row1" colspan="4" style="text-align: center;">{L_NO_UNINSTALLED_MODS}</td>
 	</tr>
 	<!-- ENDIF -->
 	<!-- BEGIN uninstalled -->
@@ -54,12 +56,19 @@
 		<td><strong>{uninstalled.MOD_NAME}</strong></td>
 		<td style="text-align: center;"><a href="{uninstalled.U_DETAILS}">{L_DETAILS}</a></td>
 		<td style="text-align: center;"><a href="{uninstalled.U_INSTALL}">{L_INSTALL}</a>&nbsp;|&nbsp;<a href="{uninstalled.U_DELETE}">{L_DELETE}</a></td>
+        <td style="text-align: center;"></td>
 	</tr>
 	<!-- END uninstalled -->
 	</tbody>
 	</table>
-
-	<!-- IF S_MOD_UPLOAD -->
+    <!-- IF .installed -->
+	<form action="{U_SORT_ACTION}" method="post" id="list">
+	<fieldset class="display-options">
+	{L_SORT_BY}: {S_SORT_KEY} {S_SORT_DIR}
+	<input class="button2" value="{L_GO}" name="sort" type="submit">
+	</fieldset></form>
+	<!-- ENDIF -->
+    <!-- IF S_MOD_UPLOAD -->
 	<br />
 
 	<form action="{U_UPLOAD}" method="post" id="mod_upload"{S_FORM_ENCTYPE}>

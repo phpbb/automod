@@ -27,12 +27,14 @@ class acp_mods
 	var $mods_dir = '';
 	var $edited_root = '';
 	var $backup_root = '';
+	var $sort_key = '';
+	var $sort_dir = '';
 
 	function main($id, $mode)
 	{
 		global $config, $db, $user, $auth, $template, $cache;
 		global $phpbb_root_path, $phpEx;
-		global $ftp_method, $test_ftp_connection, $test_connection;
+		global $ftp_method, $test_ftp_connection, $test_connection, $sort_key, $sort_dir;
 
 		include("{$phpbb_root_path}includes/functions_transfer.$phpEx");
 		include("{$phpbb_root_path}includes/editor.$phpEx");
@@ -52,7 +54,12 @@ class acp_mods
 		$mod_id = request_var('mod_id', 0);
 		$mod_url = request_var('mod_url', '');
 		$parent = request_var('parent', 0);
-
+		
+		//sort keys
+		$sort_key = request_var('sk','t');
+		$sort_dir	= request_var('sd', 'a');
+		
+	
 		$mod_path = request_var('mod_path', '');
 
 		if ($mod_path)
@@ -306,11 +313,23 @@ class acp_mods
 	*/
 	function list_installed()
 	{
-		global $db, $template;
+		global $db, $template, $user, $sort_key, $sort_dir;
+		 $sort_by_text = array('u' => $user->lang['SORT_NAME'], 't' => $user->lang['SORT_DATE']);
 
-		$sql = 'SELECT mod_name, mod_id
-			FROM ' . MODS_TABLE . '
-			ORDER BY LOWER(mod_name) ASC';
+		($sort_key == 't')? $sort='mod_time' & $s_sort_key='mod_time': $sort='mod_name' & $s_sort_key='mod_name';
+		($sort_dir == 'd') ? $dir='DESC' &  $s_sort_dir='DESC' : $dir='ASC' & $s_sort_dir='ASC';
+		$limit_days = array();
+		$s_limit_days=$sort_days=$s_limit_days = $u_sort_param = '';
+		gen_sort_selects($limit_days, $sort_by_text, $sort_days, $sort_key, $sort_dir, $s_limit_days, $s_sort_key, $s_sort_dir, $u_sort_param);
+		
+		$template->assign_vars(array(
+				'S_SORT_KEY'	=> $s_sort_key,
+				'S_SORT_DIR'	=> $s_sort_dir,
+				'U_SORT_ACTION'		=> $this->u_action ."&amp;$u_sort_param"
+		));
+		$sql = 'SELECT mod_name, mod_id, mod_time
+			FROM ' . MODS_TABLE  . '
+            ORDER BY '.$sort.' '.$dir;
 		$result = $db->sql_query($sql);
 		while ($row = $db->sql_fetchrow($result))
 		{
@@ -318,6 +337,8 @@ class acp_mods
 				'MOD_ID'		=> $row['mod_id'],
 				'MOD_NAME'		=> $row['mod_name'],
 
+				'MOD_TIME'      => $user->format_date($row['mod_time']),
+				
 				'U_DETAILS'		=> $this->u_action . '&amp;action=details&amp;mod_id=' . $row['mod_id'],
 				'U_UNINSTALL'	=> $this->u_action . '&amp;action=pre_uninstall&amp;mod_id=' . $row['mod_id'])
 			);

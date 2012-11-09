@@ -107,6 +107,7 @@ $lang = array_merge($lang, array(
 	'INLINE_EDIT_ERROR'	=> 'Error, an inline edit in the MODX install file is missing all the required elements',
 	'INSTALL_AUTOMOD'	=> 'AutoMOD Installation',
 	'INSTALL_AUTOMOD_CONFIRM'	=> 'Are you sure you want to install AutoMOD?',
+	'INSTALL_DATE'      => 'Installation Date',
 	'INSTALL_TIME'		=> 'Installation time',
 	'INSTALL_MOD'		=> 'Install this MOD',
 	'INSTALL_ERROR'		=> 'One or more install actions failed. Please review the actions below, make any adjustments and retry. You may continue with the installation even though some of the actions failed. <strong>This is not recommended and may cause your board to not function correctly.</strong>',
@@ -175,6 +176,8 @@ $lang = array_merge($lang, array(
 	'ROOT_NOT_READABLE'	=> 'AutoMOD was not able to open phpBB\'s index.php for reading. This probably means that permissions are too restrictive on your phpBB root directory, which will prevent AutoMOD from working. Please adjust your permissions and try the check again.',
 
 
+	'SORT_NAME'		=> 'Name',
+	'SORT_DATE'		=> 'Date',
 	'SOURCE'		=> 'Source',
 	'SQL_QUERIES'	=> 'SQL Queries',
 	'STATUS'		=> 'Status',
