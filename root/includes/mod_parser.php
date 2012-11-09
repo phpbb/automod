@@ -82,11 +82,11 @@ class parser
 	*/
 	function reverse_query($orig_query)
 	{
-		if (preg_match('#ALTER TABLE\s([a-z_]+)\sADD(COLUMN|)\s([a-z_]+)#i', $orig_query, $matches))
+		if (preg_match('#ALTER TABLE\s([a-z_]+)\sADD(?:\sCOLUMN)?\s([a-z_]+)#i', $orig_query, $matches))
 		{
-			return "ALTER TABLE {$matches[1]} DROP COLUMN {$matches[3]};";
+			return "ALTER TABLE {$matches[1]} DROP COLUMN {$matches[2]};";
 		}
-		else if (preg_match('#CREATE TABLE\s([a-z_])+#i', $orig_query, $matches))
+		else if (preg_match('#CREATE TABLE\s([a-z_]+)#i', $orig_query, $matches))
 		{
 			return "DROP TABLE {$matches[1]};";
 		}
