@@ -2179,13 +2179,16 @@ class acp_mods
 			}
 			$db->sql_freeresult($result);
 
+			$temp = array();
 			foreach ($children['language'] as $key => $tag)
 			{
 				// remove useless title from MODX 1.2.0 tags
-				$children['language'][$tag['realname']] = is_array($tag) ? $tag['href'] : $tag;
+				$temp['language'][$tag['realname']] = is_array($tag) ? $tag['href'] : $tag;
 			}
 
-			$available_languages = array_keys($children['language']);
+			$available_languages = array_keys($temp['language']);
+			unset($temp);
+			
 			$process_languages = $elements['language'] = array_intersect($available_languages, $installed_languages);
 
 			// $unknown_languages are provided for by the MOD, but not installed on the board

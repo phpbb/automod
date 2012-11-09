@@ -1,5 +1,11 @@
 AutoMOD Changelog
 
+- Changes since 1.0.0.1
+ + [Fix] Update UMIL to version 1.0.4
+ + [Fix] Sentence spacing. Patch by callumacrae
+ + [Fix] 500 Internal Server Error when MOD uploaded (Ticket/62689)
+ + [Fix] sql server error when viewing detail (ticket/63109)
+  
 - Changes since 1.0.0
  + [Feature] Show DIY instructions in the details. (Ticket #62171)
  + [Feature] Added error checking for readable MOD files. Patch by Callum95 (Ticket #62244)
