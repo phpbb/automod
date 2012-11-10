@@ -520,7 +520,7 @@ class acp_mods
 					'MOD_DESCRIPTION'	=> nl2br($row['mod_description']),
 					'MOD_VERSION'		=> $row['mod_version'],
 
-					'DIY_INSTRUCTIONS'	=> $actions['DIY_INSTRUCTIONS'],
+					'DIY_INSTRUCTIONS'	=> (!empty($actions['DIY_INSTRUCTIONS'])) ? $actions['DIY_INSTRUCTIONS'] : '',
 
 					'AUTHOR_NOTES'		=> nl2br($row['mod_author_notes']),
 					'AUTHOR_DETAILS'	=> $author_details,
