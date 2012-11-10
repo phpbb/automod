@@ -3,6 +3,7 @@ AutoMOD Changelog
 - Changes since 1.0.0.1
  + [Fix] Bug #63109 Unknown languages are never in the DB so there is no idea trying to find them there.
  + [Fix] Bug #63110 Unknown languages are now shown.
+ + [Fix] Bug #63107 Accept missing DIY.
 
 - Changes since 1.0.0
  + [Feature] Show DIY instructions in the details. (Ticket #62171)
