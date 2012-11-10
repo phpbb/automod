@@ -112,6 +112,10 @@ function localise_tags($header, $tagname, $index = false)
 			{
 				$output = isset($header[$tagname][$i]['data']) ? htmlspecialchars(trim($header[$tagname][$i]['data'])) : '';
 			}
+			else if (match_language('en', $header[$tagname][$i]['attrs']['LANG']))
+			{
+				$output = isset($header[$tagname][$i]['data']) ? htmlspecialchars(trim($header[$tagname][$i]['data'])) : '';
+			}
 		}
 
 		// If there was no language match, put something out there

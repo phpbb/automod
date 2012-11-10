@@ -54,12 +54,12 @@ class acp_mods
 		$mod_id = request_var('mod_id', 0);
 		$mod_url = request_var('mod_url', '');
 		$parent = request_var('parent', 0);
-		
+
 		//sort keys
 		$sort_key = request_var('sk','t');
 		$sort_dir	= request_var('sd', 'a');
-		
-	
+
+
 		$mod_path = request_var('mod_path', '');
 
 		if ($mod_path)
@@ -321,7 +321,7 @@ class acp_mods
 		$limit_days = array();
 		$s_limit_days=$sort_days=$s_limit_days = $u_sort_param = '';
 		gen_sort_selects($limit_days, $sort_by_text, $sort_days, $sort_key, $sort_dir, $s_limit_days, $s_sort_key, $s_sort_dir, $u_sort_param);
-		
+
 		$template->assign_vars(array(
 				'S_SORT_KEY'	=> $s_sort_key,
 				'S_SORT_DIR'	=> $s_sort_dir,
@@ -338,7 +338,7 @@ class acp_mods
 				'MOD_NAME'		=> $row['mod_name'],
 
 				'MOD_TIME'      => $user->format_date($row['mod_time']),
-				
+
 				'U_DETAILS'		=> $this->u_action . '&amp;action=details&amp;mod_id=' . $row['mod_id'],
 				'U_UNINSTALL'	=> $this->u_action . '&amp;action=pre_uninstall&amp;mod_id=' . $row['mod_id'])
 			);
@@ -2212,40 +2212,25 @@ class acp_mods
 			// $unknown_languages are provided for by the MOD, but not installed on the board
 			$unknown_languages = array_diff($available_languages, $installed_languages);
 
-			// Inform the user if there are unknown languages provided for by the MOD
-			if (sizeof($unknown_languages) && $action == 'details')
+			// Inform the user if there are languages provided for by the MOD
+			if (sizeof($children['language']))
 			{
-				// get full names from the DB
-				$sql = 'SELECT lang_english_name, lang_local_name, lang_iso FROM ' . LANG_TABLE . '
-					WHERE ' . $db->sql_in_set('lang_iso', $unknown_languages);
-				$result = $db->sql_query($sql);
-
-				// alert the user.
-				while ($row = $db->sql_fetchrow($result))
+				foreach ($children['language'] as $row)
 				{
-					if ($parent_id)
+					if (is_string($row))
 					{
-						// first determine which file we want to direct them to
-						foreach ($children['language'] as $file)
-						{
-							if ($file['realname'] == $row['lang_iso'])
-							{
-								$xml_file = urlencode($file['href']);
-								break;
-							}
-						}
+						continue;
 					}
 
+					$xml_file = (!empty($row['href'])) ? urlencode($row['href']) : '';
+
 					$template->assign_block_vars('unknown_lang', array(
-						'ENGLISH_NAME'	=> $row['lang_english_name'],
-						'LOCAL_NAME'	=> $row['lang_local_name'],
+						'ENGLISH_NAME'	=> $row['title'],
+						'LOCAL_NAME'	=> $row['realname'],
 						'U_INSTALL'		=> (!empty($xml_file)) ? $this->u_action . "&amp;action=pre_install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '',
 					));
-
-					// may wish to rename away from "unknown" for our details mode
-					$template->assign_var('S_UNKNOWN_LANGUAGES', true);
+					unset($row);
 				}
-				$db->sql_freeresult($result);
 			}
 
 			return $process_languages;

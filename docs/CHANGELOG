@@ -1,5 +1,9 @@
 AutoMOD Changelog
 
+- Changes since 1.0.0.1
+ + [Fix] Bug #63109 Unknown languages are never in the DB so there is no idea trying to find them there.
+ + [Fix] Bug #63110 Unknown languages are now shown.
+
 - Changes since 1.0.0
  + [Feature] Show DIY instructions in the details. (Ticket #62171)
  + [Feature] Added error checking for readable MOD files. Patch by Callum95 (Ticket #62244)
