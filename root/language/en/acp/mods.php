@@ -39,6 +39,7 @@ $lang = array_merge($lang, array(
 	'ADDITIONAL_CHANGES'	=> 'Available Changes',
 
 	'AM_MOD_ALREADY_INSTALLED'	=> 'AutoMOD has detected this MOD is already installed and cannot proceed.',
+	'AM_MOD_NOT_INSTALLED'	=> 'AutoMOD has detected that this MOD has not been installed yet and cannot proceed.',
 	'AM_MANUAL_INSTRUCTIONS'	=> 'AutoMOD is sending a compressed file to your computer. Because of the AutoMOD configuration, files cannot be written to your site automatically. You will need to extract the file and upload the files to your server manually, using an FTP client or similar method. If you did not receive this file automatically, click %shere%s.',
 
 	'APPLY_THESE_CHANGES'	=> 'Apply these changes',
