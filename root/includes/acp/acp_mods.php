@@ -353,7 +353,7 @@ class acp_mods
 	*/
 	function list_uninstalled()
 	{
-		global $phpbb_root_path, $db, $template;
+		global $phpbb_root_path, $db, $template, $config;
 
 		// get available MOD paths
 		$available_mods = $this->find_mods($this->mods_dir, 1);
@@ -395,6 +395,9 @@ class acp_mods
 				'MOD_NAME'	=> $details['MOD_NAME'],
 				'MOD_PATH'	=> $short_path,
 
+				'PHPBB_VERSION'		=> $details['PHPBB_VERSION'],
+				'S_PHPBB_VESION'	=> ($details['PHPBB_VERSION'] != $config['version']) ? true : false,
+
 				'U_INSTALL'	=> $this->u_action . "&amp;action=pre_install&amp;mod_path=$short_path",
 				'U_DELETE'	=> $this->u_action . "&amp;action=pre_delete_mod&amp;mod_path=$short_path",
 				'U_DETAILS'	=> $this->u_action . "&amp;action=details&amp;mod_path=$short_path",
@@ -409,7 +412,7 @@ class acp_mods
 	*/
 	function list_details($mod_ident)
 	{
-		global $template;
+		global $template, $config, $user;
 
 		$template->assign_vars(array(
 			'S_DETAILS'	=> true,
@@ -417,6 +420,16 @@ class acp_mods
 		));
 
 		$details = $this->mod_details($mod_ident, true);
+
+		if (!is_int($mod_ident) && $details['PHPBB_VERSION'] != $config['version'])
+		{
+			$version_warnig = sprintf($user->lang['VERSION_WARNING'], $details['PHPBB_VERSION'], $config['version']);
+
+			$template->assign_vars(array(
+				'VERSION_WARNING'	=> $version_warnig,
+				'S_PHPBB_VESION'	=> true,
+			));
+		}
 
 		if (!empty($details['AUTHOR_DETAILS']))
 		{
@@ -1307,7 +1320,7 @@ class acp_mods
 	function process_edits($editor, $actions, $details, $change = false, $display = true, $reverse = false)
 	{
 		global $template, $user, $db, $phpbb_root_path, $force_install, $mod_installed;
-		global $dest_inherits, $dest_template, $children;
+		global $dest_inherits, $dest_template, $children, $config;
 
 		$mod_installed = true;
 
@@ -1331,6 +1344,16 @@ class acp_mods
 			'S_DISPLAY_DETAILS'	=> (bool) $display,
 			'S_CHANGE_FILES'	=> (bool) $change,
 		));
+
+		if (!empty($details['PHPBB_VERSION']) && $details['PHPBB_VERSION'] != $config['version'])
+		{
+			$version_warnig = sprintf($user->lang['VERSION_WARNING'], $details['PHPBB_VERSION'], $config['version']);
+
+			$template->assign_vars(array(
+				'VERSION_WARNING'	=> $version_warnig,
+				'S_PHPBB_VESION'	=> true,
+			));
+		}
 
 		if (!empty($details['AUTHOR_NOTES']) && $details['AUTHOR_NOTES'] != $user->lang['UNKNOWN_MOD_AUTHOR-NOTES'])
 		{

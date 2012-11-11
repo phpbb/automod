@@ -31,9 +31,9 @@
 		<td class="row3" colspan="4"><strong>{L_INSTALLED_MODS}</strong></td>
 	</tr>
 	<!-- IF not .installed -->
-		<tr>
-			<td class="row1" colspan="4" style="text-align: center;">{L_NO_INSTALLED_MODS}</td>
-		</tr>
+	<tr>
+		<td class="row1" colspan="4" style="text-align: center;">{L_NO_INSTALLED_MODS}</td>
+	</tr>
 	<!-- ENDIF -->
 	<!-- BEGIN installed -->
 	<tr>
@@ -43,20 +43,34 @@
         <td style="text-align: center;"><p>{installed.MOD_TIME}</p></td>
 	</tr>
 	<!-- END installed -->
+	</tbody>
+	</table>
+	<table cellspacing="1" style="margin-top: 5px;">
+		<col class="row1" /><col class="row2" /><col class="row2" /><col class="row2" />
+	<thead>
 	<tr>
-		<td class="row3" colspan="4"><strong>{L_UNINSTALLED_MODS}</strong></td>
+		<th>{L_NAME}</th>
+		<th>{L_TARGET_VERSION}</th>
+		<th>{L_OPTIONS}</th>
+        <th>{L_ACTIONS}</th>
 	</tr>
+	</thead>
+	<tbody>
 	<!-- IF not .uninstalled -->
 	<tr>
 		<td class="row1" colspan="4" style="text-align: center;">{L_NO_UNINSTALLED_MODS}</td>
+	</tr>
+	<!-- ELSE -->
+	<tr>
+		<td class="row3" style="margin-top: 5px;" colspan="4"><strong>{L_UNINSTALLED_MODS}</strong></td>
 	</tr>
 	<!-- ENDIF -->
 	<!-- BEGIN uninstalled -->
 	<tr>
 		<td><strong>{uninstalled.MOD_NAME}</strong></td>
+		<td><!-- IF uninstalled.S_PHPBB_VESION --><span style="font-weight: bold; color: red;">{uninstalled.PHPBB_VERSION}</span><!-- ELSE -->{uninstalled.PHPBB_VERSION}<!-- ENDIF --></td>
 		<td style="text-align: center;"><a href="{uninstalled.U_DETAILS}">{L_DETAILS}</a></td>
 		<td style="text-align: center;"><a href="{uninstalled.U_INSTALL}">{L_INSTALL}</a>&nbsp;|&nbsp;<a href="{uninstalled.U_DELETE}">{L_DELETE}</a></td>
-        <td style="text-align: center;"></td>
 	</tr>
 	<!-- END uninstalled -->
 	</tbody>
@@ -146,6 +160,12 @@
 	<h1>{L_MOD_DETAILS}</h1>
 
 	<p>{L_MOD_DETAILS_EXPLAIN}</p>
+
+	<!-- IF S_PHPBB_VESION -->
+		<div class="errorbox">
+			<p>{VERSION_WARNING}</p>
+		</div>
+	<!-- ENDIF -->
 
 	<fieldset>
 		<legend>{L_MOD_DETAILS}</legend>
@@ -309,6 +329,12 @@
 		<!-- ENDIF -->
 		<input class="button1" type="submit" name="install" value="{L_INSTALL}" />
 	</fieldset>
+
+	<!-- IF S_PHPBB_VESION -->
+		<div class="errorbox">
+			<p>{VERSION_WARNING}</p>
+		</div>
+	<!-- ENDIF -->
 
 	<!-- IF S_AUTHOR_NOTES -->
 	<fieldset>

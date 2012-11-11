@@ -4,6 +4,7 @@ AutoMOD Changelog
  + [Fix] Bug #63109 Unknown languages are never in the DB so there is no idea trying to find them there.
  + [Fix] Bug #63110 Unknown languages are now shown.
  + [Fix] Bug #63107 Accept missing DIY.
+ + [Feature] Ticket #62994 Warn the forum owner/admin if they are installing a MOD targeted at a different phpBB version than their forum is.
 
 - Changes since 1.0.0
  + [Feature] Show DIY instructions in the details. (Ticket #62171)

@@ -187,7 +187,8 @@ $lang = array_merge($lang, array(
 	'STYLE_NAME'	=> 'Style name',
 	'SUCCESS'		=> 'Success',
 
-	'TARGET'		=> 'Target',
+	'TARGET'			=> 'Target',
+	'TARGET_VERSION'	=> 'phpBB target version',
 
 	'UNKNOWN_MOD_AUTHOR-NOTES'	=> 'No Author Notes were specified.',
 	'UNKNOWN_MOD_DESCRIPTION'	=> '',
@@ -205,10 +206,12 @@ $lang = array_merge($lang, array(
 	'UNRECOGNISED_COMMAND'	=> 'Error, unrecognised command %s',
 	'UPDATE_AUTOMOD'		=> 'Update AutoMOD',
 	'UPDATE_AUTOMOD_CONFIRM'=> 'Please confirm you want to update AutoMOD.',
-
 	'UPLOAD'				=> 'Upload',
-	'VERSION'				=> 'Version',
 
+	'VERSION'			=> 'Version',
+	'VERSION_WARNING'	=> 'The target phpBB version for this MOD is %1$s, but your forum version is %2$s. Even if the install is successful the MOD might not work as expected and/or might break your forum. Please verify with the MOD author that this MOD is compatible with your forum version.',
+
+	'WARNING'				=> 'Warning',
 	'WRITE_DIRECT_FAIL'		=> 'AutoMOD could not copy the file %s into place using the direct method. Please use another write method and try again.',
 	'WRITE_DIRECT_TOO_SHORT'=> 'AutoMOD was unable to finish writing the file %s. This can often be solved with the Retry button. If this does not work, try another write method.',
 	'WRITE_MANUAL_FAIL'		=> 'AutoMOD could not add the file %s to a compressed archive. Please try another write method.',
