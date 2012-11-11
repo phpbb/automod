@@ -237,7 +237,7 @@
 		<!-- BEGIN contrib -->
 		<dl>
 			<dt><label>{L_MOD_NAME}:</label></dt>
-			<dd><strong>{contrib.MOD_NAME}</strong> <!-- IF contrib.U_INSTALL -->(<a href="{contrib.U_INSTALL}">{L_INSTALL_MOD}</a>)<!-- ENDIF --></dd>
+			<dd><strong>{contrib.MOD_NAME}</strong> <!-- IF contrib.U_INSTALL -->(<a href="{contrib.U_INSTALL}">{L_INSTALL_MOD}</a>)<!-- ELSEIF contrib.U_UNINSTALL -->(<a href="{contrib.U_UNINSTALL}">{L_UNINSTALL}</a>)<!-- ENDIF --></dd>
 		</dl>
 		<!-- END contrib -->
 		<!-- BEGIN unknown_templates -->
@@ -249,7 +249,7 @@
 		<!-- BEGIN unknown_lang -->
 		<dl>
 			<dt><label>{L_LANGUAGE_NAME}:</label></dt>
-			<dd><strong>{unknown_lang.ENGLISH_NAME}</strong> &ndash; {unknown_lang.LOCAL_NAME} <!-- IF unknown_lang.U_INSTALL -->(<a href="{unknown_lang.U_INSTALL}">{L_INSTALL_MOD}</a>)<!-- ENDIF --></dd>
+			<dd><strong>{unknown_lang.ENGLISH_NAME}</strong> &ndash; {unknown_lang.LOCAL_NAME} <!-- IF unknown_lang.U_INSTALL -->(<a href="{unknown_lang.U_INSTALL}">{L_INSTALL_MOD}</a>)<!-- ELSEIF unknown_lang.U_UNINSTALL -->(<a href="{unknown_lang.U_UNINSTALL}">{L_UNINSTALL}</a>)<!-- ENDIF --></dd>
 		</dl>
 		<!-- END unknown_lang -->
 

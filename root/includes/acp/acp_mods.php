@@ -255,7 +255,7 @@ class acp_mods
 
 					case 'pre_uninstall':
 					case 'uninstall':
-						$this->uninstall($action, $mod_id);
+						$this->uninstall($action, $mod_id, $parent);
 					break;
 
 					case 'details':
@@ -764,7 +764,7 @@ class acp_mods
 		global $force_install, $mod_installed;
 
 		// Are we forcing a template install?
-		$dest_template = '';
+		$dest_template = $mod_contribs = $mod_language = '';
 		if (isset($_POST['template_submit']))
 		{
 			if (!check_form_key('acp_mods'))
@@ -808,18 +808,61 @@ class acp_mods
 		else if ($dest_template) // implicit && $parent
 		{
 			// Has this template already been processed?
-			$sql = 'SELECT mod_name FROM ' . MODS_TABLE . "
-				WHERE mod_id = $parent
-					AND mod_template " . $db->sql_like_expression($db->any_char . $dest_template . $db->any_char);
+			$sql = 'SELECT mod_name
+					FROM ' . MODS_TABLE . "
+					WHERE mod_id = $parent
+						AND mod_template " . $db->sql_like_expression($db->any_char . $dest_template . $db->any_char);
 			$result = $db->sql_query($sql);
 
 			if ($row = $db->sql_fetchrow($result))
 			{
 				trigger_error('AM_MOD_ALREADY_INSTALLED');
 			}
+			$db->sql_freeresult($result);
 		}
 		// NB: There could and should be cases to check for duplicated MODs and contribs
 		// However, there is not appropriate book-keeping in place for those in 1.0.x
+		// grab installed contrib and language items from the database
+		if ($parent)
+		{
+			$modx_type = request_var('type', '');
+			if ($modx_type == 'lang')
+			{
+				$sql = 'SELECT mod_name
+						FROM ' . MODS_TABLE . "
+						WHERE mod_id = $parent
+							AND mod_languages " . $db->sql_like_expression($db->any_char . $mod_path . $db->any_char);
+				$result = $db->sql_query($sql);
+
+				if ($row = $db->sql_fetchrow($result))
+				{
+					trigger_error('AM_MOD_ALREADY_INSTALLED');
+				}
+				else
+				{
+					$mod_language = $mod_path;
+				}
+				$db->sql_freeresult($result);
+			}
+			elseif ($modx_type == 'contrib')
+			{
+				$sql = 'SELECT mod_name
+						FROM ' . MODS_TABLE . "
+						WHERE mod_id = $parent
+							AND mod_contribs " . $db->sql_like_expression($db->any_char . $mod_path . $db->any_char);
+				$result = $db->sql_query($sql);
+
+				if ($row = $db->sql_fetchrow($result))
+				{
+					trigger_error('AM_MOD_ALREADY_INSTALLED');
+				}
+				else
+				{
+					$mod_contribs = $mod_path;
+				}
+				$db->sql_freeresult($result);
+			}
+		}
 
 		$execute_edits = ($action == 'pre_install') ? false : true;
 		$write_method = 'editor_' . determine_write_method(!$execute_edits);
@@ -901,9 +944,13 @@ class acp_mods
 			{
 				$elements['template'] = array($dest_template);
 			}
+			elseif ($mod_language)
+			{
+				$elements['language'] = array($mod_path);
+			}
 			else
 			{
-				$elements['language'] = array(core_basename($mod_path));
+				$elements['contrib'] = array($mod_path);
 			}
 		}
 
@@ -1008,6 +1055,7 @@ class acp_mods
 				'mod_actions'		=> (string) serialize($actions),
 				'mod_languages'		=> (string) (isset($elements['language']) && sizeof($elements['language'])) ? implode(',', $elements['language']) : '',
 				'mod_template'		=> (string) (isset($elements['template']) && sizeof($elements['template'])) ? implode(',', $elements['template']) : '',
+				'mod_contribs'		=> (string) (isset($elements['contrib']) && sizeof($elements['contrib'])) ? implode(',', $elements['contrib']) : '',
 			));
 			$db->sql_query($sql);
 
@@ -1036,7 +1084,8 @@ class acp_mods
 
 			if (!empty($elements['language']))
 			{
-				$sql_ary['mod_languages'] = $row['mod_languages'] . ',' . implode(',', $elements['language']);
+				$sql_ary['mod_languages'] = (!empty($row['mod_languages'])) ? $row['mod_languages'] . ',' : '';
+				$sql_ary['mod_languages'] .= implode(',', $elements['language']);
 			}
 			else
 			{
@@ -1050,6 +1099,16 @@ class acp_mods
 			else
 			{
 				$sql_ary['mod_template'] = $row['mod_template'];
+			}
+			
+			if (!empty($elements['contrib']))
+			{
+				$sql_ary['mod_contribs'] = (!empty($row['mod_contribs'])) ? $row['mod_contribs'] . ',' : '';
+				$sql_ary['mod_contribs'] .= implode(',', $elements['contrib']);
+			}
+			else
+			{
+				$sql_ary['mod_contribs'] = $row['mod_contribs'];
 			}
 
 			$sql_ary['mod_time'] = $editor->install_time;
@@ -1078,6 +1137,11 @@ class acp_mods
 				$hidden_ary['source'] = $mod_path;
 				$hidden_ary['template_submit'] = true;
 			}
+			
+			if ($mod_language || $mod_contribs)
+			{
+				$hidden_ary['type'] = $modx_type;
+			}
 
 			$template->assign_vars(array(
 				'S_ERROR'			=> true,
@@ -1101,19 +1165,50 @@ class acp_mods
 	/**
 	* Uninstall/pre uninstall a mod
 	*/
-	function uninstall($action, $mod_id)
+	function uninstall($action, $mod_id, $parent)
 	{
 		global $phpbb_root_path, $phpEx, $db, $template, $user, $config;
 		global $force_install, $mod_uninstalled;
 
-		if (!$mod_id)
+		if (!$mod_id && !$parent)
 		{
 			return false;	// ERROR
 		}
+		
+		if ($parent)
+		{
+			// grab installed contrib and language items from the database
+			$sql = 'SELECT mod_languages, mod_contribs
+					FROM ' . MODS_TABLE . "
+					WHERE mod_id = $parent";
+			$result = $db->sql_query($sql);
 
-		// set the class parameters to refelect the proper directory
+			if ($row = $db->sql_fetchrow($result))
+			{
+				$mod_path = request_var('mod_path', '');
+				if (in_array($mod_path, explode(',', $row['mod_languages'])))
+				{
+					$elements['languages'] = $mod_path;
+				}
+				elseif (in_array($mod_path, explode(',', $row['mod_contribs'])))
+				{
+					$elements['contrib'] = $mod_path;
+				}
+				else
+				{
+					trigger_error('AM_MOD_NOT_INSTALLED');
+				}
+				
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		// set the class parameters to reflect the proper directory
 		$sql = 'SELECT mod_path FROM ' . MODS_TABLE . '
-			WHERE mod_id = ' . $mod_id;
+			WHERE mod_id = ' . (($mod_id) ? $mod_id : $parent);
 		$result = $db->sql_query($sql);
 
 		if ($row = $db->sql_fetchrow($result))
@@ -1138,14 +1233,22 @@ class acp_mods
 			'S_PRE_UNINSTALL'	=> !$execute_edits,
 			'L_FORCE_INSTALL'	=> $user->lang['FORCE_UNINSTALL'],
 			'MOD_ID'		=> $mod_id,
-			'U_UNINSTALL'	=> $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
+			'U_UNINSTALL'	=> ($parent) ? $this->u_action . "&amp;action=uninstall&amp;parent=$parent&mod_path=$mod_path" : $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
 			'U_RETURN'		=> $this->u_action,
 			'U_BACK'		=> $this->u_action,
 		));
 
 		// grab actions and details
-		$details = $this->mod_details($mod_id, false, true);
-		$actions = $this->mod_actions($mod_id);
+		if (!$parent)
+		{
+			$details = $this->mod_details($mod_id, false, true);
+			$actions = $this->mod_actions($mod_id);
+		}
+		else
+		{
+			$details = $this->mod_details($mod_path, false);
+			$actions = $this->mod_actions($mod_path);
+		}
 
 		if ($execute_edits)
 		{
@@ -1163,7 +1266,7 @@ class acp_mods
 			return;
 		} // end pre_uninstall
 
-		if ($mod_uninstalled || $force_uninstall)
+		if (($mod_uninstalled || $force_uninstall) && !$parent)
 		{
 			// Move edited files back
 			$status = $editor->commit_changes($this->edited_root, '');
@@ -1176,6 +1279,74 @@ class acp_mods
 					'ERROR'	=> $status,
 				));
 			}
+		}
+		elseif (($mod_uninstalled || $force_uninstall) && $parent)
+		{
+			// Only update the database entries and don't move any files back
+			$sql = 'SELECT * FROM ' . MODS_TABLE . " WHERE mod_id = $parent";
+			$result = $db->sql_query($sql);
+
+			$row = $db->sql_fetchrow($result);
+			$db->sql_freeresult($result);
+
+			if (!$row)
+			{
+				trigger_error($user->lang['NO_MOD'] . adm_back_link($this->u_action));
+			}
+
+			$sql_ary = array(
+				'mod_version'	=> $details['MOD_VERSION'],
+			);
+
+			if (!empty($elements['languages']))
+			{
+				$sql_ary['mod_languages'] = explode(',', $row['mod_languages']);
+				foreach ($sql_ary['mod_languages'] as $key => $value)
+				{
+					if ($value != $elements['languages']);
+					{
+						unset($sql_ary['mod_languages'][$key]);
+					}
+				}
+				$sql_ary['mod_languages'] = implode(',', $sql_ary['mod_languages']);
+			}
+			else
+			{
+				$sql_ary['mod_languages'] = $row['mod_languages'];
+			}
+
+			// let's just not support uninstalling styles edits
+			$sql_ary['mod_template'] = $row['mod_template'];
+			
+			if (!empty($elements['contrib']))
+			{
+				$sql_ary['mod_contribs'] = explode(',', $row['mod_contribs']);
+				foreach ($sql_ary['mod_contribs'] as $key => $value)
+				{
+					if ($value != $elements['contrib']);
+					{
+						unset($sql_ary['mod_contribs'][$key]);
+					}
+				}
+				$sql_ary['mod_contribs'] = implode(',', $sql_ary['mod_contribs']);
+			}
+			else
+			{
+				$sql_ary['mod_contribs'] = $row['mod_contribs'];
+			}
+
+			$sql_ary['mod_time'] = $row['mod_time'];
+
+			//$prior_mod_actions = unserialize($row['mod_actions']);
+			//$sql_ary['mod_actions'] = serialize(array_merge_recursive($prior_mod_actions, $actions));
+			$sql_ary['mod_actions'] = $row['mod_actions'];
+			//unset($prior_mod_actions);
+
+			$sql = 'UPDATE ' . MODS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
+				WHERE mod_id = $parent";
+			$db->sql_query($sql);
+
+			add_log('admin', 'LOG_MOD_CHANGE', htmlspecialchars_decode($row['mod_name']));
 		}
 
 		// if we forced uninstall of the MOD, we need to let the user know their board could be broken
@@ -2101,7 +2272,7 @@ class acp_mods
 
 	function handle_contrib(&$children)
 	{
-		global $template, $parent_id, $phpbb_root_path, $user;
+		global $template, $parent_id, $phpbb_root_path, $user, $db;
 
 		if (isset($children['contrib']) && sizeof($children['contrib']))
 		{
@@ -2131,6 +2302,18 @@ class acp_mods
 					$children['contrib'] = $contrib_lang;
 				}
 			}
+			
+			if (!empty($parent_id))
+			{
+				// get installed contribs from the database
+				$sql = 'SELECT mod_contribs FROM ' . MODS_TABLE . '
+						WHERE mod_id = ' . $parent_id;
+				$result = $db->sql_query($sql);
+				$mod_contribs = $db->sql_fetchfield('mod_contribs');
+				$db->sql_freeresult();
+			}
+			
+			$mod_contribs = (!empty($mod_contribs)) ? explode(',', $mod_contribs) : array();
 
 			// there are things like upgrades...we don't care unless the MOD has previously been installed.
 			foreach ($children['contrib'] as $xml_file)
@@ -2143,7 +2326,15 @@ class acp_mods
 				// don't do the urlencode until after the file is looked up on the
 				// filesystem
 				$xml_file = urlencode('/' . $xml_file);
-				$child_details['U_INSTALL'] = ($parent_id) ? $this->u_action . "&amp;action=pre_install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '';
+				
+				if (in_array(urldecode($xml_file), $mod_contribs))
+				{
+					$child_details['U_UNINSTALL']  = ($parent_id) ? $this->u_action . "&amp;action=pre_uninstall&amp;parent=$parent_id&amp;mod_path=$xml_file&amp;type=contrib" : '';
+				}
+				else
+				{
+					$child_details['U_INSTALL'] = ($parent_id) ? $this->u_action . "&amp;action=pre_install&amp;parent=$parent_id&amp;mod_path=$xml_file&amp;type=contrib" : '';
+				}
 
 				$template->assign_block_vars('contrib', $child_details);
 			}
@@ -2238,6 +2429,17 @@ class acp_mods
 			// Inform the user if there are languages provided for by the MOD
 			if (sizeof($children['language']))
 			{
+				if (!empty($parent_id))
+				{
+					// get installed languages from the database
+					$sql = 'SELECT mod_languages FROM ' . MODS_TABLE . '
+							WHERE mod_id = ' . $parent_id;
+					$result = $db->sql_query($sql);
+					$mod_languages = $db->sql_fetchfield('mod_languages');
+					$db->sql_freeresult();
+				}
+				
+				$mod_languages = (!empty($mod_languages)) ? explode(',', $mod_languages) : array();
 				foreach ($children['language'] as $row)
 				{
 					if (is_string($row))
@@ -2250,7 +2452,8 @@ class acp_mods
 					$template->assign_block_vars('unknown_lang', array(
 						'ENGLISH_NAME'	=> $row['title'],
 						'LOCAL_NAME'	=> $row['realname'],
-						'U_INSTALL'		=> (!empty($xml_file)) ? $this->u_action . "&amp;action=pre_install&amp;parent=$parent_id&amp;mod_path=$xml_file" : '',
+						'U_INSTALL'		=> (!empty($xml_file) && !in_array($row['href'], $mod_languages) && $parent_id) ? $this->u_action . "&amp;action=pre_install&amp;parent=$parent_id&amp;mod_path=$xml_file&amp;type=lang" : '',
+						'U_UNINSTALL'		=> (!empty($xml_file) && $parent_id) ? $this->u_action . "&amp;action=pre_uninstall&amp;parent=$parent_id&amp;mod_path=$xml_file&amp;type=lang" : '',
 					));
 					unset($row);
 				}

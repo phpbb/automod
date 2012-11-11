@@ -148,84 +148,87 @@ class parser
 	{
 		$reverse_edits = array();
 
-		foreach ($actions['EDITS'] as $file => $edit_ary)
+		if (!empty($actions['EDITS']))
 		{
-			foreach ($edit_ary as $edit_id => $edit)
+			foreach ($actions['EDITS'] as $file => $edit_ary)
 			{
-				foreach ($edit as $find => $action_ary)
+				foreach ($edit_ary as $edit_id => $edit)
 				{
-					foreach ($action_ary as $type => $command)
+					foreach ($edit as $find => $action_ary)
 					{
-						// it is possible for a single edit in the install process
-						// to become more than one in the uninstall process
-						while (isset($reverse_edits['EDITS'][$file][$edit_id]))
+						foreach ($action_ary as $type => $command)
 						{
-							$edit_id++;
-						}
+							// it is possible for a single edit in the install process
+							// to become more than one in the uninstall process
+							while (isset($reverse_edits['EDITS'][$file][$edit_id]))
+							{
+								$edit_id++;
+							}
 
-						switch (strtoupper($type))
-						{
-							// for before and after adds, we use the find as a tool for more precise finds
-							// this isn't perfect, but it seems better than having
-							// finds of only a couple characters, like "/*"
-							case 'AFTER ADD':
-								$total_find = rtrim($find, "\n") . "\n" . trim($command, "\n");
+							switch (strtoupper($type))
+							{
+								// for before and after adds, we use the find as a tool for more precise finds
+								// this isn't perfect, but it seems better than having
+								// finds of only a couple characters, like "/*"
+								case 'AFTER ADD':
+									$total_find = rtrim($find, "\n") . "\n" . trim($command, "\n");
 
-								$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
-							break;
+									$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
+								break;
 
-							case 'BEFORE ADD':
-								$total_find = rtrim($command, "\n") . "\n" . trim($find, "\n");
+								case 'BEFORE ADD':
+									$total_find = rtrim($command, "\n") . "\n" . trim($find, "\n");
 
-								// replace with the find
-								$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
-							break;
+									// replace with the find
+									$reverse_edits['EDITS'][$file][$edit_id][$total_find]['replace with'] = $find;
+								break;
 
-							case 'REPLACE WITH':
-							case 'REPLACE, WITH':
-							case 'REPLACE-WITH':
-							case 'REPLACE':
-								// replace $command (new code) with $find (original code)
-								$reverse_edits['EDITS'][$file][$edit_id][$command]['replace with'] = $find;
-							break;
+								case 'REPLACE WITH':
+								case 'REPLACE, WITH':
+								case 'REPLACE-WITH':
+								case 'REPLACE':
+									// replace $command (new code) with $find (original code)
+									$reverse_edits['EDITS'][$file][$edit_id][$command]['replace with'] = $find;
+								break;
 
-							case 'IN-LINE-EDIT':
-								// build the reverse just like the normal action
-								foreach ($command as $action_id => $inline_edit)
-								{
-									foreach ($inline_edit as $inline_find => $inline_action_ary)
+								case 'IN-LINE-EDIT':
+									// build the reverse just like the normal action
+									foreach ($command as $action_id => $inline_edit)
 									{
-										foreach ($inline_action_ary as $inline_action => $inline_command)
+										foreach ($inline_edit as $inline_find => $inline_action_ary)
 										{
-											$inline_command = $inline_command[0];
-	
-											switch (strtoupper($inline_action))
+											foreach ($inline_action_ary as $inline_action => $inline_command)
 											{
-												case 'IN-LINE-AFTER-ADD':
-												case 'IN-LINE-BEFORE-ADD':
-													// Replace with a blank string
-													$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$action_id][$inline_command]['in-line-replace'][] = '';
-												break;
-	
-												case 'IN-LINE-REPLACE':
-													// replace with the inline find
-													$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$action_id][$inline_command][$inline_action][] = $inline_find;
-												break;
-	
-												default:
-													// For the moment, we do nothing.  What about increment?
-												break;
+												$inline_command = $inline_command[0];
+		
+												switch (strtoupper($inline_action))
+												{
+													case 'IN-LINE-AFTER-ADD':
+													case 'IN-LINE-BEFORE-ADD':
+														// Replace with a blank string
+														$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$action_id][$inline_command]['in-line-replace'][] = '';
+													break;
+		
+													case 'IN-LINE-REPLACE':
+														// replace with the inline find
+														$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$action_id][$inline_command][$inline_action][] = $inline_find;
+													break;
+		
+													default:
+														// For the moment, we do nothing.  What about increment?
+													break;
+												}
+		
+												$action_id++;
 											}
-	
-											$action_id++;
 										}
 									}
-								}
-							break;
+								break;
 
-							default:
-								// again, increment
-							break;
+								default:
+									// again, increment
+								break;
+							}
 						}
 					}
 				}
