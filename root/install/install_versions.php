@@ -124,6 +124,11 @@ $versions = array(
 	'1.0.0'		=> array(),
 	'1.0.0.1'	=> array(),
 	'1.0.1-DEV'	=> array(),
+	'1.0.1-b1'	=> array(
+		'table_column_add'	=> array(
+			array('phpbb_mods', 'mod_contribs', array('STEXT_UNI', '')),
+		),
+	),
 );
 
 return $versions;
