@@ -123,11 +123,7 @@ $versions = array(
 	'1.0.0-RC4'	=> array(),
 	'1.0.0'		=> array(),
 	'1.0.0.1'	=> array(),
-	'1.0.1-DEV'	=> array(
-		'table column update'	=> array(
-			array('phpbb_mods', 'mod_name', array('TEXT_UNI', '')),
-		),
-	),
+	'1.0.1-DEV'	=> array(),
 );
 return $versions;
 
