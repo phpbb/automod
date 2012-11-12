@@ -5,6 +5,9 @@ AutoMOD Changelog
  + [Fix] Bug #63110 Unknown languages are now shown.
  + [Fix] Bug #63107 Accept missing DIY.
  + [Feature] Ticket #62994 Warn the forum owner/admin if they are installing a MOD targeted at a different phpBB version than their forum is.
+ + [Feature] Add ability to handle uninstalling additional modx files
+ + [Fix] Clean-up installation/uninstallation of contrib MODx 
+ + [Fix] Give a higher priority to the uninstallation of the MOD 
 
 - Changes since 1.0.0
  + [Feature] Show DIY instructions in the details. (Ticket #62171)
