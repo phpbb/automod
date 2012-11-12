@@ -1167,6 +1167,12 @@ class acp_mods
 			return false;	// ERROR
 		}
 		
+		// the MOD is more important than additional MODx files
+		if ($parent == $mod_id)
+		{
+			$parent = 0;
+		}
+		
 		if ($parent)
 		{
 			// grab installed contrib and language items from the database
