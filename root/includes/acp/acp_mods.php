@@ -984,6 +984,11 @@ class acp_mods
 				$s_hidden_fields['source'] = $mod_path;
 				$s_hidden_fields['template_submit'] = true;
 			}
+			
+			if ($parent)
+			{
+				$s_hidden_fields['type'] = $modx_type;
+			}
 
 			$template->assign_var('S_HIDDEN_FIELDS', build_hidden_fields($s_hidden_fields));
 			add_form_key('acp_mods');
@@ -1227,6 +1232,12 @@ class acp_mods
 
 		// get FTP information if we need it (or initialize array $hidden_ary)
 		$hidden_ary = get_connection_info(!$execute_edits);
+		
+		if ($parent)
+		{
+			$hidden_ary['parent'] = $parent;
+			$hidden_ary['mod_path'] = $mod_path;
+		}
 
 		$template->assign_vars(array(
 			'S_UNINSTALL'		=> $execute_edits,
@@ -1236,6 +1247,7 @@ class acp_mods
 			'U_UNINSTALL'	=> ($parent) ? $this->u_action . "&amp;action=uninstall&amp;parent=$parent&mod_path=$mod_path" : $this->u_action . '&amp;action=uninstall&amp;mod_id=' . $mod_id,
 			'U_RETURN'		=> $this->u_action,
 			'U_BACK'		=> $this->u_action,
+			'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),
 		));
 
 		// grab actions and details
@@ -1257,6 +1269,27 @@ class acp_mods
 		}
 
 		$display = ($execute_edits || $config['preview_changes']) ? true : false;
+
+		// cleanup edits if we forced the install on a contrib or language
+		if ($parent)
+		{
+			if (isset($actions['EDITS']))
+			{
+				foreach ($actions['EDITS'] as $file => $edit_ary)
+				{
+					foreach ($edit_ary as $edit_id => $edit)
+					{
+						foreach ($edit as $find => $action_ary)
+						{
+							if (empty($action_ary))
+							{
+								unset($actions['EDITS'][$file][$edit_id][$find]);
+							}
+						}
+					}
+				}
+			}
+		}
 
 		// process the actions
 		$mod_uninstalled = $this->process_edits($editor, $actions, $details, $execute_edits, $display, true);
