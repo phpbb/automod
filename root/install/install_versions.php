@@ -129,6 +129,11 @@ $versions = array(
 			array('phpbb_mods', 'mod_contribs', array('STEXT_UNI', '')),
 		),
 	),
+	'1.0.1-RC1'	=> array(
+		'table_column_update'	=> array(
+			array('phpbb_mods', 'mod_name', array('TEXT_UNI', '')),
+		),
+	),
 );
 
 return $versions;

@@ -6,10 +6,9 @@ AutoMOD Changelog
  + [Fix] Bug #63107 Accept missing DIY.
  + [Feature] Ticket #62994 Warn the forum owner/admin if they are installing a MOD targeted at a different phpBB version than their forum is.
  + [Feature] Add ability to handle uninstalling additional modx files
- + [Fix] Clean-up installation/uninstallation of contrib MODx 
- + [Fix] Give a higher priority to the uninstallation of the MOD 
-
-- Changes since 1.0.0
+ + [Fix] Clean-up installation/uninstallation of contrib MODx
+ + [Fix] Give a higher priority to the uninstallation of the MOD
+ + [Fix] Bug #62917 Handle translated MOD names correctly.
  + [Feature] Show DIY instructions in the details. (Ticket #62171)
  + [Feature] Added error checking for readable MOD files. Patch by Callum95 (Ticket #62244)
  + [Feature] Ability to hide successful edits when install fails. php Patch by EXreaction (Ticket #59995)
@@ -28,6 +27,8 @@ AutoMOD Changelog
  + [Fix] mod_upload() & delete() should respect configured FTP write method Patch by jasmineaura (Ticket #62277)
  + [Fix] MODs with special chars was copied to the wrong place. Patch by callumacrae (Ticket #62688)
  + [Fix] missed \s and incorrect regexp in reverse_query function. Patch by bolknote
+
+- Changes since 1.0.0
  + [Fix] Update UMIL to version 1.0.4
 
 - Changes since 1.0.0 Release Candidate 4

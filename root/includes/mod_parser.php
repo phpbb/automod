@@ -464,7 +464,8 @@ class parser_xml
 		// try not to hardcode schema?
 		$details = array(
 			'MOD_PATH' 		=> $this->file,
-			'MOD_NAME'		=> localise_tags($header, 'TITLE'),
+			'MOD_NAME'		=> get_title($header),
+//			'MOD_NAME'		=> localise_tags($header, 'TITLE'),
 			'MOD_DESCRIPTION'	=> nl2br(localise_tags($header, 'DESCRIPTION')),
 			'MOD_VERSION'		=> htmlspecialchars(trim($version)),
 //			'MOD_DEPENDENCIES'	=> (isset($header['TITLE'][0]['data'])) ? htmlspecialchars(trim($header['TITLE'][0]['data'])) : '',

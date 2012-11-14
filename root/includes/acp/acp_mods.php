@@ -293,7 +293,17 @@ class acp_mods
 
 						if ($row = $db->sql_fetchrow($result))
 						{
-							$download_name = str_replace(' ', '_', $row['mod_name']);
+							// Always use the English name except for showing the user.
+							if (($name_ary = @unserialize($row['mod_name'])) !== false)
+							{
+								$mod_name = $name_ary['en'];
+							}
+							else
+							{
+								$mod_name = $row['mod_name'];
+							}
+
+							$download_name = str_replace(' ', '_', $mod_name);
 						}
 
 						$editor->compress->download("{$this->store_dir}/mod_$time", $download_name);
@@ -327,15 +337,57 @@ class acp_mods
 				'S_SORT_DIR'	=> $s_sort_dir,
 				'U_SORT_ACTION'		=> $this->u_action ."&amp;$u_sort_param"
 		));
+		// The MOD name is a array so it can't be used as sort key directly.
+		$sql_sort = ($sort_key == 't') ? " ORDER BY mod_time $dir" : '';
 		$sql = 'SELECT mod_name, mod_id, mod_time
-			FROM ' . MODS_TABLE  . '
-            ORDER BY '.$sort.' '.$dir;
+			FROM ' . MODS_TABLE .
+			$sql_sort;
 		$result = $db->sql_query($sql);
-		while ($row = $db->sql_fetchrow($result))
+		$mod_ary = $db->sql_fetchrowset($result);
+		$db->sql_freeresult($result);
+
+		foreach ($mod_ary as $key => $row)
 		{
+			if (($name_ary = @unserialize($row['mod_name'])) === false)
+			{
+				$name_ary['en'] = $row['mod_name'];
+			}
+
+			$mod_ary[$key]['mod_name'] = $name_ary;
+		}
+
+		if ($sort_key != 't')
+		{
+			$sort_ary = array();
+			foreach ($mod_ary as $key => $row)
+			{
+				$sort_ary[$key] = $row['mod_name']['en'];
+			}
+
+			if ($sort_dir == 'd')
+			{
+				arsort($sort_ary, SORT_STRING);
+			}
+			else
+			{
+				asort($sort_ary, SORT_STRING);
+			}
+
+			foreach ($sort_ary as $key => $name)
+			{
+				$sort_ary[$key] = $mod_ary[$key];
+			}
+
+			$mod_ary = $sort_ary;
+			unset($sort_ary);
+		}
+
+		foreach ($mod_ary as $row)
+		{
+			$mod_name = (!empty($row['mod_name'][$user->data['user_lang']])) ? $row['mod_name'][$user->data['user_lang']] : $row['mod_name']['en'];
 			$template->assign_block_vars('installed', array(
 				'MOD_ID'		=> $row['mod_id'],
-				'MOD_NAME'		=> $row['mod_name'],
+				'MOD_NAME'		=> htmlspecialchars($mod_name),
 
 				'MOD_TIME'      => $user->format_date($row['mod_time']),
 
@@ -343,7 +395,6 @@ class acp_mods
 				'U_UNINSTALL'	=> $this->u_action . '&amp;action=pre_uninstall&amp;mod_id=' . $row['mod_id'])
 			);
 		}
-		$db->sql_freeresult($result);
 
 		return;
 	}
@@ -353,7 +404,7 @@ class acp_mods
 	*/
 	function list_uninstalled()
 	{
-		global $phpbb_root_path, $db, $template, $config;
+		global $phpbb_root_path, $db, $template, $config, $user;
 
 		// get available MOD paths
 		$available_mods = $this->find_mods($this->mods_dir, 1);
@@ -390,9 +441,10 @@ class acp_mods
 		{
 			$details = $this->mod_details($file, false);
 			$short_path = urlencode(str_replace($this->mods_dir, '', $details['MOD_PATH']));
+			$mod_name = (!empty($details['MOD_NAME'][$user->data['user_lang']])) ? $details['MOD_NAME'][$user->data['user_lang']] : $details['MOD_NAME']['en'];
 
 			$template->assign_block_vars('uninstalled', array(
-				'MOD_NAME'	=> $details['MOD_NAME'],
+				'MOD_NAME'	=> htmlspecialchars($mod_name),
 				'MOD_PATH'	=> $short_path,
 
 				'PHPBB_VERSION'		=> $details['PHPBB_VERSION'],
@@ -1049,7 +1101,7 @@ class acp_mods
 				'mod_time'			=> (int) $editor->install_time,
 				// @todo: Are dependencies part of the MODX Spec?
 				'mod_dependencies'	=> '', //(string) serialize($details['MOD_DEPENDENCIES']),
-				'mod_name'			=> (string) $details['MOD_NAME'],
+				'mod_name'			=> (string) serialize($details['MOD_NAME']),
 				'mod_description'	=> (string) $details['MOD_DESCRIPTION'],
 				'mod_version'		=> (string) $details['MOD_VERSION'],
 				'mod_path'			=> (string) $details['MOD_PATH'],

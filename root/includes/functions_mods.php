@@ -80,6 +80,33 @@ function match_language($user_language, $xml_language)
 }
 
 /**
+* Grab MOD titles
+*
+* @param $header - variable holding all relevant tag information
+* @return array(language iso => MOD name)
+*/
+function get_title($header)
+{
+	if (is_string($header['TITLE']))
+	{
+		return($header['TITLE']);
+	}
+
+	$return = array();
+	foreach ($header['TITLE'] as $row)
+	{
+		if (!is_array($row))
+		{
+			continue;
+		}
+
+		$return[$row['attrs']['LANG']] = trim($row['data']);
+	}
+
+	return($return);
+}
+
+/**
 * Easy method to grab localisable tags from the XML array
 * @param $header - variable holding all relevant tag information
 * @param $tagname - tag name to fetch
