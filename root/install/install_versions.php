@@ -134,6 +134,7 @@ $versions = array(
 			array('phpbb_mods', 'mod_name', array('TEXT_UNI', '')),
 		),
 	),
+	'1.0.1'		=> array(),
 );
 
 return $versions;
