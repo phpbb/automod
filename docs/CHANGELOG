@@ -1,19 +1,20 @@
 AutoMOD Changelog
 
 - Changes since 1.0.0.1
- + [Fix] Bug #63109 Unknown languages are never in the DB so there is no idea trying to find them there.
- + [Fix] Bug #63110 Unknown languages are now shown.
- + [Fix] Bug #63107 Accept missing DIY.
  + [Feature] Ticket #62994 Warn the forum owner/admin if they are installing a MOD targeted at a different phpBB version than their forum is.
  + [Feature] Add ability to handle uninstalling additional modx files
- + [Fix] Clean-up installation/uninstallation of contrib MODx
- + [Fix] Give a higher priority to the uninstallation of the MOD
- + [Fix] Bug #62917 Handle translated MOD names correctly.
  + [Feature] Show DIY instructions in the details. (Ticket #62171)
  + [Feature] Added error checking for readable MOD files. Patch by Callum95 (Ticket #62244)
  + [Feature] Ability to hide successful edits when install fails. php Patch by EXreaction (Ticket #59995)
+ + [Feature] Added install_mod.xml so AutoMOD can update itself.
  + [Change] Changed the wording for DIY. (Ticket #62171)
  + [Change] Hide the second uninstall button if there are no file edits. (Ticket #62468)
+ + [Fix] Bug #63109 Unknown languages are never in the DB so there is no idea trying to find them there.
+ + [Fix] Bug #63110 Unknown languages are now shown.
+ + [Fix] Bug #63107 Accept missing DIY.
+ + [Fix] Clean-up installation/uninstallation of contrib MODx
+ + [Fix] Give a higher priority to the uninstallation of the MOD
+ + [Fix] Bug #62917 Handle translated MOD names correctly.
  + [Fix] Use correct language key when creating dir fails
  + [Fix] Undefined variable error when an unknown action is attempted
  + [Fix] Removed closing </a> that did not have any open tags. (Ticket #62152)
