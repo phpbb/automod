@@ -9,6 +9,7 @@ AutoMOD Changelog
  + [Feature] Added install_mod.xml so AutoMOD can update itself.
  + [Change] Changed the wording for DIY. (Ticket #62171)
  + [Change] Hide the second uninstall button if there are no file edits. (Ticket #62468)
+ + [Change] Changed the directory name from upload to root. To follow the MODX requirements.
  + [Fix] Bug #63109 Unknown languages are never in the DB so there is no idea trying to find them there.
  + [Fix] Bug #63110 Unknown languages are now shown.
  + [Fix] Bug #63107 Accept missing DIY.
