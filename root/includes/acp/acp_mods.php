@@ -1119,7 +1119,22 @@ class acp_mods
 			$cache->purge();
 
 			// Add log
-			add_log('admin', 'LOG_MOD_ADD', $details['MOD_NAME']);
+			if (is_array($details['MOD_NAME']))
+			{
+				if (isset($details['MOD_NAME']['en']))
+				{
+					$mod_name = $details['MOD_NAME']['en'];
+				}
+				else
+				{
+					$mod_name = array_shift($details['MOD_NAME']);
+				}
+			}
+			else
+			{
+				$mod_name = $details['MOD_NAME'];
+			}
+			add_log('admin', 'LOG_MOD_ADD', $mod_name);
 		}
 		// in this case, we are installing an additional template or language
 		else if (($mod_installed || $force_install) && $parent)
@@ -1462,7 +1477,23 @@ class acp_mods
 			$db->sql_query($sql);
 
 			// Add log
-			add_log('admin', 'LOG_MOD_REMOVE', $details['MOD_NAME']);
+			$mod_name = @unserialize(htmlspecialchars_decode($details['MOD_NAME']));
+			if (is_array($mod_name))
+			{
+				if (isset($mod_name['en']))
+				{
+					$mod_name = $mod_name['en'];
+				}
+				else
+				{
+					$mod_name = array_shift($mod_name);
+				}
+			}
+			else
+			{
+				$mod_name = $details['MOD_NAME'];
+			}
+			add_log('admin', 'LOG_MOD_REMOVE', $mod_name);
 
 			$editor->commit_changes_final('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
 		}
