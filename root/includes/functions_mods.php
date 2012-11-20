@@ -107,6 +107,48 @@ function get_title($header)
 }
 
 /**
+ * Get localized MOD title or English title
+ *
+ * @param $titles, string or a serialized array containing the MOD name(s)
+ * @param $lang, string language ISO.
+ * @return string with MOD name in users selected language or English.
+ */
+function localize_title($title, $lang = 'en')
+{
+	$name_ary = array();
+
+	if (!is_array($title))
+	{
+		if (($name_ary = @unserialize($title)) === false)
+		{
+			// Before AutoMOD 1.0.1 the title was a string with only the MOD name.
+			return($title);
+		}
+	}
+	else
+	{
+		$name_ary = $title;
+	}
+
+	// If we get here the MOD is installed with AutoMOD 1.0.1+
+	// And the stored title is a serialized array.
+	if (!empty($name_ary[$lang]))
+	{
+		return($name_ary[$lang]);
+	}
+	else if (!empty($name_ary['en']))
+	{
+		// Default to English if the selected language is not found.
+		return($name_ary['en']);
+	}
+
+	// Something went wrong.
+	// We have a array that neither contain the selected language nor English.
+	// Return the first array element.
+	return(array_shift($name_ary));
+}
+
+/**
 * Easy method to grab localisable tags from the XML array
 * @param $header - variable holding all relevant tag information
 * @param $tagname - tag name to fetch

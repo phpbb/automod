@@ -2,6 +2,7 @@ AutoMOD Changelog
 
 - Changes since 1.0.l
  + [Fix] Bug #63241 AutoMOD passes array of MOD titles to add_log()
+ + [Fix] Bug #62917 Handle translated MOD names correctly, fixed again.
 
 - Changes since 1.0.0.1
  + [Feature] Ticket #62994 Warn the forum owner/admin if they are installing a MOD targeted at a different phpBB version than their forum is.

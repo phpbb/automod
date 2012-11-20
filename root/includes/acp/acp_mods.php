@@ -294,15 +294,7 @@ class acp_mods
 						if ($row = $db->sql_fetchrow($result))
 						{
 							// Always use the English name except for showing the user.
-							if (($name_ary = @unserialize($row['mod_name'])) !== false)
-							{
-								$mod_name = $name_ary['en'];
-							}
-							else
-							{
-								$mod_name = $row['mod_name'];
-							}
-
+							$mod_name = localize_title($row['mod_name'], 'en');
 							$download_name = str_replace(' ', '_', $mod_name);
 						}
 
@@ -384,7 +376,7 @@ class acp_mods
 
 		foreach ($mod_ary as $row)
 		{
-			$mod_name = (!empty($row['mod_name'][$user->data['user_lang']])) ? $row['mod_name'][$user->data['user_lang']] : $row['mod_name']['en'];
+			$mod_name = localize_title($row['mod_name'], $user->data['user_lang']);
 			$template->assign_block_vars('installed', array(
 				'MOD_ID'		=> $row['mod_id'],
 				'MOD_NAME'		=> htmlspecialchars($mod_name),
@@ -441,7 +433,7 @@ class acp_mods
 		{
 			$details = $this->mod_details($file, false);
 			$short_path = urlencode(str_replace($this->mods_dir, '', $details['MOD_PATH']));
-			$mod_name = (!empty($details['MOD_NAME'][$user->data['user_lang']])) ? $details['MOD_NAME'][$user->data['user_lang']] : $details['MOD_NAME']['en'];
+			$mod_name = localize_title($details['MOD_NAME'], $user->data['user_lang']);
 
 			$template->assign_block_vars('uninstalled', array(
 				'MOD_NAME'	=> htmlspecialchars($mod_name),
@@ -533,6 +525,9 @@ class acp_mods
 
 		unset($details['MOD_HISTORY']);
 
+		$details['MOD_NAME'] = localize_title($details['MOD_NAME'], $user->data['user_lang']);
+		$details['MOD_NAME'] = htmlspecialchars($details['MOD_NAME']);
+
 		$template->assign_vars($details);
 
 		if (!empty($details['AUTHOR_NOTES']))
@@ -581,7 +576,7 @@ class acp_mods
 					'MOD_PATH'			=> $row['mod_path'],
 					'MOD_INSTALL_TIME'	=> $user->format_date($row['mod_time']),
 //					'MOD_DEPENDENCIES'	=> unserialize($row['mod_dependencies']), // ?
-					'MOD_NAME'			=> htmlspecialchars($row['mod_name']),
+					'MOD_NAME'			=> $row['mod_name'],
 					'MOD_DESCRIPTION'	=> nl2br($row['mod_description']),
 					'MOD_VERSION'		=> $row['mod_version'],
 
@@ -848,8 +843,16 @@ class acp_mods
 
 		if (!$parent)
 		{
+			// $details['MOD_NAME'] is a array and not knowing what language was used when the MOD was installed,
+			// if it was installed with AutoMOD 1.0.0. So need to check all.
+			$sql_where = '';
+			foreach ($details['MOD_NAME'] as $mod_name)
+			{
+				$sql_where .= (($sql_where == '') ? ' mod_name ' : ' OR mod_name ') . $db->sql_like_expression($db->any_char . $mod_name . $db->any_char);
+			}
+
 			$sql = 'SELECT mod_name FROM ' . MODS_TABLE . "
-				WHERE mod_name = '" . $db->sql_escape($details['MOD_NAME']) . "'";
+				WHERE $sql_where";
 			$result = $db->sql_query($sql);
 
 			if ($row = $db->sql_fetchrow($result))
@@ -1036,7 +1039,7 @@ class acp_mods
 				$s_hidden_fields['source'] = $mod_path;
 				$s_hidden_fields['template_submit'] = true;
 			}
-			
+
 			if ($parent)
 			{
 				$s_hidden_fields['type'] = $modx_type;
@@ -1096,12 +1099,14 @@ class acp_mods
 		// if MOD installed successfully, make a record.
 		if (($mod_installed || $force_install) && !$parent)
 		{
+			$mod_name = (is_array($details['MOD_NAME'])) ? serialize($details['MOD_NAME']) : $details['MOD_NAME'];
+
 			// Insert database data
 			$sql = 'INSERT INTO ' . MODS_TABLE . ' ' . $db->sql_build_array('INSERT', array(
 				'mod_time'			=> (int) $editor->install_time,
 				// @todo: Are dependencies part of the MODX Spec?
 				'mod_dependencies'	=> '', //(string) serialize($details['MOD_DEPENDENCIES']),
-				'mod_name'			=> (string) serialize($details['MOD_NAME']),
+				'mod_name'			=> (string) $mod_name,
 				'mod_description'	=> (string) $details['MOD_DESCRIPTION'],
 				'mod_version'		=> (string) $details['MOD_VERSION'],
 				'mod_path'			=> (string) $details['MOD_PATH'],
@@ -1119,21 +1124,7 @@ class acp_mods
 			$cache->purge();
 
 			// Add log
-			if (is_array($details['MOD_NAME']))
-			{
-				if (isset($details['MOD_NAME']['en']))
-				{
-					$mod_name = $details['MOD_NAME']['en'];
-				}
-				else
-				{
-					$mod_name = array_shift($details['MOD_NAME']);
-				}
-			}
-			else
-			{
-				$mod_name = $details['MOD_NAME'];
-			}
+			$mod_name = localize_title($details['MOD_NAME'], 'en');
 			add_log('admin', 'LOG_MOD_ADD', $mod_name);
 		}
 		// in this case, we are installing an additional template or language
@@ -1172,7 +1163,7 @@ class acp_mods
 			{
 				$sql_ary['mod_template'] = $row['mod_template'];
 			}
-			
+
 			if (!empty($elements['contrib']))
 			{
 				$sql_ary['mod_contribs'] = (!empty($row['mod_contribs'])) ? $row['mod_contribs'] . ',' : '';
@@ -1209,7 +1200,7 @@ class acp_mods
 				$hidden_ary['source'] = $mod_path;
 				$hidden_ary['template_submit'] = true;
 			}
-			
+
 			if ($mod_language || $mod_contribs)
 			{
 				$hidden_ary['type'] = $modx_type;
@@ -1230,7 +1221,9 @@ class acp_mods
 
 		if ($mod_installed || $force_install)
 		{
-			$editor->commit_changes_final('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
+			// $editor->commit_changes_final don't do anything ATM, but to be compatible with future versions
+			$mod_name = localize_title($details['MOD_NAME'], 'en');
+			$editor->commit_changes_final('mod_' . $editor->install_time, str_replace(' ', '_', $mod_name));
 		}
 	}
 
@@ -1246,13 +1239,13 @@ class acp_mods
 		{
 			return false;	// ERROR
 		}
-		
+
 		// the MOD is more important than additional MODx files
 		if ($parent == $mod_id)
 		{
 			$parent = 0;
 		}
-		
+
 		if ($parent)
 		{
 			// grab installed contrib and language items from the database
@@ -1276,7 +1269,7 @@ class acp_mods
 				{
 					trigger_error('AM_MOD_NOT_INSTALLED');
 				}
-				
+
 			}
 			else
 			{
@@ -1305,7 +1298,7 @@ class acp_mods
 
 		// get FTP information if we need it (or initialize array $hidden_ary)
 		$hidden_ary = get_connection_info(!$execute_edits);
-		
+
 		if ($parent)
 		{
 			$hidden_ary['parent'] = $parent;
@@ -1423,7 +1416,7 @@ class acp_mods
 
 			// let's just not support uninstalling styles edits
 			$sql_ary['mod_template'] = $row['mod_template'];
-			
+
 			if (!empty($elements['contrib']))
 			{
 				$sql_ary['mod_contribs'] = explode(',', $row['mod_contribs']);
@@ -1452,7 +1445,8 @@ class acp_mods
 				WHERE mod_id = $parent";
 			$db->sql_query($sql);
 
-			add_log('admin', 'LOG_MOD_CHANGE', htmlspecialchars_decode($row['mod_name']));
+			$mod_name = localize_title($row['mod_name'], $user->data['user_lang']);
+			add_log('admin', 'LOG_MOD_CHANGE', htmlspecialchars_decode($mod_name));
 		}
 
 		// if we forced uninstall of the MOD, we need to let the user know their board could be broken
@@ -1477,25 +1471,12 @@ class acp_mods
 			$db->sql_query($sql);
 
 			// Add log
-			$mod_name = @unserialize(htmlspecialchars_decode($details['MOD_NAME']));
-			if (is_array($mod_name))
-			{
-				if (isset($mod_name['en']))
-				{
-					$mod_name = $mod_name['en'];
-				}
-				else
-				{
-					$mod_name = array_shift($mod_name);
-				}
-			}
-			else
-			{
-				$mod_name = $details['MOD_NAME'];
-			}
+			$mod_name = localize_title($details['MOD_NAME'], 'en');
+			$mod_name = htmlspecialchars_decode($mod_name);
 			add_log('admin', 'LOG_MOD_REMOVE', $mod_name);
 
-			$editor->commit_changes_final('mod_' . $editor->install_time, str_replace(' ', '_', $details['MOD_NAME']));
+			$mod_name = localize_title($details['MOD_NAME'], 'en');
+			$editor->commit_changes_final('mod_' . $editor->install_time, str_replace(' ', '_', $mod_name));
 		}
 	}
 
@@ -2424,7 +2405,7 @@ class acp_mods
 					$children['contrib'] = $contrib_lang;
 				}
 			}
-			
+
 			if (!empty($parent_id))
 			{
 				// get installed contribs from the database
@@ -2434,7 +2415,7 @@ class acp_mods
 				$mod_contribs = $db->sql_fetchfield('mod_contribs');
 				$db->sql_freeresult();
 			}
-			
+
 			$mod_contribs = (!empty($mod_contribs)) ? explode(',', $mod_contribs) : array();
 
 			// there are things like upgrades...we don't care unless the MOD has previously been installed.
@@ -2448,7 +2429,7 @@ class acp_mods
 				// don't do the urlencode until after the file is looked up on the
 				// filesystem
 				$xml_file = urlencode('/' . $xml_file);
-				
+
 				if (in_array(urldecode($xml_file), $mod_contribs))
 				{
 					$child_details['U_UNINSTALL']  = ($parent_id) ? $this->u_action . "&amp;action=pre_uninstall&amp;parent=$parent_id&amp;mod_path=$xml_file&amp;type=contrib" : '';
@@ -2458,6 +2439,7 @@ class acp_mods
 					$child_details['U_INSTALL'] = ($parent_id) ? $this->u_action . "&amp;action=pre_install&amp;parent=$parent_id&amp;mod_path=$xml_file&amp;type=contrib" : '';
 				}
 
+				$child_details['MOD_NAME'] = localize_title($child_details['MOD_NAME'], $user->data['user_lang']);
 				$template->assign_block_vars('contrib', $child_details);
 			}
 		}
@@ -2560,7 +2542,7 @@ class acp_mods
 					$mod_languages = $db->sql_fetchfield('mod_languages');
 					$db->sql_freeresult();
 				}
-				
+
 				$mod_languages = (!empty($mod_languages)) ? explode(',', $mod_languages) : array();
 				foreach ($children['language'] as $row)
 				{

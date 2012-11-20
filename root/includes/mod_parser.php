@@ -200,7 +200,7 @@ class parser
 											foreach ($inline_action_ary as $inline_action => $inline_command)
 											{
 												$inline_command = $inline_command[0];
-		
+
 												switch (strtoupper($inline_action))
 												{
 													case 'IN-LINE-AFTER-ADD':
@@ -208,17 +208,17 @@ class parser
 														// Replace with a blank string
 														$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$action_id][$inline_command]['in-line-replace'][] = '';
 													break;
-		
+
 													case 'IN-LINE-REPLACE':
 														// replace with the inline find
 														$reverse_edits['EDITS'][$file][$edit_id][$find]['in-line-edit'][$action_id][$inline_command][$inline_action][] = $inline_find;
 													break;
-		
+
 													default:
 														// For the moment, we do nothing.  What about increment?
 													break;
 												}
-		
+
 												$action_id++;
 											}
 										}
