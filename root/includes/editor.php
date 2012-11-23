@@ -180,6 +180,12 @@ class editor
 	*/
 	function find($find)
 	{
+		if ($find == '')
+		{
+			// Can't find a empty string,
+			return(false);
+		}
+
 		$find_success = 0;
 
 		$find = $this->normalize($find);
@@ -297,6 +303,12 @@ class editor
 	*/
 	function inline_find($find, $inline_find, $start_offset = false, $end_offset = false)
 	{
+		if ($inline_find == '')
+		{
+			// Can't find a empty string,
+			return(false);
+		}
+
 		$find = $this->normalize($find);
 
 		if ($start_offset === false || $end_offset === false)
