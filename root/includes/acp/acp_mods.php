@@ -765,7 +765,7 @@ class acp_mods
 		{
 			global $db, $user;
 
-			$sql = 'SELECT mod_actions
+			$sql = 'SELECT mod_actions, mod_name
 				FROM ' . MODS_TABLE . "
 					WHERE mod_id = $mod_ident";
 			$result = $db->sql_query($sql);
@@ -774,7 +774,16 @@ class acp_mods
 
 			if ($row)
 			{
-				return unserialize($row['mod_actions']);
+				$mod_actions = unserialize($row['mod_actions']);
+
+				if (@unserialize($row['mod_name']) === false)
+				{
+					// On version 1.0.1 and later the mod name is a serialized array.
+					// Earlier it was a string so unserialize will fail.
+					$mod_actions['EDITS'] = $this->update_edits($mod_actions['EDITS']);
+				}
+
+				return($mod_actions);
 			}
 			else
 			{
@@ -799,6 +808,126 @@ class acp_mods
 
 		return $actions;
 
+	}
+
+	/**
+	 * Updates inline edits for MODs installed before AutoMOD 1.0.1.
+	 *
+	 * @param array $mod_edits, MOD actions directly from the DB.
+	 * @return mixed uppdated array or false on error.
+	 */
+	function update_edits($mod_edits)
+	{
+		if (empty($mod_edits))
+		{
+			return(false);
+		}
+
+		$updated_ary = array();
+
+		foreach ($mod_edits as $file => $edits)
+		{
+			$updated_ary[$file] = array();
+			$inline = false;
+			$key = 0;
+			$old_find = $find_line = '';
+
+			foreach ($edits as $edit)
+			{
+				foreach ($edit as $find => $action)
+				{
+					$first_key = key($action); // The first key contains the action or "in-line-edit".
+
+					if ($first_key != 'in-line-edit')
+					{
+						if ($inline)
+						{
+							$updated_ary[$file][$key++][$find_line] = array('in-line-edit' => $inline_edit);
+							$inline_edit = array();
+							$inline = false;
+							$old_find = $find_line = '';
+						}
+
+						$updated_ary[$file][$key++][$find] = $action;
+						$inline = false;
+						continue;
+					}
+
+					$inline = true;
+					$inline_edit = (empty($inline_edit)) ? array() : $inline_edit;
+
+					if (!empty($old_find) && !$this->same_line($old_find, $find, $action['in-line-edit']))
+					{
+						$updated_ary[$file][$key++][$find_line] = array('in-line-edit' => $inline_edit);
+						$inline_edit = array();
+					}
+
+					$find_line = $find;
+					$old_find = $find;
+					$inline_edit[] = $action['in-line-edit'];
+				}
+			}
+
+			if ($inline && !empty($inline_edit))
+			{
+				$updated_ary[$file][$key++][$find_line] = array('in-line-edit' => $inline_edit);
+				$inline = false;
+				$inline_edit = array();
+				$old_find = $find_line = '';
+			}
+		}
+
+		return($updated_ary);
+	}
+
+	/**
+	* Tries to check if two inline edits are editing the same line.
+	*
+	* @param string $prev, the find from the previous in-line-edit.
+	* @param string $find, the find for the current in-line-edit.
+	* @param array $action, the current edit array.
+	* @return bool true for identical lines, otherwise false
+	*/
+	function same_line($prev_find, $find, $action)
+	{
+		if (empty($prev_find) || empty($find))
+		{
+			// If both are empty something is wrong.
+			return(false);
+		}
+
+		// The first key in $action is the in-line-find string
+		$edit_ary		= reset($action);		// Array with what to do and what to remove.
+		$inline_find	= key($action);	// String to find in $find.
+
+		$add_ary =	reset($edit_ary);	// $add_ary[0] contains the string to remove from $find
+		$add_str =	$add_ary[0];
+		$inline_action	= key($edit_ary);	// What to do.
+
+		if (($pos = strpos($find, $inline_find)) === false)
+		{
+			return(false);
+		}
+
+		// The actions currently supported are in-line-before-add and in-line-after-add.
+		// replace and delete will be added later.
+		switch ($inline_action)
+		{
+			case 'in-line-before-add':
+				$len = strlen($add_str);
+				$start = $pos - $len;
+				$compare = substr_replace($find, '', $start, $len);
+			break;
+
+			case 'in-line-after-add':
+			default:
+				$start = $pos + strlen($inline_find);
+				$compare = substr_replace($find, '', $start, strlen($add_str));
+			break;
+		}
+
+		$check = ($compare == $prev_find) ? true : false;
+		return($check);
 	}
 
 	/**
