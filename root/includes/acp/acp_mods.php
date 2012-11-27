@@ -904,25 +904,36 @@ class acp_mods
 		$add_str =	$add_ary[0];
 		$inline_action	= key($edit_ary);	// What to do.
 
-		if (($pos = strpos($find, $inline_find)) === false)
-		{
-			return(false);
-		}
-
 		// The actions currently supported are in-line-before-add and in-line-after-add.
 		// replace and delete will be added later.
 		switch ($inline_action)
 		{
+			case 'in-line-replace':
+				// There are no positions stored in the DB so we can not be sure that there
+				// is only one occasion of the string added instead of the search string.
+				// Keeping count on the previous edits still don't give a 100% guaranty that
+				// we are in the right place in the string.
+				$compare = str_replace($add_str, $inline_find, $find);
+			break;
+
 			case 'in-line-before-add':
+				$pos = strpos($find, $inline_find);
 				$len = strlen($add_str);
 				$start = $pos - $len;
 				$compare = substr_replace($find, '', $start, $len);
 			break;
 
 			case 'in-line-after-add':
-			default:
+				$pos = strpos($find, $inline_find);
 				$start = $pos + strlen($inline_find);
 				$compare = substr_replace($find, '', $start, strlen($add_str));
+			break;
+
+			case 'inline-remove':
+			default:
+				// inline-remove don't yet work to install with AutoMOD so I assume nobody
+				// is trying to remove it either in MODs installed with 1.0.0.1 or earlier.
+				return(false);
 			break;
 		}
 
