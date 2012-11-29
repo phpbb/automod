@@ -2844,7 +2844,7 @@ class acp_mods
 		else if (!is_dir($mod_dir))
 		{
 			$from_dir = $mod_dir . '_tmp/';
-			$to_dir = $mod_dir;
+			$to_dir = $mod_dir . '/';
 		}
 		// We should never really get here, but you never know!
 		else
