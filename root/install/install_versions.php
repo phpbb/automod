@@ -136,6 +136,7 @@ $versions = array(
 	),
 	'1.0.1'		=> array(),
 	'1.0.2-RC1'	=> array(),
+	'1.0.2-RC2'	=> array(),
 );
 
 return $versions;
