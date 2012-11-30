@@ -1329,6 +1329,8 @@ class acp_mods
 		// there was an error we need to tell the user about
 		else
 		{
+			add_form_key('acp_mods');
+
 			if ($parent)
 			{
 				$hidden_ary['parent'] = $parent;
@@ -1596,6 +1598,8 @@ class acp_mods
 		}
 		else if (!$mod_uninstalled)
 		{
+			add_form_key('acp_mods');
+
 			$template->assign_vars(array(
 				'S_ERROR'			=> true,
 				'S_HIDDEN_FIELDS'	=> build_hidden_fields($hidden_ary),

@@ -6,6 +6,7 @@ AutoMOD Changelog
  + [Fix] Bug #63248 Return failure when searching for a empty string instead of PHP warning and success.
  + [Fix] Bug #63249 Try to translate AutoMOD 1.0.0 installed MODs to something AutoMOD 1.0.1+ can remove.
  + [Fix] If the MOD zip file root contained more than one dir and/or file a slash was not added to dest dir.
+ + [Fix] add_form_key() was missing when some forms was created.
 
 - Changes since 1.0.0.1
  + [Feature] Ticket #62994 Warn the forum owner/admin if they are installing a MOD targeted at a different phpBB version than their forum is.
