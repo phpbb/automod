@@ -4,7 +4,7 @@
 * @package automod
 * @version $Id$
 * @copyright (c) 2009 phpBB Group
-* @license http://opensource.org/licenses/gpl-2.0.php GNU Public License
+* @license http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
 *
 */
 
@@ -40,15 +40,15 @@ for ($i = 1; $i < sizeof($argv); $i++)
 					echo "Error: no value supplied for argument {$argv[$i]}\n";
 					exit;
 				}
-				
+
 				if (!is_dir($argv[$i + 1]))
 				{
 					echo "Error: given board does not exist\n";
 					exit;
 				}
-				
+
 				$args['board'] = $argv[++$i];
-				
+
 				if (substr($args['board'], -1) != '/')
 				{
 					$args['board'] .= '/';
@@ -81,7 +81,7 @@ for ($i = 1; $i < sizeof($argv); $i++)
 			echo "Error: given MOD_FILE does not exist\n";
 			exit;
 		}
-		
+
 		$args['mod_file'] = $argv[$i];
 	}
 }
@@ -231,7 +231,7 @@ if (isset($actions['EDITS']))
 										}
 										continue;
 									}
-								
+
 									foreach ($inline_edit as $inline_find => $inline_commands)
 									{
 										foreach ($inline_commands as $inline_action => $inline_contents)
@@ -350,7 +350,7 @@ if (!empty($actions['SQL']) && ($mod_installed || $force_install || ($display &&
 			if (!$query_success)
 			{
 				$error = $db->sql_error();
-				
+
 				if ($args['verbose'])
 				{
 					echo "Error: SQL Error\n";

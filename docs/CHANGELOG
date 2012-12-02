@@ -1,5 +1,13 @@
 AutoMOD Changelog
 
+- Changes since 1.0.2
+ + [Change] Ticket #63245 Clarified the license string in some files.
+ + [Fix] Bug #62917 Handle translated MOD names correctly, fixed again.
+ + [Fix] Bug #63248 Return failure when searching for a empty string instead of PHP warning and success.
+ + [Fix] Bug #63249 Try to translate AutoMOD 1.0.0 installed MODs to something AutoMOD 1.0.1+ can remove.
+ + [Fix] If the MOD zip file root contained more than one dir and/or file a slash was not added to dest dir.
+ + [Fix] add_form_key() was missing when some forms was created.
+
 - Changes since 1.0.l
  + [Fix] Bug #63241 AutoMOD passes array of MOD titles to add_log()
  + [Fix] Bug #62917 Handle translated MOD names correctly, fixed again.
