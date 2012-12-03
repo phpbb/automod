@@ -2,6 +2,7 @@ AutoMOD Changelog
 
 - Changes since 1.0.2
  + [Fix] Bug #63243 Don't show two install buttons if there is nothing else to display on install or uninstall.
+ + [Fix] Bug #63258 Don't crash over a missed directory.
  + [Change] Ticket #63245 Clarified the license string in some files.
 
 - Changes since 1.0.l

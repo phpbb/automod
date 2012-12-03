@@ -59,8 +59,28 @@ class acp_mods
 		$sort_key = request_var('sk','t');
 		$sort_dir	= request_var('sd', 'a');
 
-
 		$mod_path = request_var('mod_path', '');
+
+		// Make sure $this->mods_dir actually exists.
+		// If not try to create it.
+		if (!file_exists($this->mods_dir))
+		{
+			if (!file_exists($this->store_dir) || !is_writable($this->store_dir))
+			{
+				trigger_error($user->lang['STORE_MISSING'] . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+
+			// If we get here store/ exists and is writeable by PHP
+			if (!mkdir($this->mods_dir))
+			{
+				trigger_error(sprintf($user->lang['COULD_NOT_CREATE_DIR'], 'store/mods/') . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+
+			if (!phpbb_chmod($this->mods_dir, CHMOD_ALL))
+			{
+				trigger_error(sprintf($user->lang['COULD_NOT_CHMOD_DIR'], 'store/mods/') . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+		}
 
 		if ($mod_path)
 		{
