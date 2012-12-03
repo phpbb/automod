@@ -852,7 +852,8 @@ class editor_direct extends editor
 			{
 				return sprintf($user->lang['MODS_COPY_FAILURE'], $dest);
 			}
-			@chmod($dest, octdec($config['am_file_perms']));
+
+			@phpbb_chmod($dest, CHMOD_ALL);
 		}
 
 		return true;
@@ -886,7 +887,7 @@ class editor_direct extends editor
 		// If we are not looking at a file stored in the database, use local file functions
 		$fr = @fopen($new_filename, 'wb');
 		$length_written = @fwrite($fr, $file_contents);
-		@chmod($new_filename, octdec($config['am_file_perms']));
+		@phpbb_chmod($new_filename, CHMOD_ALL);
 
 		// This appears to be correct even with multibyte encodings.  strlen and
 		// fwrite both return the number of bytes written, not the number of chars
@@ -935,8 +936,8 @@ class editor_direct extends editor
 
 			if (!is_dir($path))
 			{
-				@mkdir($path, $mode);
-				@chmod($path, $mode);
+				@mkdir($path);
+				@phpbb_chmod($path, CHMOD_ALL); // PHP needs write permission.
 
 				if (!is_dir($path))
 				{
