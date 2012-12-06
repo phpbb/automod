@@ -352,7 +352,8 @@ class acp_mods
 		// The MOD name is a array so it can't be used as sort key directly.
 		$sql_sort = ($sort_key == 't') ? " ORDER BY mod_time $dir" : '';
 		$sql = 'SELECT mod_name, mod_id, mod_time
-			FROM ' . MODS_TABLE .
+			FROM ' . MODS_TABLE . "
+				WHERE mod_name NOT LIKE '%AutoMOD%'" .
 			$sql_sort;
 		$result = $db->sql_query($sql);
 		$mod_ary = $db->sql_fetchrowset($result);
