@@ -2116,10 +2116,11 @@ class acp_mods
 					}
 
 					$template->assign_block_vars('new_files', array(
-						'S_SUCCESS'			=> ($status === true) ? true : false,
-						'S_NO_COPY_ATTEMPT'	=> (is_null($status)) ? true : false,
 						'SOURCE'			=> $source,
 						'TARGET'			=> $target,
+
+						'S_NO_COPY_ATTEMPT'	=> (is_null($status)) ? true : false,
+						'S_SUCCESS'			=> ($status === true) ? true : false,
 					));
 				}
 				else if ($display && !$change)
@@ -2133,8 +2134,10 @@ class acp_mods
 				else if ($change && $display && !$mod_installed && !$force_install)
 				{
 					$template->assign_block_vars('new_files', array(
+						'SOURCE'			=> $source,
+						'TARGET'			=> $target,
+
 						'S_NO_COPY_ATTEMPT'	=> true,
-						'FILENAME'			=> $target,
 					));
 				}
 			}
