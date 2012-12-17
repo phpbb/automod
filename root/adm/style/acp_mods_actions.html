@@ -104,8 +104,8 @@
 		<fieldset>
 			<strong>{sql_queries.QUERY}</strong>
 			<!-- IF S_CHANGE_FILES -->
-				<!-- IF sql_queries.S_SUCCESS --><font color="green">{L_SUCCESS}:</font><br />
-				<!-- ELSE --><font color="red">{L_ERROR}:</font>{sql_queries.ERROR_MSG}<br />
+				<!-- IF sql_queries.S_SUCCESS --><br /><font color="green">{L_SUCCESS}:</font><br />
+				<!-- ELSE --><br /><font color="red">{L_ERROR}:</font>{sql_queries.ERROR_MSG}<br />
 				<!-- ENDIF -->
 			<!-- ENDIF -->
 		</fieldset>
@@ -161,7 +161,7 @@
 		// ]]>
 	</script>
 	<p>
-		<a href="#" onclick="toggle_files(); return false;" id="hide-files">{L_CLICK_HIDE_FILES}</a> &bull; 
+		<a href="#" onclick="toggle_files(); return false;" id="hide-files">{L_CLICK_HIDE_FILES}</a> &bull;
 		<a href="#" onclick="toggle_edits(); return false;" id="hide-edits">{L_CLICK_HIDE_EDITS}</a>
 	</p>
     <!-- ENDIF -->
