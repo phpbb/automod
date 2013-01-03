@@ -116,6 +116,7 @@ $lang = array_merge($lang, array(
 	'INSTALL_MOD'		=> 'Install this MOD',
 	'INSTALL_ERROR'		=> 'One or more install actions failed. Please review the actions below, make any adjustments and retry. You may continue with the installation even though some of the actions failed. <strong>This is not recommended and may cause your board to not function correctly.</strong>',
 	'INSTALL_FORCED'	=> 'You forced the installation of this MOD even though there were errors installing the MOD. Your board may be broken. Please note the actions that failed below and correct them.',
+	'UNINSTALL_FORCED'	=> 'You forced the uninstallation of this MOD even though there were errors uninstalling the MOD. Your board may be broken. Please note the actions that failed below and correct them.',
 	'INSTALLED'			=> 'MOD installed',
 	'INSTALLED_EXPLAIN'	=> 'Your MOD has been installed! Here you can view some of the results from the installation. Please note any errors, and seek support at <a href="http://www.phpbb.com">phpBB.com</a>',
 	'INSTALLED_MODS'	=> 'Installed MODs',
