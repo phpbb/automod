@@ -1615,7 +1615,7 @@ class acp_mods
 		// if we forced uninstall of the MOD, we need to let the user know their board could be broken
 		if ($force_uninstall)
 		{
-			$template->assign_var('S_FORCE', true);
+			$template->assign_var('S_FORCE_UNINSTALL', true);
 		}
 		else if (!$mod_uninstalled)
 		{
