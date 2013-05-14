@@ -276,6 +276,7 @@ class acp_mods
 					case 'pre_uninstall':
 					case 'uninstall':
 						$this->uninstall($action, $mod_id, $parent);
+						$cache->purge();
 					break;
 
 					case 'details':
