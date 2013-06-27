@@ -10,6 +10,17 @@
 *
 */
 /**
+*
+* common [Australian English en-AU]
+*
+* @package language
+* @version $Id$
+* @author benbejay <bejay2010@hotmail.co.uk> (benbejay [Ben]) http://www.pictures.ushost247.com
+* @copyright (c) 2005 phpBB Group, 2011 Ben
+* @license http://opensource.org/licenses/gpl-license.php GNU Public License
+*
+*/ 
+/**
 */
 if (!defined('IN_PHPBB'))
 {
