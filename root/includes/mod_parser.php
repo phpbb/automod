@@ -90,6 +90,12 @@ class parser
 		{
 			return "DROP TABLE {$matches[1]};";
 		}
+		else if (preg_match('#INSERT INTO\s([^\s]+) SET (.+)#i', $orig_query, $matches))
+		{
+			$sql = "DELETE FROM {$matches[1]} WHERE {$matches[2]};";
+			$sql = str_replace(', ', ' AND ', $sql);
+			return $sql;
+		}
 
 		return false;
 	}
