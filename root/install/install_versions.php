@@ -138,7 +138,11 @@ $versions = array(
 	'1.0.2-RC1'	=> array(),
 	'1.0.2-RC2'	=> array(),
 	'1.0.2'		=> array(),
-	'1.0.3-DEV'	=> array(),
+	'1.0.3-DEV'	=> array(
+		'table_column_update'	=> array(
+			array('phpbb_mods', 'mod_contribs', array('TEXT_UNI', '')),
+		),
+	),
 );
 
 return $versions;
