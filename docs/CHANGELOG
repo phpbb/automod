@@ -6,6 +6,8 @@ AutoMOD Changelog
  + [Fix] Bug #61545 Use phpbb_chmod(), instead of chmod() when creating directories.
  + [Fix] Bug #63263 Don't show AutoMOD as installed MOD.
  + [Fix] Bug #63264 AutoMOD did not display file names when copy was not attempted.
+ + [Fix] Ticket #EXTTOOLS-619 AutoMOD did not clear the cache after uninstalling MODs.
+ + [Fix] Ticket #EXTTOOLS-627 Changed mod_contribs from varchar to text.
  + [Change] Ticket #63245 Clarified the license string in some files.
 
 - Changes since 1.0.l
