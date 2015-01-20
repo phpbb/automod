@@ -82,13 +82,27 @@ class parser
 	*/
 	function reverse_query($orig_query)
 	{
-		if (preg_match('#ALTER TABLE\s([a-z_]+)\sADD(?:\sCOLUMN)?\s([a-z_]+)#i', $orig_query, $matches))
+		if (preg_match('#ALTER TABLE\s([a-z_]+)\sADD(?:\sCOLUMN)?\sINDEX\s\(([a-z_]+)\)#i', $orig_query, $matches))
+		{
+			return "SELECT NOW()";
+		}
+		else if (preg_match('#ALTER TABLE\s([a-z_]+)\sCHANGE#i', $orig_query, $matches))
+		{
+			return "SELECT NOW()";
+		}
+		else if (preg_match('#ALTER TABLE\s([a-z_]+)\sADD(?:\sCOLUMN)?\s([a-z_]+)#i', $orig_query, $matches))
 		{
 			return "ALTER TABLE {$matches[1]} DROP COLUMN {$matches[2]};";
 		}
 		else if (preg_match('#CREATE TABLE\s([a-z_]+)#i', $orig_query, $matches))
 		{
 			return "DROP TABLE {$matches[1]};";
+		}
+		else if (preg_match('#INSERT INTO\s([^\s]+) SET (.+)#i', $orig_query, $matches))
+		{
+			$sql = "DELETE FROM {$matches[1]} WHERE {$matches[2]};";
+			$sql = str_replace(', ', ' AND ', $sql);
+			return $sql;
 		}
 
 		return false;
